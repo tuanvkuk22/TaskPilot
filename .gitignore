@@ -1,10 +1,6 @@
-# =========================
-# Laravel
-# =========================
-/vendor/
+vendor/
 node_modules/
 npm-debug.log
-yarn-error.log
 
 # Laravel 4 specific
 bootstrap/compiled.php
@@ -13,80 +9,12 @@ app/storage/
 # Laravel 5 & Lumen specific
 public/storage
 public/hot
-
-# Laravel 5 & Lumen specific with changed public path
-public_html/storage
-public_html/hot
-
 storage/*.key
+.env.*.php
+.env.php
 .env
-.env.backup
-.env.production
-
 Homestead.yaml
 Homestead.json
-/.vagrant
 
-.phpunit.result.cache
-.phpactor.json
-auth.json
-
-/public/build
-/storage/pail
-
-# =========================
-# Python
-# =========================
-
-# Byte-compiled / optimized
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual environments
-.venv/
-venv/
-env/
-ENV/
-AI/dataset
-evaluation/output
-# Distribution / packaging
-build/
-dist/
-*.egg-info/
-.eggs/
-*.egg
-
-# Test / coverage
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-.tox/
-.nox/
-
-# Type checker / linter
-.mypy_cache/
-.pyre/
-.pytype/
-.ruff_cache/
-
-# Jupyter
-.ipynb_checkpoints/
-
-# IDE
-.vscode/
-.idea/
-
-# Logs
-*.log
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Environment
-.python-version
-
-# Local configuration
-*.sqlite3
+# Rocketeer PHP task runner and deployment package. https://github.com/rocketeers/rocketeer
+.rocketeer/
