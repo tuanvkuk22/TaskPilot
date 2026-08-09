@@ -48,7 +48,7 @@ __pycache__/
 venv/
 env/
 ENV/
-dataset
+AI/dataset
 evaluation/output
 # Distribution / packaging
 build/
