@@ -1,52 +1,84 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
+use Illuminate\Support\Facades\Route;
+use ProjectsManager\Http\Controllers\Auth\ForgotPasswordController;
+use ProjectsManager\Http\Controllers\Auth\LoginController;
+use ProjectsManager\Http\Controllers\Auth\RegisterController;
+use ProjectsManager\Http\Controllers\Auth\ResetPasswordController;
+use ProjectsManager\Http\Controllers\Auth\SocialAuthController;
+use ProjectsManager\Modules\Comments\Controllers\CommentsController;
+use ProjectsManager\Modules\Companies\Controllers\CompaniesController;
+use ProjectsManager\Modules\Home\Controllers\HomeController;
+use ProjectsManager\Modules\Meetings\Controllers\MeetingsController;
+use ProjectsManager\Modules\Projects\Controllers\ProjectsController;
+use ProjectsManager\Modules\Projects\Controllers\ProjectToolsController;
+use ProjectsManager\Modules\Tasks\Controllers\SprintsController;
+use ProjectsManager\Modules\Tasks\Controllers\TasksController;
+use ProjectsManager\Modules\Teams\Controllers\TeamsController;
 
-Route::get('/', function () {
-    return view('welcome');
+Route::view('/', 'welcome')->name('welcome');
+
+Route::middleware('guest')->group(function (): void {
+    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [LoginController::class, 'login']);
+    Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('register', [RegisterController::class, 'register']);
+    Route::get('password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::get('password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+    Route::post('password/reset', [ResetPasswordController::class, 'reset'])->name('password.update');
+    Route::get('auth/google', [SocialAuthController::class, 'redirectToProvider'])->name('google.redirect');
+    Route::get('auth/google/callback', [SocialAuthController::class, 'handleProviderCallback'])->name('google.callback');
 });
+Route::post('logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
-
-Route::get('login', 'Auth\LoginController@showLoginForm')->name('login');
-Route::post('login', 'Auth\LoginController@login');
-Route::post('logout', 'Auth\LoginController@logout')->name('logout');
-
-Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('register');
-Route::post('register', 'Auth\RegisterController@register');
-
-Route::get('auth/google', 'Auth\SocialAuthController@redirectToProvider')->name('auth.google');
-Route::get('auth/google/callback', 'Auth\SocialAuthController@handleProviderCallback');
-
-Route::get('password/reset', 'Auth\ForgotPasswordController@showLinkRequestForm')->name('password.request');
-Route::post('password/email', 'Auth\ForgotPasswordController@sendResetLinkEmail')->name('password.email');
-Route::get('password/reset/{token}', 'Auth\ResetPasswordController@showResetForm')->name('password.reset');
-Route::post('password/reset', 'Auth\ResetPasswordController@reset')->name('password.update');
-
-Route::get('/home', 'HomeController@index')->name('home');
-
-//->middleware('auth');
-
-
-Route::middleware(['auth'])->group(function () {
-
-    Route::resource('companies', 'CompaniesController');
-
-    Route::get('projects/create/{company_id?}', 'ProjectsController@create');
-    Route::post('/projects/adduser', 'ProjectsController@adduser')->name('projects.adduser');
-    Route::resource('projects', 'ProjectsController');
-    Route::resource('roles', 'RolesController');
-    Route::resource('tasks', 'TasksController');
-    Route::resource('users', 'UsersController');
-    Route::resource('comments', 'CommentsController');
-
-
+Route::middleware('auth')->group(function (): void {
+    Route::get('home', [HomeController::class, 'index'])->name('home');
+    Route::resource('companies', CompaniesController::class);
+    Route::resource('projects', ProjectsController::class);
+    Route::get('projects/create/{companyId?}', [ProjectsController::class, 'create'])->name('projects.create.for-company');
+    Route::post('projects/adduser', [ProjectsController::class, 'adduser'])->name('projects.adduser');
+    Route::post('projects/quick-category', [ProjectsController::class, 'storeQuickCategory'])->name('projects.categories.store');
+    Route::post('projects/quick-company', [ProjectsController::class, 'storeQuickCompany'])->name('projects.companies.store');
+    Route::post('projects/{project}/archive', [ProjectsController::class, 'archive'])->name('projects.archive');
+    Route::get('projects/{project}/board', [ProjectsController::class, 'board'])->name('projects.board');
+    Route::get('projects/{project}/timeline', [ProjectsController::class, 'timeline'])->name('projects.timeline');
+    Route::get('projects/{project}/roadmap', [ProjectsController::class, 'roadmap'])->name('projects.roadmap');
+    Route::get('projects/{project}/permissions', [ProjectsController::class, 'editPermissions'])->name('projects.permissions.index');
+    Route::post('projects/{project}/permissions', [ProjectsController::class, 'storePermission'])->name('projects.permissions.store');
+    Route::put('projects/{project}/permissions/{permission}', [ProjectsController::class, 'updatePermission'])->name('projects.permissions.update');
+    Route::delete('projects/{project}/permissions/{permission}', [ProjectsController::class, 'destroyPermission'])->name('projects.permissions.destroy');
+    Route::get('projects/{project}/tools/documents', [ProjectToolsController::class, 'documents'])->name('projects.tools.documents');
+    Route::get('projects/{project}/tools/budgets', [ProjectToolsController::class, 'budgets'])->name('projects.tools.budgets');
+    Route::get('projects/{project}/tools/chat', [ProjectToolsController::class, 'chat'])->name('projects.tools.chat');
+    Route::post('projects/{project}/tools', [ProjectToolsController::class, 'store'])->name('projects.tools.store');
+    Route::resource('tasks', TasksController::class);
+    Route::post('tasks/{task}/move', [TasksController::class, 'move'])->name('tasks.move');
+    Route::post('tasks/{task}/worklog', [TasksController::class, 'worklog'])->name('tasks.worklog');
+    Route::get('projects/{project}/sprints', [SprintsController::class, 'index'])->name('sprints.index');
+    Route::post('projects/{project}/sprints', [SprintsController::class, 'store'])->name('sprints.store');
+    Route::post('sprints/{sprint}/start', [SprintsController::class, 'start'])->name('sprints.start');
+    Route::post('sprints/{sprint}/close', [SprintsController::class, 'close'])->name('sprints.close');
+    Route::resource('teams', TeamsController::class);
+    Route::post('teams/{team}/invite', [TeamsController::class, 'invite'])->name('teams.invite');
+    Route::resource('comments', CommentsController::class)->only(['index', 'store', 'show']);
+    Route::get('projects/{project}/meetings', [MeetingsController::class, 'index'])->name('meetings.index');
+    Route::post('projects/{project}/meetings', [MeetingsController::class, 'store'])->name('meetings.store');
+    Route::get('meetings/{meeting}', [MeetingsController::class, 'show'])->name('meetings.show');
+    Route::get('meetings/{meeting}/archive', [MeetingsController::class, 'archive'])->name('meetings.archive');
+    Route::get('meetings/{meeting}/token', [MeetingsController::class, 'token'])->name('meetings.token');
+    Route::get('meetings/{meeting}/tasks', [MeetingsController::class, 'tasks'])->name('meetings.tasks');
+    Route::get('meetings/{meeting}/messages', [MeetingsController::class, 'messages'])->name('meetings.messages');
+    Route::post('meetings/{meeting}/messages', [MeetingsController::class, 'message'])->name('meetings.messages.store');
+    Route::put('meetings/{meeting}/messages/{message}', [MeetingsController::class, 'updateMessage'])->name('meetings.messages.update');
+    Route::delete('meetings/{meeting}/messages/{message}', [MeetingsController::class, 'deleteMessage'])->name('meetings.messages.destroy');
+    Route::post('meetings/{meeting}/messages/{message}/task', [MeetingsController::class, 'taskFromMessage'])->name('meetings.messages.task');
+    Route::put('meetings/{meeting}/note', [MeetingsController::class, 'note'])->name('meetings.note');
+    Route::put('meetings/{meeting}/minutes', [MeetingsController::class, 'minutes'])->name('meetings.minutes');
+    Route::post('meetings/{meeting}/recordings', [MeetingsController::class, 'recording'])->name('meetings.recording');
+    Route::get('meetings/{meeting}/file/{path}', [MeetingsController::class, 'file'])->where('path', '.*')->name('meetings.file');
+    Route::post('meetings/{meeting}/presence', [MeetingsController::class, 'presence'])->name('meetings.presence');
+    Route::get('meetings/{meeting}/presence', [MeetingsController::class, 'presenceLogs'])->name('meetings.presence.logs');
+    Route::get('meetings/{meeting}/live-presence', [MeetingsController::class, 'livePresence'])->name('meetings.live-presence');
+    Route::post('meetings/{meeting}/end', [MeetingsController::class, 'end'])->name('meetings.end');
 });

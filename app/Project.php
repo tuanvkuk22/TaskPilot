@@ -12,19 +12,22 @@ class Project extends Model
         'description',
         'company_id',
         'user_id',
-        'days',
-
+        'days', 'status', 'archived', 'project_type', 'team_name', 'project_code',
+        'start_date', 'end_date', 'budget', 'priority', 'customer_name', 'location',
+        'objective', 'category_id', 'team_id',
     ];
+
+    protected $casts = ['archived' => 'boolean', 'start_date' => 'date', 'end_date' => 'date', 'budget' => 'decimal:2'];
 
 
     public function users(){
-		return $this->belongsToMany('ProjectsManager\User');
+		return $this->belongsToMany(User::class)->withPivot('role', 'permissions');
     }
 
     
 
     public function company(){
-		return $this->belongsTo('ProjectsManager\Company');
+		return $this->belongsTo(Company::class);
     }
 
     public function comments()
@@ -32,4 +35,19 @@ class Project extends Model
         return $this->morphMany('ProjectsManager\Comment', 'commentable');
     }
 
+    public function tasks() { return $this->hasMany(Task::class); }
+    public function category() { return $this->belongsTo(ProjectCategory::class); }
+    public function team() { return $this->belongsTo(Team::class); }
+    public function sprints() { return $this->hasMany(Sprint::class); }
+    public function permissions() { return $this->hasMany(ProjectPermission::class); }
+    public function meetings() { return $this->hasMany(Meeting::class); }
+
+    public function scopeStatusFilter($query, $status)
+    {
+        if (empty($status) || $status === 'all') {
+            return $query;
+        }
+
+        return $query->where('status', $status);
+    }
 }

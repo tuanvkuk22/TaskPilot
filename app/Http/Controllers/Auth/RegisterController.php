@@ -4,14 +4,30 @@ namespace ProjectsManager\Http\Controllers\Auth;
 
 use ProjectsManager\User;
 use ProjectsManager\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class RegisterController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | Register Controller
+    |--------------------------------------------------------------------------
+    |
+    | This controller handles the registration of new users as well as their
+    | validation and creation. By default this controller uses a trait to
+    | provide this functionality without requiring any additional code.
+    |
+    */
+
+    /**
+     * Where to redirect users after registration.
+     *
+     * @var string
+     */
     /**
      * Create a new controller instance.
      *
@@ -23,79 +39,47 @@ class RegisterController extends Controller
     }
 
     /**
-     * Show the application registration form.
+     * Get a validator for an incoming registration request.
      *
-     * @return \Illuminate\View\View
+     * @param  array  $data
+     * @return \Illuminate\Contracts\Validation\Validator
      */
-    public function showRegistrationForm()
+    protected function validator(array $data)
     {
-        return view('auth.register', [
-            'timezones' => $this->timezones(),
-        ]);
-    }
-
-    /**
-     * Handle a registration request for the application.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function register(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
+        return Validator::make($data, [
             'name' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users,username',
-            'full_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'job_title' => 'nullable|string|max:255',
-            'department' => 'nullable|string|max:255',
-            'timezone' => ['required', 'string', 'max:255', Rule::in(array_keys($this->timezones()))],
         ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput($request->except('password', 'password_confirmation'));
-        }
-
-        $user = User::create([
-            'name' => $request->input('name'),
-            'username' => $request->input('username'),
-            'full_name' => $request->input('full_name'),
-            'email' => $request->input('email'),
-            'avatar' => null,
-            'job_title' => $request->input('job_title'),
-            'department' => $request->input('department'),
-            'status' => 'active',
-            'timezone' => $request->input('timezone'),
-            'password' => Hash::make($request->input('password')),
-        ]);
-
-        Auth::login($user);
-
-        return redirect()->intended('/home');
     }
 
     /**
-     * Get supported timezones for registration.
+     * Create a new user instance after a valid registration.
      *
-     * @return array
+     * @param  array  $data
+     * @return \ProjectsManager\User
      */
-    private function timezones(): array
+    protected function create(array $data)
     {
-        return [
-            'UTC' => 'UTC',
-            'Asia/Ho_Chi_Minh' => 'Asia/Ho_Chi_Minh',
-            'Asia/Tokyo' => 'Asia/Tokyo',
-            'Asia/Shanghai' => 'Asia/Shanghai',
-            'Asia/Singapore' => 'Asia/Singapore',
-            'Europe/London' => 'Europe/London',
-            'Europe/Paris' => 'Europe/Paris',
-            'Europe/Berlin' => 'Europe/Berlin',
-            'America/New_York' => 'America/New_York',
-            'America/Chicago' => 'America/Chicago',
-            'America/Los_Angeles' => 'America/Los_Angeles',
-        ];
+        return User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => bcrypt($data['password']),
+        ]);
+    }
+
+    public function showRegistrationForm(): View
+    {
+        return view('auth.register');
+    }
+
+    public function register(Request $request): RedirectResponse
+    {
+        $validator = $this->validator($request->all());
+        if ($validator->fails()) return back()->withInput($request->except('password', 'password_confirmation'))->withErrors($validator);
+        $user = $this->create($validator->validated());
+        Auth::login($user);
+        $request->session()->regenerate();
+        return redirect('/home');
     }
 }

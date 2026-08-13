@@ -9,19 +9,22 @@ class Company extends Model
     //
 
     protected $fillable = [
-        'id',
         'name',
         'description',
-        'user_id'
+        'user_id',
+        'contact_phone',
+        'contact_email',
+        'contact_address',
+        'contact_note',
 
     ];
 
     public function user(){
-		return $this->belongsTo('ProjectsManager\User');
+		return $this->belongsTo(User::class);
     }
 
     public function projects(){
-        return $this->hasMany('ProjectsManager\Project');
+        return $this->hasMany(Project::class);
     }
 
     public function comments()

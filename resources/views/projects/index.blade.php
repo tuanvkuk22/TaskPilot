@@ -1,25 +1,5 @@
 @extends('layouts.app')
-
 @section('content')
-
-<div class="col-md-6 col-lg-6 col-md-offset-3  col-lg-offset-3">
-    <div class="panel panel-primary ">
-    <div class="panel-heading">Projects <a  class="pull-right btn btn-primary btn-sm" href="/projects/create">
-    Create new</a> </div>
-    <div class="panel-body">
-        
-
-    <ul class="list-group">
-    @foreach($projects as $project)
-        <li class="list-group-item"> 
-        <i class="fa fa-play" aria-hidden="true"></i>
-        <a href="/projects/{{ $project->id }}" >{{ $project->name }}</a></li>
-    @endforeach
-    </ul>
-
-
-    </div>
-    </div>
-</div>
-
+<section class="tp-page-head"><div><span class="tp-eyebrow">PROJECTS</span><h1>Dự án</h1><p>Theo dõi tiến độ, thành viên và công việc của từng dự án.</p></div><a href="{{ route('projects.create') }}" class="btn btn-primary"><i class="fa fa-plus"></i> Tạo dự án</a></section>
+<section class="tp-surface"><div class="tp-surface-header"><div class="tp-actions"><a class="btn btn-default btn-sm {{ !$status ? 'active' : '' }}" href="{{ route('projects.index') }}">Tất cả</a><a class="btn btn-default btn-sm" href="{{ route('projects.index',['status'=>'active']) }}">Đang hoạt động</a><a class="btn btn-default btn-sm" href="{{ route('projects.index',['status'=>'archived']) }}">Đã lưu trữ</a></div></div><div class="table-responsive"><table class="table tp-table"><thead><tr><th>Dự án</th><th>Khách hàng / đội</th><th>Tiến độ</th><th></th></tr></thead><tbody>@forelse($projects as $project)<tr><td><a href="{{ route('projects.show',$project) }}">{{ $project->name }}</a><span class="tp-meta">{{ $project->project_code ?: 'Chưa có mã' }} · {{ \Illuminate\Support\Str::limit($project->objective ?: $project->description,60) }}</span></td><td>{{ $project->company->name ?? 'Nội bộ' }}<span class="tp-meta">{{ $project->team->name ?? $project->team_name ?? 'Chưa có đội' }}</span></td><td><span class="tp-badge {{ $project->priority }}">{{ $project->status }}</span></td><td class="text-right"><a href="{{ route('projects.board',$project) }}">Board</a></td></tr>@empty<tr><td colspan="4"><div class="tp-empty"><i class="fa fa-folder-open-o"></i>Chưa có dự án. Hãy tạo dự án đầu tiên.</div></td></tr>@endforelse</tbody></table></div></section>
 @endsection

@@ -2,86 +2,55 @@
 
 namespace ProjectsManager\Http\Controllers\Auth;
 
+use ProjectsManager\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
-use ProjectsManager\Http\Controllers\Controller;
+use Illuminate\View\View;
 
 class LoginController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | Login Controller
+    |--------------------------------------------------------------------------
+    |
+    | This controller handles authenticating users for the application and
+    | redirecting them to your home screen. The controller uses a trait
+    | to conveniently provide its functionality to your applications.
+    |
+    */
+
     /**
-     * Create a new controller instance.
+     * Where to redirect users after login.
      *
-     * @return void
+     * @var string
      */
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
     }
 
-    /**
-     * Show the application login form.
-     *
-     * @return \Illuminate\View\View
-     */
-    public function showLoginForm()
+    public function showLoginForm(): View
     {
         return view('auth.login');
     }
 
-    /**
-     * Handle a login request to the application.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function login(Request $request)
+    public function login(Request $request): RedirectResponse
     {
-        $validator = Validator::make($request->all(), [
-            'username' => 'required|string|max:255',
-            'password' => 'required|string|min:6',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput($request->only('username', 'remember'));
+        $credentials = $request->validate(['email' => ['required', 'email'], 'password' => ['required', 'string']]);
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+            return back()->withInput($request->only('email'))->withErrors(['email' => 'Thông tin đăng nhập không chính xác.']);
         }
-
-        $loginIdentifier = $request->input('username');
-        $credentials = filter_var($loginIdentifier, FILTER_VALIDATE_EMAIL)
-            ? ['email' => $loginIdentifier, 'password' => $request->input('password')]
-            : ['username' => $loginIdentifier, 'password' => $request->input('password')];
-        $remember = $request->boolean('remember');
-
-        if (Auth::attempt($credentials, $remember)) {
-            $request->session()->regenerate();
-
-            $user = Auth::user();
-            $user->last_login_at = now();
-            $user->save();
-
-            return redirect()->intended('/home');
-        }
-
-        return redirect()->back()
-            ->withErrors(['username' => 'Thông tin đăng nhập không đúng. Vui lòng kiểm tra lại.'])
-            ->withInput($request->only('username', 'remember'));
+        $request->session()->regenerate();
+        return redirect()->intended('/home');
     }
 
-    /**
-     * Log the user out of the application.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function logout(Request $request)
+    public function logout(Request $request): RedirectResponse
     {
         Auth::logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
         return redirect()->route('login');
     }
 }

@@ -15,33 +15,24 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name',
-        'username',
-        'full_name',
-        'email',
-        'avatar',
-        'job_title',
-        'department',
-        'status',
-        'timezone',
-        'last_login_at',
+        'name', 
+        'email', 
         'password',
         'first_name',
         'middle_name',
         'last_name',
         'city',
         'role_id',
+        'avatar',
         'provider',
         'provider_id',
-    ];
-
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'last_login_at' => 'datetime',
+        'status',
+        'last_login_at',
+        'username',
+        'full_name',
+        'job_title',
+        'department',
+        'timezone',
     ];
 
     /**
@@ -74,6 +65,11 @@ class User extends Authenticatable
     public function projects()
     {
         return $this->belongsToMany('ProjectsManager\Project');
+    }
+
+    public function assignedTasks()
+    {
+        return $this->hasMany(Task::class, 'assignee_id');
     }
 
     public function comments()

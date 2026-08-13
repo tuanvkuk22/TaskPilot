@@ -1,6 +1,6 @@
-# Project Manager
+Project Manager
 
-Project Manager is a simple **Project Management System** built with **Laravel 13**. It is designed for companies to manage users, companies, projects, tasks, roles, and comments in one place.
+Project Manager is a simple *Project Management System* built with *Laravel 13*. It is designed for companies to manage users, companies, projects, tasks, roles, and comments in one place.
 
 ## Features
 
@@ -28,108 +28,81 @@ Before installing the project, make sure you have:
 
 ### 1. Clone the repository
 
-```bash
 git clone <repository-url>
 cd ProjectManager
-```
 
 ### 2. Install PHP dependencies
 
-```bash
 composer install
-```
 
 ### 3. Configure environment
 
-Copy the `.env` file:
+Copy the .env file:
 
-```bash
 cp .env.example .env
-```
 
 Generate the application key:
 
-```bash
 php artisan key:generate
-```
 
 ### 4. Configure the database
 
-Update the database settings in `.env`:
+Update the database settings in .env:
 
-```env
+env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=projectmanager
 DB_USERNAME=your_username
 DB_PASSWORD=your_password
-```
 
 If MySQL is running in Docker, make sure the host and port match your Docker configuration.
 
 ### 5. Run database migrations
 
-```bash
 php artisan migrate
-```
 
 ### 6. Create the storage link
 
-```bash
 php artisan storage:link
-```
 
 ### 7. Start the application
 
-```bash
 php artisan serve
-```
 
 The application will be available at:
 
-```text
+text
 http://127.0.0.1:8000
-```
 
 ## Testing
 
 Run the test suite with:
 
-```bash
 php artisan test
-```
 
 ## Useful Commands
 
 Clear application caches:
 
-```bash
 php artisan optimize:clear
-```
 
 Check the current Laravel version:
 
-```bash
 php artisan --version
-```
 
 Check migration status:
 
-```bash
 php artisan migrate:status
-```
 
 List application routes:
 
-```bash
 php artisan route:list
-```
 
 ## Project Structure
 
-```text
-```
+text
 
 ## Main Modules
 
@@ -168,9 +141,7 @@ The main database tables include:
 
 For local development:
 
-```bash
 php artisan serve
-```
 
 For frontend assets, install the required dependencies and run the project's configured build commands if applicable.
 

@@ -1,0 +1,20 @@
+port: 7881
+
+rtc:
+  tcp_port: 7882
+  port_range_start: 50000
+  port_range_end: 60000
+  use_external_ip: false
+  allow_tcp_fallback: true
+
+logging:
+  level: info
+
+room:
+  auto_create: true
+  empty_timeout: 300
+  departure_timeout: 20
+  max_participants: 100
+
+keys:
+  taskpilot: 990bb3adaa0610d918bf251ed62342520ab473da5c189346deb58e0d2122689f
