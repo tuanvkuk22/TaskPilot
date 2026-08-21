@@ -30,6 +30,7 @@ class ProjectRepository
             })
             ->statusFilter($status)
             ->orderBy('updated_at', 'desc')
+            ->with('tasks')
             ->get();
     }
 
@@ -275,5 +276,22 @@ class ProjectRepository
         $suffix = str_pad((string) ((int) Project::max('id') + 1), 4, '0', STR_PAD_LEFT);
 
         return 'PRJ-' . $datePart . '-' . $suffix;
+    }
+
+    public function countForUser(int $userId, ?string $status = null): int
+    {
+        $query = Project::query()
+            ->where(function ($query) use ($userId) {
+                $query->where('user_id', $userId)
+                    ->orWhereHas('users', function ($userQuery) use ($userId) {
+                        $userQuery->where('users.id', $userId);
+                    });
+            });
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        return $query->count();
     }
 }

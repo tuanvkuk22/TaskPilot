@@ -1,9 +1,28 @@
 @extends('layouts.app')
+
 @section('content')
-<section class="tp-page-head"><div><span class="tp-eyebrow">PROJECTS</span><h1>Tạo dự án mới</h1><p>Một không gian để tập hợp thành viên, backlog và các mốc quan trọng.</p></div><a href="{{ route('projects.index') }}" class="btn btn-default">Quay lại</a></section>
-<section class="tp-surface tp-form"><div class="tp-surface-body"><form method="POST" action="{{ route('projects.store') }}">@csrf
-<div class="row"><div class="col-md-8"><div class="form-group"><label for="name">Tên dự án *</label><input id="name" name="name" class="form-control" required value="{{ old('name') }}"></div></div><div class="col-md-4"><div class="form-group"><label>Mã dự án</label><input class="form-control" value="{{ $project_code_preview }}" disabled></div></div></div>
-<div class="form-group"><label for="objective">Mục tiêu</label><input id="objective" name="objective" class="form-control" value="{{ old('objective') }}" placeholder="Kết quả dự án cần đạt"></div><div class="form-group"><label for="description">Mô tả</label><textarea id="description" name="description" class="form-control">{{ old('description') }}</textarea></div>
-<div class="row"><div class="col-md-4"><div class="form-group"><label>Khách hàng</label><select name="company_id" class="form-control"><option value="">Nội bộ</option>@foreach($companies as $company)<option value="{{ $company->id }}" {{ old('company_id',$company_id)==$company->id?'selected':'' }}>{{ $company->name }}</option>@endforeach</select></div></div><div class="col-md-4"><div class="form-group"><label>Danh mục</label><select name="category_id" class="form-control"><option value="">Chưa chọn</option>@foreach($categories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select></div></div><div class="col-md-4"><div class="form-group"><label>Đội nhóm</label><select name="team_id" class="form-control"><option value="">Chưa gán</option>@foreach($teams as $team)<option value="{{ $team->id }}">{{ $team->name }}</option>@endforeach</select></div></div></div>
-<div class="row"><div class="col-md-3"><div class="form-group"><label>Trạng thái *</label><select name="status" class="form-control"><option value="planning">Lên kế hoạch</option><option value="active" selected>Đang hoạt động</option><option value="on_hold">Tạm dừng</option></select></div></div><div class="col-md-3"><div class="form-group"><label>Ưu tiên *</label><select name="priority" class="form-control"><option value="low">Thấp</option><option value="medium" selected>Trung bình</option><option value="high">Cao</option><option value="critical">Khẩn cấp</option></select></div></div><div class="col-md-3"><div class="form-group"><label>Ngày bắt đầu</label><input type="date" name="start_date" class="form-control"></div></div><div class="col-md-3"><div class="form-group"><label>Hạn hoàn thành</label><input type="date" name="end_date" class="form-control"></div></div></div><div class="tp-actions"><button class="btn btn-primary">Tạo dự án</button><a href="{{ route('projects.index') }}" class="btn btn-default">Hủy</a></div></form></div></section>
+<link href="{{ asset('build/assets/edit-shared.css') }}?v={{ filemtime(public_path('build/assets/edit-shared.css')) }}" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
+<div id="project-create-app" class="project-create-form"></div>
+@endsection
+
+@section('jqueryScript')
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script>
+    window.projectCreateData = {
+        companies: @json($companies ?? []),
+        categories: @json($categories ?? []),
+        teams: @json($teams ?? []),
+        project_code_preview: @json($project_code_preview ?? ''),
+        company_id: @json($company_id ?? null),
+        errors: @json($errors ?? []),
+        old: @json(old()),
+        store_url: @json(route('projects.store')),
+        category_store_url: @json(route('projects.categories.store')),
+        company_store_url: @json(route('projects.companies.store')),
+        csrf_token: @json(csrf_token()),
+        projects_index_url: @json(route('projects.index')),
+    };
+</script>
+<script type="module" src="{{ asset('build/assets/project-create.js') }}?v={{ filemtime(public_path('build/assets/project-create.js')) }}"></script>
 @endsection

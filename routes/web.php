@@ -12,6 +12,9 @@ use ProjectsManager\Modules\Home\Controllers\HomeController;
 use ProjectsManager\Modules\Meetings\Controllers\MeetingsController;
 use ProjectsManager\Modules\Projects\Controllers\ProjectsController;
 use ProjectsManager\Modules\Projects\Controllers\ProjectToolsController;
+use ProjectsManager\Modules\Projects\Controllers\ProjectDocumentsController;
+use ProjectsManager\Modules\Projects\Controllers\ProjectFormsController;
+use ProjectsManager\Modules\Projects\Controllers\ProjectDevelopmentController;
 use ProjectsManager\Modules\Tasks\Controllers\SprintsController;
 use ProjectsManager\Modules\Tasks\Controllers\TasksController;
 use ProjectsManager\Modules\Teams\Controllers\TeamsController;
@@ -35,35 +38,50 @@ Route::post('logout', [LoginController::class, 'logout'])->middleware('auth')->n
 Route::middleware('auth')->group(function (): void {
     Route::get('home', [HomeController::class, 'index'])->name('home');
     Route::resource('companies', CompaniesController::class);
+
+    Route::get('projects/role-permissions', [ProjectsController::class, 'availablePermissions'])->name('projects.role.permissions');
+
     Route::resource('projects', ProjectsController::class);
     Route::get('projects/create/{companyId?}', [ProjectsController::class, 'create'])->name('projects.create.for-company');
-    Route::post('projects/adduser', [ProjectsController::class, 'adduser'])->name('projects.adduser');
+    Route::post('projects/adduser', [ProjectsController::class, 'adduser'])->name('projects.adduser')->middleware('can.project:manage_members');
     Route::post('projects/quick-category', [ProjectsController::class, 'storeQuickCategory'])->name('projects.categories.store');
     Route::post('projects/quick-company', [ProjectsController::class, 'storeQuickCompany'])->name('projects.companies.store');
     Route::post('projects/{project}/archive', [ProjectsController::class, 'archive'])->name('projects.archive');
     Route::get('projects/{project}/board', [ProjectsController::class, 'board'])->name('projects.board');
     Route::get('projects/{project}/timeline', [ProjectsController::class, 'timeline'])->name('projects.timeline');
     Route::get('projects/{project}/roadmap', [ProjectsController::class, 'roadmap'])->name('projects.roadmap');
-    Route::get('projects/{project}/permissions', [ProjectsController::class, 'editPermissions'])->name('projects.permissions.index');
-    Route::post('projects/{project}/permissions', [ProjectsController::class, 'storePermission'])->name('projects.permissions.store');
-    Route::put('projects/{project}/permissions/{permission}', [ProjectsController::class, 'updatePermission'])->name('projects.permissions.update');
-    Route::delete('projects/{project}/permissions/{permission}', [ProjectsController::class, 'destroyPermission'])->name('projects.permissions.destroy');
+    Route::get('projects/{project}/permissions', [ProjectsController::class, 'editPermissions'])->name('projects.permissions.index')->middleware('can.project:manage_project');
+    Route::post('projects/{project}/permissions', [ProjectsController::class, 'storePermission'])->name('projects.permissions.store')->middleware('can.project:manage_project');
+    Route::put('projects/{project}/permissions/{permission}', [ProjectsController::class, 'updatePermission'])->name('projects.permissions.update')->middleware('can.project:manage_project');
+    Route::delete('projects/{project}/permissions/{permission}', [ProjectsController::class, 'destroyPermission'])->name('projects.permissions.destroy')->middleware('can.project:manage_project');
+
+    Route::get('projects/{project}/roles', [ProjectsController::class, 'roles'])->name('projects.roles.index')->middleware('can.project:manage_project');
+    Route::post('projects/{project}/roles', [ProjectsController::class, 'storeRole'])->name('projects.roles.store')->middleware('can.project:manage_project');
+    Route::put('projects/{project}/roles/{role}', [ProjectsController::class, 'updateRole'])->name('projects.roles.update')->middleware('can.project:manage_project');
+    Route::delete('projects/{project}/roles/{role}', [ProjectsController::class, 'destroyRole'])->name('projects.roles.destroy')->middleware('can.project:manage_project');
+
     Route::get('projects/{project}/tools/documents', [ProjectToolsController::class, 'documents'])->name('projects.tools.documents');
     Route::get('projects/{project}/tools/budgets', [ProjectToolsController::class, 'budgets'])->name('projects.tools.budgets');
     Route::get('projects/{project}/tools/chat', [ProjectToolsController::class, 'chat'])->name('projects.tools.chat');
     Route::post('projects/{project}/tools', [ProjectToolsController::class, 'store'])->name('projects.tools.store');
+
     Route::resource('tasks', TasksController::class);
     Route::post('tasks/{task}/move', [TasksController::class, 'move'])->name('tasks.move');
     Route::post('tasks/{task}/worklog', [TasksController::class, 'worklog'])->name('tasks.worklog');
+
     Route::get('projects/{project}/sprints', [SprintsController::class, 'index'])->name('sprints.index');
     Route::post('projects/{project}/sprints', [SprintsController::class, 'store'])->name('sprints.store');
+
     Route::post('sprints/{sprint}/start', [SprintsController::class, 'start'])->name('sprints.start');
     Route::post('sprints/{sprint}/close', [SprintsController::class, 'close'])->name('sprints.close');
+
     Route::resource('teams', TeamsController::class);
     Route::post('teams/{team}/invite', [TeamsController::class, 'invite'])->name('teams.invite');
     Route::resource('comments', CommentsController::class)->only(['index', 'store', 'show']);
+
     Route::get('projects/{project}/meetings', [MeetingsController::class, 'index'])->name('meetings.index');
     Route::post('projects/{project}/meetings', [MeetingsController::class, 'store'])->name('meetings.store');
+
     Route::get('meetings/{meeting}', [MeetingsController::class, 'show'])->name('meetings.show');
     Route::get('meetings/{meeting}/archive', [MeetingsController::class, 'archive'])->name('meetings.archive');
     Route::get('meetings/{meeting}/token', [MeetingsController::class, 'token'])->name('meetings.token');
@@ -81,4 +99,27 @@ Route::middleware('auth')->group(function (): void {
     Route::get('meetings/{meeting}/presence', [MeetingsController::class, 'presenceLogs'])->name('meetings.presence.logs');
     Route::get('meetings/{meeting}/live-presence', [MeetingsController::class, 'livePresence'])->name('meetings.live-presence');
     Route::post('meetings/{meeting}/end', [MeetingsController::class, 'end'])->name('meetings.end');
+
+    Route::get('projects/{project}/members', [ProjectsController::class, 'members'])->name('projects.members.index')->middleware('can.project:manage_members');
+    Route::post('projects/{project}/members/role', [ProjectsController::class, 'updateMemberRole'])->name('projects.members.role.update')->middleware('can.project:manage_members');
+    Route::post('projects/{project}/members/invite', [ProjectsController::class, 'inviteMember'])->name('projects.members.invite')->middleware('can.project:manage_members');
+    Route::post('projects/{project}/members/import', [ProjectsController::class, 'importMembers'])->name('projects.members.import')->middleware('can.project:manage_members');
+    Route::delete('projects/{project}/members', [ProjectsController::class, 'removeMember'])->name('projects.members.destroy')->middleware('can.project:manage_members');
+
+    // Documents
+    Route::get('projects/{project}/documents', [ProjectDocumentsController::class, 'index'])->name('projects.documents.index');
+    Route::post('projects/{project}/documents', [ProjectDocumentsController::class, 'store'])->name('projects.documents.store');
+    Route::delete('projects/{project}/documents/{document}', [ProjectDocumentsController::class, 'destroy'])->name('projects.documents.destroy');
+
+    // Forms
+    Route::get('projects/{project}/forms', [ProjectFormsController::class, 'index'])->name('projects.forms.index');
+    Route::post('projects/{project}/forms', [ProjectFormsController::class, 'storeForm'])->name('projects.forms.store');
+    Route::get('projects/{project}/forms/{form}', [ProjectFormsController::class, 'show'])->name('projects.forms.show');
+    Route::post('projects/{project}/forms/{form}/responses', [ProjectFormsController::class, 'submitResponse'])->name('projects.forms.responses.store');
+    Route::delete('projects/{project}/forms/{form}', [ProjectFormsController::class, 'destroyForm'])->name('projects.forms.destroy');
+
+    // Development
+    Route::get('projects/{project}/development', [ProjectDevelopmentController::class, 'index'])->name('projects.development.index');
+    Route::post('projects/{project}/development', [ProjectDevelopmentController::class, 'store'])->name('projects.development.store');
+    Route::delete('projects/{project}/development/{link}', [ProjectDevelopmentController::class, 'destroy'])->name('projects.development.destroy');
 });

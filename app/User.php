@@ -50,6 +50,11 @@ class User extends Authenticatable
 		return $this->belongsTo('ProjectsManager\Role');
     }
 
+    public function hasRoleName(string $name): bool
+    {
+        return $this->role && $this->role->name === $name;
+    }
+
     public function companies(){
 		return $this->hasMany('ProjectsManager\Company');
     }

@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'TaskPilot') }}</title>
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/custom-ui.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/custom-ui.css') }}?v={{ filemtime(public_path('css/custom-ui.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/project-ui.css') }}?v={{ filemtime(public_path('css/project-ui.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/project_roles.css') }}?v={{ filemtime(public_path('css/project_roles.css')) }}" rel="stylesheet">
     <script src="https://use.fontawesome.com/874dbadbd7.js" defer></script>
 </head>
 <body>
@@ -60,8 +62,6 @@
       </div>
     </main>
 </div>
-<script src="{{ asset('js/app.js') }}"></script>
-<script src="{{ asset('js/jira-tag-input.js') }}"></script>
-@yield('jqueryScript')
+ @yield('jqueryScript')
 </body>
 </html>

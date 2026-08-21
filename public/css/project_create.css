@@ -1,0 +1,97 @@
+
+/*project - create*/
+.tp-project-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 24px;
+    align-items: start;
+}
+
+.tp-project-main {
+    min-width: 0;
+}
+
+.tp-project-sidebar {
+    min-width: 0;
+}
+
+.tp-project-main .tp-surface,
+.tp-project-sidebar .tp-surface {
+    margin-bottom: 24px;
+}
+
+.tp-project-main .tp-surface:last-child,
+.tp-project-sidebar .tp-surface:last-child {
+    margin-bottom: 0;
+}
+
+.tp-project-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #edf0f4;
+}
+
+@media (max-width: 991px) {
+    .tp-project-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 767px) {
+    .tp-project-footer {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .tp-project-footer .btn {
+        width: 100%;
+    }
+}
+
+.project-create-vue .tp-page-head h1 {
+    font-size: 34px;
+}
+
+.project-create-vue .tp-page-head p {
+    font-size: 18px;
+}
+
+.project-create-vue .form-control {
+    font-size: 16px;
+    min-height: 48px;
+}
+
+.project-create-vue .form-group label {
+    font-size: 15px;
+    margin-bottom: 8px;
+}
+
+.project-create-vue .btn {
+    font-size: 16px;
+    padding: 12px 20px;
+}
+
+.project-create-vue .tp-actions .btn {
+    min-height: 52px;
+}
+
+.project-member-field {
+    min-height: 90px;
+    font-size: 15px;
+}
+
+.project-member-field input {
+    font-size: 15px;
+}
+
+.project-native-modal .modal-title {
+    font-size: 20px;
+}
+
+.project-native-modal .form-control {
+    font-size: 15px;
+}
