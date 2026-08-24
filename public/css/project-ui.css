@@ -1,0 +1,240 @@
+/* ============================================================
+   project-ui.css – Jira-style Premium UI for TaskPilot
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --primary: #0c66e4;
+  --primary-dark: #0052cc;
+  --primary-light: #e9f2ff;
+  --surface: #ffffff;
+  --bg: #f4f5f7;
+  --bg-2: #f8f9fa;
+  --border: #dfe1e6;
+  --text: #172b4d;
+  --text-muted: #6b778c;
+  --text-subtle: #91a0b6;
+  --success: #00875a;
+  --success-bg: #e3fcef;
+  --warning: #ff991f;
+  --warning-bg: #fffae6;
+  --danger: #de350b;
+  --danger-bg: #ffebe6;
+  --info: #0065ff;
+  --info-bg: #deebff;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --shadow-sm: 0 1px 3px rgba(23,43,77,.08);
+  --shadow: 0 4px 8px rgba(23,43,77,.12);
+  --shadow-lg: 0 8px 24px rgba(23,43,77,.16);
+  --transition: 0.15s ease;
+  --nav-height: 50px;
+}
+
+/* ── Base ── */
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+/* ── Jira-style Project Sub-navbar ── */
+.tp-project-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 0;
+  border-bottom: 2px solid var(--border);
+  background: var(--surface);
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+.tp-project-nav::-webkit-scrollbar { height: 3px; }
+.tp-project-nav::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.tp-project-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color var(--transition), border-color var(--transition);
+  border-radius: 0;
+}
+.tp-project-nav a:hover { color: var(--text); border-bottom-color: var(--border); background: var(--bg); }
+.tp-project-nav a.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.tp-project-nav a .nav-icon { font-size: 13px; opacity: .8; }
+
+/* ── Page header ── */
+.jira-page-header {
+  padding: 24px 0 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.jira-page-header h1 { font-size: 22px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+.jira-page-header p { color: var(--text-muted); margin: 0; font-size: 13px; }
+.jira-page-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── Cards ── */
+.jira-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: box-shadow var(--transition);
+}
+.jira-card:hover { box-shadow: var(--shadow); }
+.jira-card-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.jira-card-header h2 { font-size: 15px; font-weight: 600; color: var(--text); margin: 0; }
+.jira-card-body { padding: 20px; }
+
+/* ── Buttons ── */
+.btn-jira {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; font-size: 13.5px; font-weight: 500;
+  border-radius: var(--radius); border: none; cursor: pointer;
+  transition: background var(--transition), box-shadow var(--transition); text-decoration: none;
+}
+.btn-jira-primary { background: var(--primary); color: #fff; }
+.btn-jira-primary:hover { background: var(--primary-dark); color: #fff; box-shadow: 0 2px 8px rgba(12,102,228,.35); }
+.btn-jira-ghost { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+.btn-jira-ghost:hover { background: var(--primary-light); }
+.btn-jira-danger { background: var(--danger); color: #fff; }
+.btn-jira-danger:hover { background: #bf2600; color: #fff; }
+.btn-jira-subtle { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.btn-jira-subtle:hover { background: var(--bg-2); }
+
+/* ── Badges / Status Chips ── */
+.jira-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase;
+}
+.jira-chip-blue { background: var(--info-bg); color: var(--info); }
+.jira-chip-green { background: var(--success-bg); color: var(--success); }
+.jira-chip-orange { background: var(--warning-bg); color: var(--warning); }
+.jira-chip-red { background: var(--danger-bg); color: var(--danger); }
+.jira-chip-grey { background: var(--bg-2); color: var(--text-muted); border: 1px solid var(--border); }
+
+/* ── Table ── */
+.jira-table { width: 100%; border-collapse: collapse; }
+.jira-table th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); background: var(--bg); border-bottom: 1px solid var(--border); }
+.jira-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 13.5px; color: var(--text); vertical-align: middle; }
+.jira-table tbody tr { transition: background var(--transition); }
+.jira-table tbody tr:hover { background: var(--primary-light); }
+.jira-table tbody tr:last-child td { border-bottom: none; }
+
+/* ── Document type icons ── */
+.doc-type-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--radius); font-size: 14px; flex-shrink: 0; }
+.doc-link .doc-type-icon { background: var(--info-bg); color: var(--info); }
+.doc-google_doc .doc-type-icon { background: #e8f5e9; color: #2e7d32; }
+.doc-notion .doc-type-icon { background: #f3f0ee; color: #333; }
+.doc-confluence .doc-type-icon { background: #e3f2fd; color: #1976d2; }
+.doc-file .doc-type-icon { background: #fce4ec; color: #c62828; }
+
+/* ── Development link types ── */
+.dev-type-chip { padding: 3px 9px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
+.dev-branch { background: #e8eaf6; color: #3949ab; }
+.dev-commit { background: #f3e5f5; color: #7b1fa2; }
+.dev-pr { background: #e8f5e9; color: #2e7d32; }
+.dev-pipeline { background: #fff8e1; color: #f57f17; }
+.dev-deployment { background: #e0f2f1; color: #00695c; }
+
+/* ── Dev status ── */
+.dev-status-open { color: var(--success); }
+.dev-status-merged { color: var(--primary); }
+.dev-status-closed { color: var(--text-muted); }
+.dev-status-failed { color: var(--danger); }
+.dev-status-success { color: var(--success); }
+
+/* ── Form builder ── */
+.form-builder-field {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 16px; margin-bottom: 10px; display: flex; gap: 10px; align-items: center;
+  transition: box-shadow var(--transition);
+}
+.form-builder-field:hover { box-shadow: var(--shadow-sm); }
+.form-builder-field input, .form-builder-field select {
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 10px; font-size: 13px;
+  background: var(--surface); color: var(--text); flex: 1;
+}
+.add-field-btn { border: 2px dashed var(--border); background: transparent; color: var(--text-muted); border-radius: var(--radius); padding: 10px; width: 100%; cursor: pointer; font-size: 13px; transition: border-color var(--transition), color var(--transition); }
+.add-field-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+/* ── Empty state ── */
+.jira-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; color: var(--text-muted); }
+.jira-empty i { font-size: 48px; margin-bottom: 16px; color: var(--text-subtle); }
+.jira-empty h3 { font-size: 17px; font-weight: 600; color: var(--text); margin: 0 0 8px; }
+.jira-empty p { font-size: 13px; max-width: 320px; margin: 0; }
+
+/* ── Modal ── */
+.jira-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 9998; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.jira-modal-backdrop.open { opacity: 1; pointer-events: all; }
+.jira-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(.95); background: var(--surface); border-radius: var(--radius-lg); padding: 28px; width: min(96vw, 560px); z-index: 9999; box-shadow: var(--shadow-lg); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+.jira-modal.open { opacity: 1; pointer-events: all; transform: translate(-50%,-50%) scale(1); }
+.jira-modal h2 { font-size: 17px; font-weight: 700; margin: 0 0 20px; color: var(--text); }
+.jira-modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+.jira-modal .form-group { margin-bottom: 14px; }
+.jira-modal label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .4px; }
+.jira-modal input, .jira-modal select, .jira-modal textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; font-size: 13px;
+  color: var(--text); background: var(--surface); transition: border-color var(--transition), box-shadow var(--transition); box-sizing: border-box;
+}
+.jira-modal input:focus, .jira-modal select:focus, .jira-modal textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(12,102,228,.25); }
+
+/* ── Avatar ── */
+.jira-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+
+/* ── Timeline ── */
+.jira-gantt { overflow-x: auto; position: relative; }
+.gantt-header { display: flex; background: var(--bg); border-bottom: 1px solid var(--border); padding: 8px 0; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+.gantt-label-col { width: 240px; min-width: 240px; padding: 0 14px; flex-shrink: 0; }
+.gantt-dates { display: flex; flex: 1; }
+.gantt-date-cell { min-width: 32px; text-align: center; font-size: 10px; color: var(--text-muted); border-left: 1px solid var(--border); padding: 2px 4px; }
+.gantt-row { display: flex; align-items: center; border-bottom: 1px solid var(--border); min-height: 38px; transition: background var(--transition); }
+.gantt-row:hover { background: var(--primary-light); }
+.gantt-row-label { width: 240px; min-width: 240px; padding: 0 14px; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.gantt-bar-area { position: relative; flex: 1; height: 38px; }
+.gantt-bar { position: absolute; top: 8px; height: 22px; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; cursor: pointer; transition: opacity var(--transition); }
+.gantt-bar:hover { opacity: .85; }
+.gantt-bar-task { background: var(--primary); }
+.gantt-bar-bug { background: var(--danger); }
+.gantt-bar-story { background: var(--success); }
+.gantt-bar-epic { background: #6554c0; }
+
+/* ── Chat ── */
+.jira-chat-messages { display: flex; flex-direction: column; gap: 12px; max-height: 480px; overflow-y: auto; padding: 16px; }
+.chat-bubble { display: flex; gap: 10px; }
+.chat-bubble.mine { flex-direction: row-reverse; }
+.chat-bubble-body { max-width: 72%; }
+.chat-bubble.mine .chat-bubble-body { align-items: flex-end; }
+.chat-text { background: var(--bg); border-radius: 12px 12px 12px 2px; padding: 10px 14px; font-size: 13.5px; line-height: 1.5; color: var(--text); }
+.chat-bubble.mine .chat-text { background: var(--primary); color: #fff; border-radius: 12px 12px 2px 12px; }
+.chat-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+.chat-input-bar { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--surface); }
+.chat-input-bar textarea { flex: 1; border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; font-size: 13px; resize: none; font-family: inherit; color: var(--text); }
+.chat-input-bar textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(12,102,228,.2); }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .jira-page-header { flex-direction: column; }
+  .gantt-label-col { width: 140px; min-width: 140px; }
+}
+
+/* ── Utility ── */
+.mt-0 { margin-top: 0; }
+.mb-16 { margin-bottom: 16px; }
+.gap-8 { gap: 8px; }
+.d-flex { display: flex; }
+.align-center { align-items: center; }
+.justify-between { justify-content: space-between; }

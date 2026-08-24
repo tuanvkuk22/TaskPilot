@@ -9,6 +9,7 @@ class Project extends Model
     //
     protected $fillable = [
         'name',
+        'image',
         'description',
         'company_id',
         'user_id',
@@ -24,7 +25,9 @@ class Project extends Model
 		return $this->belongsToMany(User::class)->withPivot('role', 'permissions');
     }
 
-    
+    public function roles(){
+        return $this->hasMany(ProjectRole::class);
+    }
 
     public function company(){
 		return $this->belongsTo(Company::class);
@@ -41,6 +44,9 @@ class Project extends Model
     public function sprints() { return $this->hasMany(Sprint::class); }
     public function permissions() { return $this->hasMany(ProjectPermission::class); }
     public function meetings() { return $this->hasMany(Meeting::class); }
+    public function documents() { return $this->hasMany(ProjectDocument::class); }
+    public function forms() { return $this->hasMany(ProjectForm::class); }
+    public function developmentLinks() { return $this->hasMany(ProjectDevelopmentLink::class); }
 
     public function scopeStatusFilter($query, $status)
     {

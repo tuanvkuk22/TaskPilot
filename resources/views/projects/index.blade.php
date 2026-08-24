@@ -1,5 +1,15 @@
 @extends('layouts.app')
 @section('content')
-<section class="tp-page-head"><div><span class="tp-eyebrow">PROJECTS</span><h1>Dự án</h1><p>Theo dõi tiến độ, thành viên và công việc của từng dự án.</p></div><a href="{{ route('projects.create') }}" class="btn btn-primary"><i class="fa fa-plus"></i> Tạo dự án</a></section>
-<section class="tp-surface"><div class="tp-surface-header"><div class="tp-actions"><a class="btn btn-default btn-sm {{ !$status ? 'active' : '' }}" href="{{ route('projects.index') }}">Tất cả</a><a class="btn btn-default btn-sm" href="{{ route('projects.index',['status'=>'active']) }}">Đang hoạt động</a><a class="btn btn-default btn-sm" href="{{ route('projects.index',['status'=>'archived']) }}">Đã lưu trữ</a></div></div><div class="table-responsive"><table class="table tp-table"><thead><tr><th>Dự án</th><th>Khách hàng / đội</th><th>Tiến độ</th><th></th></tr></thead><tbody>@forelse($projects as $project)<tr><td><a href="{{ route('projects.show',$project) }}">{{ $project->name }}</a><span class="tp-meta">{{ $project->project_code ?: 'Chưa có mã' }} · {{ \Illuminate\Support\Str::limit($project->objective ?: $project->description,60) }}</span></td><td>{{ $project->company->name ?? 'Nội bộ' }}<span class="tp-meta">{{ $project->team->name ?? $project->team_name ?? 'Chưa có đội' }}</span></td><td><span class="tp-badge {{ $project->priority }}">{{ $project->status }}</span></td><td class="text-right"><a href="{{ route('projects.board',$project) }}">Board</a></td></tr>@empty<tr><td colspan="4"><div class="tp-empty"><i class="fa fa-folder-open-o"></i>Chưa có dự án. Hãy tạo dự án đầu tiên.</div></td></tr>@endforelse</tbody></table></div></section>
+<link href="{{ asset('build/assets/project-list.css') }}?v={{ filemtime(public_path('build/assets/project-list.css')) }}" rel="stylesheet">
+<div id="project-list-app"></div>
+@endsection
+
+@section('jqueryScript')
+<script>
+    window.projectListData = {
+        projects: @json($projects),
+        stats: @json($stats),
+    };
+</script>
+<script type="module" src="{{ asset('build/assets/project-list.js') }}"></script>
 @endsection

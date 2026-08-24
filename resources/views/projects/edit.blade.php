@@ -1,75 +1,28 @@
 @extends('layouts.app')
 
 @section('content')
+<link href="{{ asset('build/assets/edit-shared.css') }}?v={{ filemtime(public_path('build/assets/edit-shared.css')) }}" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
+<div id="project-edit-app" class="project-edit-form"></div>
+@endsection
 
-
-
-<div class="row col-md-9 col-lg-9 col-sm-9 pull-left " style="background: white;">
-<h1>Update company </h1>
-
-      <!-- Example row of columns -->
-      <div class="row  col-md-12 col-lg-12 col-sm-12" >
-
-      <form method="post" action="{{ route('companies.update',[$company->id]) }}">
-                            {{ csrf_field() }}
-
-                            <input type="hidden" name="_method" value="put">
-
-                            <div class="form-group">
-                                <label for="company-name">Name<span class="required">*</span></label>
-                                <input   placeholder="Enter name"  
-                                          id="company-name"
-                                          required
-                                          name="name"
-                                          spellcheck="false"
-                                          class="form-control"
-                                          value="{{ $company->name }}"
-                                           />
-                            </div>
-
-
-                            <div class="form-group">
-                                <label for="company-content">Description</label>
-                                <textarea placeholder="Enter description" 
-                                          style="resize: vertical" 
-                                          id="company-content"
-                                          name="description"
-                                          rows="5" spellcheck="false"
-                                          class="form-control autosize-target text-left">
-                                          {{ $company->description }}</textarea>
-                            </div>
-                            <div class="form-group">
-                                <input type="submit" class="btn btn-primary"
-                                       value="Submit"/>
-                            </div>
-                        </form>
-   
-
-      </div>
-</div>
-
-
-<div class="col-sm-3 col-md-3 col-lg-3 pull-right">
-          <!--<div class="sidebar-module sidebar-module-inset">
-            <h4>About</h4>
-            <p>Etiam porta <em>sem malesuada magna</em> mollis euismod. Cras mattis consectetur purus sit amet fermentum. Aenean lacinia bibendum nulla sed consectetur.</p>
-          </div> -->
-          <div class="sidebar-module">
-            <h4>Actions</h4>
-            <ol class="list-unstyled">
-              <li><a href="/companies/{{ $company->id }}"><i class="fa fa-building-o" aria-hidden="true"></i> View companies</a></li>
-              <li><a href="/companies"><i class="fa fa-building" aria-hidden="true"></i> All companies</a></li>
-              
-            </ol>
-          </div>
-
-          <!--<div class="sidebar-module">
-            <h4>Members</h4>
-            <ol class="list-unstyled">
-              <li><a href="#">March 2014</a></li>
-            </ol>
-          </div> -->
-        </div>
-
-
-    @endsection
+@section('jqueryScript')
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script>
+    window.projectEditData = {
+        project: @json($project),
+        companies: @json($companies ?? []),
+        categories: @json($categories ?? []),
+        teams: @json($teams ?? []),
+        errors: @json($errors ?? []),
+        old: @json(old()),
+        category_store_url: @json(route('projects.categories.store')),
+        company_store_url: @json(route('projects.companies.store')),
+        csrf_token: @json(csrf_token()),
+        update_url: @json($update_url ?? route('projects.update', $project->id)),
+        projects_index_url: @json(route('projects.index')),
+        project_image_url: @json($project->image ? \Illuminate\Support\Facades\Storage::url($project->image) : ''),
+    };
+</script>
+<script type="module" src="{{ asset('build/assets/project-edit.js') }}?v={{ filemtime(public_path('build/assets/project-edit.js')) }}"></script>
+@endsection

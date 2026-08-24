@@ -29,8 +29,17 @@ class UpdateProjectHandler
     {
         return $this->repository->update($project, [
             'name' => $data['name'] ?? $project->name,
+            'image' => array_key_exists('image', $data) ? $data['image'] : $project->image,
             'description' => $data['description'] ?? $project->description,
             'status' => $data['status'] ?? $project->status,
+            'priority' => $data['priority'] ?? $project->priority,
+            'start_date' => $data['start_date'] ?? $project->start_date,
+            'end_date' => $data['end_date'] ?? $project->end_date,
+            'budget' => $data['budget'] ?? $project->budget,
+            'company_id' => $data['company_id'] ?? $project->company_id,
+            'category_id' => $data['category_id'] ?? $project->category_id,
+            'team_id' => $data['team_id'] ?? $project->team_id,
+            'objective' => $data['objective'] ?? $project->objective,
         ]);
     }
 }

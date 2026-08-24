@@ -4,27 +4,15 @@ namespace ProjectsManager\Modules\Projects\Handlers;
 
 use ProjectsManager\Project;
 use ProjectsManager\Modules\Projects\Repositories\ProjectRepository;
+use ProjectsManager\ProjectRole;
 
 class StoreProjectHandler
 {
-    /**
-     * Create a new handler instance.
-     *
-     * @param ProjectRepository $repository
-     */
     public function __construct(
         private readonly ProjectRepository $repository
     ) {
     }
 
-    /**
-     * Execute project creation use case.
-     *
-     * @param int $userId
-     * @param array $data
-     *
-     * @return array
-     */
     public function handle(int $userId, array $data): array
     {
         $categoryId = $data['category_id'] ?? null;
@@ -50,11 +38,6 @@ class StoreProjectHandler
             if (in_array(strtolower($email), $teamMembers, true)) {
                 return ['success' => false, 'error' => 'Thành viên ' . $email . ' đang nằm trong đội nhóm đã được chọn.'];
             }
-
-            $user = $this->repository->findUserByEmail($email);
-            if ($user && $this->repository->isUserAssignedToOwnerProjectsOrTeams($user->id, $userId)) {
-                return ['success' => false, 'error' => 'Thành viên ' . $email . ' đã có trong một dự án hoặc đội nhóm của bạn.'];
-            }
         }
 
         $descriptionParts = array_filter([
@@ -65,6 +48,7 @@ class StoreProjectHandler
         $project = $this->repository->create([
             'name' => trim((string) ($data['name'] ?? '')),
             'description' => $descriptionParts ? implode("\n\n", $descriptionParts) : null,
+            'image' => $data['image'] ?? null,
             'company_id' => ! empty($data['company_id']) ? $data['company_id'] : null,
             'user_id' => $userId,
             'status' => $data['status'] ?? 'active',
@@ -89,7 +73,17 @@ class StoreProjectHandler
         $projectCode = $this->repository->generateProjectCode($project);
         $this->repository->update($project, ['project_code' => $projectCode]);
 
-        $this->repository->attachUser($project, $userId, 'owner', ['view', 'edit', 'manage_tasks', 'manage_members', 'manage_project']);
+        $this->seedDefaultRoles($project);
+
+        $this->repository->attachUser($project, $userId, 'owner', [
+            'project.manage', 'project.edit', 'project.view',
+            'task.manage', 'task.view', 'task.create', 'task.edit',
+            'member.manage', 'member.view', 'member.invite',
+            'document.manage', 'document.view',
+            'meeting.manage', 'meeting.view',
+            'comment.create', 'comment.view',
+            'report.view',
+        ]);
 
         foreach ($memberEmails as $email) {
             $user = $this->repository->findUserByEmail($email);
@@ -99,7 +93,13 @@ class StoreProjectHandler
             }
 
             if (! $this->repository->hasUser($project, $user->id)) {
-                $this->repository->attachUser($project, $user->id, 'member', ['view', 'edit']);
+                $this->repository->attachUser($project, $user->id, 'Thành viên', [
+                    'project.view', 'project.edit',
+                    'task.view', 'task.create', 'task.edit',
+                    'document.view', 'document.create', 'document.edit',
+                    'meeting.view', 'meeting.create',
+                    'comment.create', 'comment.view',
+                ]);
             }
         }
 
@@ -111,7 +111,13 @@ class StoreProjectHandler
                         continue;
                     }
 
-                    $this->repository->attachUser($project, $teamUser->id, 'member', ['view', 'edit']);
+                    $this->repository->attachUser($project, $teamUser->id, 'Thành viên', [
+                        'project.view', 'project.edit',
+                        'task.view', 'task.create', 'task.edit',
+                        'document.view', 'document.create', 'document.edit',
+                        'meeting.view', 'meeting.create',
+                        'comment.create', 'comment.view',
+                    ]);
                 }
             }
         }
@@ -119,13 +125,41 @@ class StoreProjectHandler
         return ['success' => true, 'project' => $project];
     }
 
-    /**
-     * Normalize emails input into an array.
-     *
-     * @param mixed $value
-     *
-     * @return array
-     */
+    private function seedDefaultRoles(Project $project): void
+    {
+        $defaultRoles = [
+            ['name' => 'Quản lý', 'permissions' => [
+                'project.manage', 'project.edit', 'project.view',
+                'task.manage', 'task.view', 'task.create', 'task.edit',
+                'member.manage', 'member.view', 'member.invite',
+                'document.manage', 'document.view',
+                'meeting.manage', 'meeting.view',
+                'comment.create', 'comment.view',
+                'report.view',
+            ]],
+            ['name' => 'Thành viên', 'permissions' => [
+                'project.view', 'project.edit',
+                'task.view', 'task.create', 'task.edit', 'task.status', 'task.priority',
+                'member.view',
+                'document.view', 'document.create', 'document.edit',
+                'meeting.view', 'meeting.create',
+                'comment.create', 'comment.view',
+            ]],
+            ['name' => 'Người xem', 'permissions' => [
+                'project.view', 'task.view', 'member.view',
+                'document.view', 'meeting.view', 'comment.view', 'report.view',
+            ]],
+        ];
+
+        foreach ($defaultRoles as $role) {
+            ProjectRole::create([
+                'project_id' => $project->id,
+                'name' => $role['name'],
+                'permissions' => $role['permissions'],
+            ]);
+        }
+    }
+
     private function normalizeEmails(mixed $value): array
     {
         if (empty($value)) {

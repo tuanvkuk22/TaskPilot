@@ -24,8 +24,8 @@
                             <button class="tp-project-btn tp-project-btn-primary" type="submit"><i class="fa fa-save"></i> Lưu</button>
                         </div>
                         <div class="tp-permission-role-options">
-                            @foreach(['manager' => 'Quản lý', 'member' => 'Thành viên', 'viewer' => 'Người xem'] as $role => $label)
-                                <label><input type="checkbox" name="roles[]" value="{{ $role }}" {{ in_array($role, old('roles', $permission->roles ?? []), true) ? 'checked' : '' }}> {{ $label }}</label>
+                            @foreach($project->roles as $role)
+                                <label><input type="checkbox" name="roles[]" value="{{ $role->name }}" {{ in_array($role->name, old('roles', $permission->roles ?? []), true) ? 'checked' : '' }}> {{ $role->name }}</label>
                             @endforeach
                         </div>
                         @error('permission_' . $permission->id)<div class="text-danger small">{{ $message }}</div>@enderror
@@ -53,8 +53,8 @@
                     </div>
                     <fieldset class="mb-3">
                         <legend>Vai trò được cấp quyền</legend>
-                        @foreach(['manager' => 'Quản lý', 'member' => 'Thành viên', 'viewer' => 'Người xem'] as $role => $label)
-                            <label><input type="checkbox" name="roles[]" value="{{ $role }}" {{ in_array($role, old('roles', []), true) ? 'checked' : '' }}> {{ $label }}</label>
+                        @foreach($project->roles as $role)
+                            <label><input type="checkbox" name="roles[]" value="{{ $role->name }}" {{ in_array($role->name, old('roles', []), true) ? 'checked' : '' }}> {{ $role->name }}</label>
                         @endforeach
                         @error('roles')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                     </fieldset>
