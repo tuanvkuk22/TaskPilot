@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<link href="{{ asset('build/assets/project-list.css') }}?v={{ filemtime(public_path('build/assets/project-list.css')) }}" rel="stylesheet">
+<link href="{{ asset('build/assets/project-list.css') }}?v={{ file_exists(public_path('build/assets/project-list.css')) ? filemtime(public_path('build/assets/project-list.css')) : time() }}" rel="stylesheet">
 <div id="project-list-app"></div>
 @endsection
 

@@ -21,7 +21,7 @@ class TaskRepository
     public function getFilteredTasks(mixed $projectId = null, ?string $status = null, ?string $priority = null): Collection
     {
         return Task::query()
-            ->with('project', 'user', 'assignee')
+            ->with('project', 'user', 'assignee', 'reporter')
             ->when($projectId, fn ($query) => $query->where('project_id', $projectId))
             ->when($status, fn ($query) => $query->where('status', $status))
             ->when($priority, fn ($query) => $query->where('priority', $priority))
@@ -76,6 +76,33 @@ class TaskRepository
             ->orderByDesc('status')
             ->orderBy('starts_at')
             ->get();
+    }
+
+    /**
+     * Get distinct labels list across tasks.
+     *
+     * @return array
+     */
+    public function getAllLabels(): array
+    {
+        $defaultLabels = [
+            'Frontend', 'Backend', 'UI/UX', 'API', 'Database',
+            'Bugfix', 'Feature', 'Refactor', 'Documentation', 'Testing', 'Urgent'
+        ];
+
+        $dbLabels = Task::query()
+            ->whereNotNull('labels')
+            ->where('labels', '!=', '')
+            ->pluck('labels')
+            ->flatMap(function ($item) {
+                return array_map('trim', explode(',', $item));
+            })
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        return array_values(array_unique(array_merge($defaultLabels, $dbLabels)));
     }
 
     /**

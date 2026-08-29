@@ -1,5 +1,5 @@
 import { createApp } from 'vue';
-import ProjectMembers from './components/ProjectMembers.vue';
+import ProjectMembers from './components/projects/ProjectMembers.vue';
 
 const app = createApp(ProjectMembers, {
     project: window.projectMembersData?.project || {},

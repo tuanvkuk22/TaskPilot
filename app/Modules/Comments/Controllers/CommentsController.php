@@ -66,7 +66,7 @@ class CommentsController extends Controller
         $comment = $this->storeCommentHandler->handle(Auth::id(), $request->all());
 
         if ($comment) {
-            return back()->with('success', 'Comment created successfully');
+            return back();
         }
 
         return back()->withInput()->with('errors', 'Error creating new comment');

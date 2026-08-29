@@ -1,7 +1,11 @@
 @extends('layouts.app')
 
 @section('content')
+<link href="{{ asset('build/assets/task-shared.css') }}?v={{ file_exists(public_path('build/assets/task-shared.css')) ? filemtime(public_path('build/assets/task-shared.css')) : time() }}" rel="stylesheet">
+@if(file_exists(public_path('build/assets/project-dashboard.css')))
 <link href="{{ asset('build/assets/project-dashboard.css') }}?v={{ filemtime(public_path('build/assets/project-dashboard.css')) }}" rel="stylesheet">
+@endif
+
 <div id="project-dashboard-app"></div>
 @endsection
 
@@ -13,5 +17,5 @@
         comments: @json($comments),
     };
 </script>
-<script type="module" src="{{ asset('build/assets/project-dashboard.js') }}"></script>
+<script type="module" src="{{ asset('build/assets/project-dashboard.js') }}?v={{ file_exists(public_path('build/assets/project-dashboard.js')) ? filemtime(public_path('build/assets/project-dashboard.js')) : time() }}"></script>
 @endsection

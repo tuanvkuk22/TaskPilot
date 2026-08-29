@@ -15,3 +15,25 @@ Homestead.json
 
 # Rocketeer PHP task runner and deployment package. https://github.com/rocketeers/rocketeer
 .rocketeer/
+
+# IDE & OS files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Python & Virtual environment
+.venv/
+venv/
+ENV/
+__pycache__/
+*.pyc
+
+# Test & cache files
+.phpunit.result.cache
+
+# Data & Large Datasets (over GitHub 100MB limit)
+AI/dataset/*.csv
+
+

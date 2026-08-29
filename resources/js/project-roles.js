@@ -1,5 +1,5 @@
 import { createApp } from 'vue';
-import ProjectRoles from './components/ProjectRoles.vue';
+import ProjectRoles from './components/projects/ProjectRoles.vue';
 
 console.log('project-roles.js loading...');
 console.log('projectRolesData:', window.projectRolesData);

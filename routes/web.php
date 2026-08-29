@@ -66,7 +66,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post('projects/{project}/tools', [ProjectToolsController::class, 'store'])->name('projects.tools.store');
 
     Route::resource('tasks', TasksController::class);
-    Route::post('tasks/{task}/move', [TasksController::class, 'move'])->name('tasks.move');
+    Route::match(['post', 'patch', 'put'], 'tasks/{task}/move', [TasksController::class, 'move'])->name('tasks.move');
     Route::post('tasks/{task}/worklog', [TasksController::class, 'worklog'])->name('tasks.worklog');
 
     Route::get('projects/{project}/sprints', [SprintsController::class, 'index'])->name('sprints.index');

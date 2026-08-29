@@ -88,16 +88,39 @@ class ProjectsController extends Controller
 
     public function board(Project $project): View
     {
-        $project->load(['tasks.assignee', 'tasks.project']);
+        $project->load(['tasks.assignee', 'tasks.reporter', 'tasks.project', 'tasks.parent']);
 
-        return view('projects.board', ['project' => $project]);
+        $tasks = $project->tasks;
+        $stats = [
+            'total' => $tasks->count(),
+            'in_progress' => $tasks->whereIn('status', ['in_progress', 'doing', 'review'])->count(),
+            'done' => $tasks->whereIn('status', ['done', 'completed', 'resolved'])->count(),
+            'high_priority' => $tasks->where('priority', 'high')->count(),
+        ];
+
+        return view('projects.board', [
+            'project' => $project,
+            'tasks' => $tasks,
+            'stats' => $stats,
+        ]);
     }
 
     public function timeline(Project $project): View
     {
-        $project->load(['tasks.assignee']);
+        $project->load([
+            'tasks.assignee',
+            'tasks.reporter',
+            'tasks.parent',
+            'tasks.children.assignee',
+            'tasks.children.reporter',
+            'sprints'
+        ]);
 
-        return view('projects.timeline', ['project' => $project]);
+        return view('projects.timeline', [
+            'project' => $project,
+            'tasks' => $project->tasks,
+            'sprints' => $project->sprints ?? [],
+        ]);
     }
 
     public function roadmap(Project $project): View

@@ -1,5 +1,5 @@
 import { createApp } from 'vue';
-import ProjectList from './components/ProjectList.vue';
+import ProjectList from './components/projects/ProjectList.vue';
 
 const app = createApp(ProjectList, {
   projects: window.projectListData?.projects || [],

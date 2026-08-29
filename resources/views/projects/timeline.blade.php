@@ -1,4 +1,20 @@
 @extends('layouts.app')
+
 @section('content')
-<div class="jira-workspace"><div class="jira-workspace-heading"><div><span class="jira-eyebrow">{{ $project->project_code }}</span><h1>{{ $project->name }} / Timeline</h1><p>Tiến độ issue theo hạn hoàn thành và mốc dự án.</p></div><div class="jira-view-links"><a href="{{ route('projects.board', $project) }}">Board</a><a class="active" href="{{ route('projects.timeline', $project) }}">Timeline</a><a href="{{ route('projects.roadmap', $project) }}">Roadmap</a></div></div><section class="jira-timeline"><div class="jira-timeline-axis"></div>@forelse($project->tasks->sortBy('due_date') as $task)<article class="jira-timeline-row"><div class="jira-timeline-date">{{ optional($task->due_date)->format('d/m/Y') ?? 'Chưa đặt hạn' }}</div><div class="jira-timeline-dot"></div><div class="jira-timeline-card"><div><span class="jira-issue-type jira-type-{{ $task->issue_type }}">{{ strtoupper($task->issue_type ?? 'task') }}</span><a href="{{ route('tasks.show', $task) }}">{{ $task->name }}</a></div><span class="jira-status jira-status-{{ $task->status }}">{{ str_replace('_', ' ', ucfirst($task->status)) }}</span></div></article>@empty<div class="jira-empty-column">Chưa có issue trong timeline.</div>@endforelse</section></div>
+<link rel="stylesheet" href="{{ asset('build/assets/task-shared.css') }}?v={{ file_exists(public_path('build/assets/task-shared.css')) ? filemtime(public_path('build/assets/task-shared.css')) : time() }}">
+<link rel="stylesheet" href="{{ asset('build/assets/project-timeline.css') }}?v={{ file_exists(public_path('build/assets/project-timeline.css')) ? filemtime(public_path('build/assets/project-timeline.css')) : time() }}">
+
+<div class="container-fluid py-3 px-4" style="width: 100%; max-width: 100%;">
+    <div id="project-timeline-app"></div>
+</div>
+
+<script>
+    window.projectTimelineData = {
+        project: @json($project),
+        tasks: @json($tasks),
+        sprints: @json($sprints ?? [])
+    };
+</script>
+
+<script type="module" src="{{ asset('build/assets/project-timeline.js') }}?v={{ file_exists(public_path('build/assets/project-timeline.js')) ? filemtime(public_path('build/assets/project-timeline.js')) : time() }}"></script>
 @endsection
