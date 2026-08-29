@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
-import ProjectDashboard from './components/ProjectDashboard.vue';
+import '../css/task-shared.css';
+import ProjectDashboard from './components/projects/ProjectDashboard.vue';
 
 const app = createApp(ProjectDashboard, {
     project: window.projectDashboardData?.project || {},

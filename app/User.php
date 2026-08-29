@@ -82,4 +82,13 @@ class User extends Authenticatable
         return $this->morphMany('ProjectsManager\Comment', 'commentable');
     }
 
+    public function teams()
+    {
+        return $this->belongsToMany(Team::class, 'team_user')->withPivot('role', 'permissions');
+    }
+
+    public function ownedTeams()
+    {
+        return $this->hasMany(Team::class, 'user_id');
+    }
 }

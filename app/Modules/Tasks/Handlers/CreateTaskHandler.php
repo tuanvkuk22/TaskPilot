@@ -30,8 +30,10 @@ class CreateTaskHandler
             'projects' => $this->repository->getAccessibleProjects($userId),
             'project_id' => $projectId,
             'users' => $this->repository->getAssignableUsers($userId, $projectId),
+            'reporters' => $this->repository->getAssignableUsers($userId, $projectId),
             'epics' => $this->repository->getEpics($projectId),
             'sprints' => $this->repository->getSprints($projectId),
+            'available_labels' => $this->repository->getAllLabels(),
         ];
     }
 }

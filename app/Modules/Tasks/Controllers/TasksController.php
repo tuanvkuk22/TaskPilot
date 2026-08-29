@@ -85,12 +85,14 @@ class TasksController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'issue_type' => ['required', 'in:task,bug,story,epic,subtask'],
             'assignee_id' => ['nullable', 'integer', 'exists:users,id'],
+            'reporter_id' => ['nullable', 'integer', 'exists:users,id'],
             'due_date' => ['nullable', 'date'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'story_points' => ['nullable', 'numeric', 'min:0'],
             'labels' => ['nullable', 'string', 'max:1000'],
-            'sprint' => ['nullable', 'string', 'max:255'],
-            'parent_id' => ['nullable', 'integer', 'exists:tasks,id'],
             'sprint_id' => ['nullable', 'integer', 'exists:sprints,id'],
+            'parent_id' => ['nullable', 'integer', 'exists:tasks,id'],
         ]);
 
         $task = $this->storeTaskHandler->handle(Auth::id(), $request->all());
@@ -109,8 +111,13 @@ class TasksController extends Controller
     public function show(Task $task): View
     {
         $task = $this->showTaskHandler->handle($task);
+        $formData = $this->createTaskHandler->handle(Auth::id(), $task->project_id);
 
-        return view('tasks.show', ['task' => $task, 'worklogs' => $task->worklogs()->with('user')->latest('logged_at')->get()]);
+        return view('tasks.show', array_merge($formData, [
+            'task' => $task,
+            'worklogs' => $task->worklogs()->with('user')->latest('logged_at')->get(),
+            'comments' => $task->comments()->with('user')->latest()->get(),
+        ]));
     }
 
     public function worklog(Request $request, Task $task): RedirectResponse
@@ -147,22 +154,35 @@ class TasksController extends Controller
      * @param Request $request
      * @param Task $task
      *
-     * @return RedirectResponse
+     * @return RedirectResponse|\Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, Task $task): RedirectResponse
+    public function update(Request $request, Task $task): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'issue_type' => ['required', 'in:task,bug,story,epic,subtask'],
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'issue_type' => ['sometimes', 'required', 'in:task,bug,story,epic,subtask'],
+            'status' => ['sometimes', 'required', 'in:todo,in_progress,done'],
+            'priority' => ['sometimes', 'required', 'in:low,medium,high'],
             'assignee_id' => ['nullable', 'integer', 'exists:users,id'],
+            'reporter_id' => ['nullable', 'integer', 'exists:users,id'],
             'due_date' => ['nullable', 'date'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date'],
             'story_points' => ['nullable', 'numeric', 'min:0'],
             'labels' => ['nullable', 'string', 'max:1000'],
-            'sprint' => ['nullable', 'string', 'max:255'],
-            'parent_id' => ['nullable', 'integer', 'exists:tasks,id'],
             'sprint_id' => ['nullable', 'integer', 'exists:sprints,id'],
+            'parent_id' => ['nullable', 'integer', 'exists:tasks,id'],
+            'description' => ['nullable', 'string'],
         ]);
         $this->updateTaskHandler->handle($task, $request->all());
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'task' => $task->fresh(['project', 'assignee', 'reporter', 'parent'])]);
+        }
+
+        if ($request->has('redirect_to_show') || url()->previous() == route('tasks.show', $task->id)) {
+            return redirect()->route('tasks.show', $task->id)->with('success', 'Công việc đã được cập nhật.');
+        }
 
         return redirect()->route('tasks.index', ['project_id' => $task->project_id])
             ->with('success', 'Task updated successfully.');

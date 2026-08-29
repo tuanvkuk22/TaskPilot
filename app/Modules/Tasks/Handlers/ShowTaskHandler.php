@@ -15,7 +15,7 @@ class ShowTaskHandler
      */
     public function handle(Task $task): Task
     {
-        $task->load('project', 'user');
+        $task->load('project', 'user', 'assignee', 'reporter', 'sprintRelation', 'parent', 'children');
 
         return $task;
     }

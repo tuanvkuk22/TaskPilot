@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
 import '../css/edit-shared.css';
-import ProjectCreate from './components/ProjectCreate.vue';
+import ProjectCreate from './components/projects/ProjectCreate.vue';
 
 const d = window.projectCreateData || {};
 

@@ -27,22 +27,20 @@ class UpdateTaskHandler
      */
     public function handle(Task $task, array $data): bool
     {
-        return $this->repository->update($task, [
-            'name' => $data['name'] ?? $task->name,
-            'description' => $data['description'] ?? $task->description,
-            'status' => $data['status'] ?? $task->status,
-            'priority' => $data['priority'] ?? $task->priority,
-            'project_id' => $data['project_id'] ?? $task->project_id,
-            'days' => $data['days'] ?? $task->days,
-            'hours' => $data['hours'] ?? $task->hours,
-            'issue_type' => $data['issue_type'] ?? $task->issue_type,
-            'assignee_id' => $data['assignee_id'] ?? $task->assignee_id,
-            'due_date' => $data['due_date'] ?? $task->due_date,
-            'story_points' => $data['story_points'] ?? $task->story_points,
-            'labels' => $data['labels'] ?? $task->labels,
-            'sprint' => $data['sprint'] ?? $task->sprint,
-            'parent_id' => $data['parent_id'] ?? $task->parent_id,
-            'sprint_id' => $data['sprint_id'] ?? $task->sprint_id,
-        ]);
+        $update = [];
+        $fields = [
+            'name', 'description', 'status', 'priority', 'project_id',
+            'days', 'hours', 'issue_type', 'assignee_id', 'reporter_id',
+            'start_date', 'end_date', 'due_date', 'story_points', 'labels',
+            'sprint', 'parent_id', 'sprint_id'
+        ];
+
+        foreach ($fields as $field) {
+            if (array_key_exists($field, $data)) {
+                $update[$field] = $data[$field] === '' ? null : $data[$field];
+            }
+        }
+
+        return $this->repository->update($task, $update);
     }
 }

@@ -25,6 +25,7 @@
     },
     "dependencies": {
         "@vitejs/plugin-vue": "^6.0.8",
+        "ckeditor4": "4.22.1",
         "xlsx": "^0.18.5"
     }
 }

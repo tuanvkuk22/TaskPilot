@@ -1693,10 +1693,10 @@ cipher-base@^1.0.0, cipher-base@^1.0.1, cipher-base@^1.0.3:
     inherits "^2.0.1"
     safe-buffer "^5.0.1"
 
-ckeditor4@^4.25.2:
-  version "4.25.2"
-  resolved "https://registry.npmjs.org/ckeditor4/-/ckeditor4-4.25.2.tgz"
-  integrity sha512-Xt80BRzYE/2OzZicEHTw5m20vwFX7in4DAjC9lox0cLefgV1zzQIuVFIV/bvVn9HluYPYnIuebYwUUVlXq7xjg==
+ckeditor4@4.22.1:
+  version "4.22.1"
+  resolved "https://registry.npmjs.org/ckeditor4/-/ckeditor4-4.22.1.tgz"
+  integrity sha512-Yj4vTHX5YxHwc48gNqUqTm+KLkRr9tuyb4O2VIABu4oKHWRNVIdLdy6vUNe/XNx+RiTavMejfA1MVOU/MxLjqQ==
 
 clap@^1.0.9:
   version "1.2.3"

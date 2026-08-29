@@ -5,10 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'TaskPilot') }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}" rel="stylesheet">
     <link href="{{ asset('css/custom-ui.css') }}?v={{ filemtime(public_path('css/custom-ui.css')) }}" rel="stylesheet">
     <link href="{{ asset('css/project-ui.css') }}?v={{ filemtime(public_path('css/project-ui.css')) }}" rel="stylesheet">
     <link href="{{ asset('css/project_roles.css') }}?v={{ filemtime(public_path('css/project_roles.css')) }}" rel="stylesheet">
+    <style>
+        body, button, input, select, textarea, .navbar, .btn, h1, h2, h3, h4, h5, h6, label, p, span, a, div {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+        }
+        /* Preserve FontAwesome Icon Glyphs */
+        i.fa, i.fas, i.far, i.fab, i.fal, i.fad, .fa, .fas, .far, .fab, .fal, .fad, [class^="fa-"], [class*=" fa-"] {
+            font-family: FontAwesome, 'Font Awesome 5 Free', 'Font Awesome 5 Brands' !important;
+        }
+    </style>
     <script src="https://use.fontawesome.com/874dbadbd7.js" defer></script>
 </head>
 <body>

@@ -44,10 +44,12 @@ class StoreTaskHandler
             'company_id' => $project->company_id,
             'issue_type' => $data['issue_type'] ?? 'task',
             'assignee_id' => $data['assignee_id'] ?? $userId,
+            'reporter_id' => $data['reporter_id'] ?? $userId,
             'due_date' => $data['due_date'] ?? null,
+            'start_date' => $data['start_date'] ?? null,
+            'end_date' => $data['end_date'] ?? null,
             'story_points' => $data['story_points'] ?? null,
             'labels' => $data['labels'] ?? null,
-            'sprint' => $data['sprint'] ?? null,
             'parent_id' => $data['parent_id'] ?? null,
             'sprint_id' => $data['sprint_id'] ?? null,
         ]);

@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
 import '../css/edit-shared.css';
-import ProjectEdit from './components/ProjectEdit.vue';
+import ProjectEdit from './components/projects/ProjectEdit.vue';
 
 const app = createApp(ProjectEdit, {
     project: window.projectEditData?.project || {},
