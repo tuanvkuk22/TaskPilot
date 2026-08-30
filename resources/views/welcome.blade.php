@@ -1,1 +1,31 @@
-<!doctype html><html lang="{{ app()->getLocale() }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TaskPilot — Project workspace</title><link href="{{ asset('css/app.css') }}" rel="stylesheet"><link href="{{ asset('css/custom-ui.css') }}" rel="stylesheet"><script src="https://use.fontawesome.com/874dbadbd7.js"></script></head><body><nav class="navbar navbar-default tp-navbar"><div class="container"><a class="navbar-brand" href="{{ route('welcome') }}"><span class="tp-brand-mark"><i class="fa fa-check"></i></span>TaskPilot</a><ul class="nav navbar-nav navbar-right">@auth<li><a href="{{ route('home') }}">Mở workspace</a></li>@else<li><a href="{{ route('login') }}">Đăng nhập</a></li><li><a class="btn btn-primary" style="margin-top:13px;padding:8px 14px;color:#fff" href="{{ route('register') }}">Dùng thử miễn phí</a></li>@endauth</ul></div></nav><main class="container" style="padding:76px 15px"><div class="row"><div class="col-md-7"><span class="tp-eyebrow">ONE PLACE FOR WORK</span><h1 style="font-size:48px;font-weight:800;line-height:1.08;color:#172b4d">Đưa dự án từ kế hoạch đến hoàn thành.</h1><p class="lead" style="margin:22px 0;color:#526783;line-height:1.7">TaskPilot giúp đội ngũ quản lý dự án, công việc, sprint và trao đổi trong một workspace rõ ràng.</p><div class="tp-actions"><a class="btn btn-primary btn-lg" href="{{ auth()->check()?route('home'):route('register') }}">Bắt đầu với TaskPilot</a><a class="btn btn-default btn-lg" href="{{ route('login') }}">Đăng nhập</a></div></div><div class="col-md-5"><section class="tp-surface" style="padding:26px;margin-top:14px"><span class="tp-badge done">Đang trên đúng lộ trình</span><h3 style="margin:20px 0 8px">Workspace cho cả đội</h3><p class="text-muted">Dự án · Kanban · Sprint · Time logs · Cuộc họp</p><hr><p><i class="fa fa-check text-success"></i> Phân công rõ ràng</p><p><i class="fa fa-check text-success"></i> Theo dõi tiến độ trực quan</p><p><i class="fa fa-check text-success"></i> Tập trung vào kết quả</p></section></div></div></main></body></html>
+<!doctype html>
+<html lang="{{ app()->getLocale() }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ config('app.name', 'TaskPilot') }} — Workspace Quản lý Dự án & Tiến độ Hiện đại</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link href="{{ asset('build/assets/welcome.css') }}?v={{ file_exists(public_path('build/assets/welcome.css')) ? filemtime(public_path('build/assets/welcome.css')) : time() }}" rel="stylesheet">
+</head>
+<body>
+    <div id="welcome-app"></div>
+
+    <script>
+        window.welcomeData = {
+            is_authenticated: @json(auth()->check()),
+            user_name: @json(auth()->check() ? auth()->user()->name : ''),
+            home_url: @json(route('home')),
+            login_url: @json(route('login')),
+            register_url: @json(route('register')),
+            welcome_url: @json(route('welcome')),
+        };
+    </script>
+    <script type="module" src="{{ asset('build/assets/welcome.js') }}?v={{ file_exists(public_path('build/assets/welcome.js')) ? filemtime(public_path('build/assets/welcome.js')) : time() }}"></script>
+</body>
+</html>
