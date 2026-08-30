@@ -131,8 +131,8 @@
                         <div class="flex-grow-1 font-weight-bold text-truncate me-2" style="min-width: 0; padding-left: 6px;">
                             <i class="fa fa-chevron-right me-1 text-muted font-size-11"></i> Work
                         </div>
-                        <div style="width: 100px;" class="flex-shrink-0 font-weight-bold text-center">Status</div>
-                        <div style="width: 60px;" class="flex-shrink-0 font-weight-bold text-center">Assignee</div>
+                        <div style="width: 110px;" class="flex-shrink-0 font-weight-bold text-center">Status</div>
+                        <div style="width: 70px;" class="flex-shrink-0 font-weight-bold text-center">Assignee</div>
                     </div>
 
                     <div class="pane-body" ref="leftPaneBody" @scroll="syncVerticalScroll('left')">
@@ -172,8 +172,8 @@
                                         <button type="button" class="tp-btn tp-btn-primary btn-xs flex-shrink-0" style="height: 28px; padding: 0 10px; font-size: 11px;" @click="handleCreateTaskForEpic(task.parentEpicId)">Tạo Task</button>
                                         <button type="button" class="tp-btn tp-btn-light btn-xs flex-shrink-0" style="height: 28px; padding: 0 8px;" @click="inlineCreateEpicId = null"><i class="fa fa-times"></i></button>
                                     </div>
-                                    <div style="width: 100px;" class="flex-shrink-0"></div>
-                                    <div style="width: 60px;" class="flex-shrink-0"></div>
+                                    <div style="width: 110px;" class="flex-shrink-0"></div>
+                                    <div style="width: 70px;" class="flex-shrink-0"></div>
                                 </template>
 
                                 <!-- Standard Task / Epic Row -->
@@ -227,20 +227,46 @@
                                         </button>
                                     </div>
 
-                                    <!-- Status Column -->
-                                    <div style="width: 100px;" class="flex-shrink-0 text-center" @click.stop>
+                                    <!-- Status Column: Interactive Inline Select -->
+                                    <div style="width: 110px;" class="flex-shrink-0 d-flex justify-content-center align-items-center" @click.stop>
                                         <div v-if="task.issue_type === 'epic'" class="epic-status-segment-bar mx-auto">
                                             <div class="seg-in-progress" :style="{ width: getEpicSegmentPercent(task, 'in_progress') + '%' }"></div>
                                             <div class="seg-done" :style="{ width: getEpicSegmentPercent(task, 'done') + '%' }"></div>
                                         </div>
-                                        <StatusBadge v-else-if="!task.isVirtualGroup" :status="task.status || 'todo'" />
+                                        <div v-else-if="!task.isVirtualGroup" class="status-dropdown-wrapper">
+                                            <select
+                                                class="timeline-status-select"
+                                                :class="`status-select-${task.status || 'todo'}`"
+                                                :value="task.status || 'todo'"
+                                                @change="handleStatusChange(task, $event.target.value)"
+                                                title="Bấm để thay đổi trạng thái"
+                                            >
+                                                <option value="todo">CẦN LÀM</option>
+                                                <option value="in_progress">ĐANG LÀM</option>
+                                                <option value="done">HOÀN THÀNH</option>
+                                            </select>
+                                        </div>
                                     </div>
 
-                                    <!-- Assignee Column: ONLY AVATAR, NO NAME. NO ASSIGNEE FOR EPIC -->
-                                    <div style="width: 60px;" class="flex-shrink-0 d-flex justify-content-center align-items-center" @click.stop>
+                                    <!-- Assignee Column: Interactive Inline User Select -->
+                                    <div style="width: 70px;" class="flex-shrink-0 d-flex justify-content-center align-items-center" @click.stop>
                                         <template v-if="!task.isVirtualGroup && task.issue_type !== 'epic'">
-                                            <UserAvatarPill v-if="task.assignee" :name="task.assignee.name" :only-avatar="true" />
-                                            <span v-else class="text-muted small" title="Chưa phân công" style="font-size: 11px;">-</span>
+                                            <div class="assignee-select-wrapper" :title="task.assignee ? `Người thực hiện: ${task.assignee.name} (Bấm để thay đổi)` : 'Chưa phân công (Bấm để chọn)'">
+                                                <select
+                                                    class="timeline-assignee-select"
+                                                    :value="task.assignee_id || ''"
+                                                    @change="handleAssigneeChange(task, $event.target.value)"
+                                                >
+                                                    <option value="">- Chưa phân công -</option>
+                                                    <option v-for="user in assignableUsers" :key="user.id" :value="user.id">
+                                                        {{ user.name }}
+                                                    </option>
+                                                </select>
+                                                <div class="assignee-pill-overlay">
+                                                    <UserAvatarPill v-if="task.assignee" :name="task.assignee.name" :only-avatar="true" />
+                                                    <span v-else class="unassigned-avatar-circle">?</span>
+                                                </div>
+                                            </div>
                                         </template>
                                     </div>
                                 </template>
@@ -578,6 +604,89 @@ const props = defineProps({
 
 // Reactive Task List from DB
 const taskList = ref([...props.tasks]);
+
+// List of assignable users for inline assignee picker
+const assignableUsers = computed(() => {
+    const list = [];
+    const map = new Map();
+
+    if (props.project?.users && Array.isArray(props.project.users)) {
+        props.project.users.forEach(u => {
+            if (u && u.id && !map.has(u.id)) {
+                map.set(u.id, u);
+                list.push(u);
+            }
+        });
+    }
+
+    (taskList.value || []).forEach(t => {
+        if (t.assignee && t.assignee.id && !map.has(t.assignee.id)) {
+            map.set(t.assignee.id, t.assignee);
+            list.push(t.assignee);
+        }
+    });
+
+    return list;
+});
+
+async function handleStatusChange(task, newStatus) {
+    if (!task || task.status === newStatus) return;
+    const oldStatus = task.status;
+    task.status = newStatus;
+
+    try {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        await fetch(`/tasks/${task.id}/move`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token || '',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+    } catch (err) {
+        console.error('Error changing task status:', err);
+        task.status = oldStatus;
+    }
+}
+
+async function handleAssigneeChange(task, newAssigneeId) {
+    if (!task) return;
+    const oldAssigneeId = task.assignee_id;
+    const oldAssignee = task.assignee;
+
+    const assigneeIdNum = newAssigneeId ? parseInt(newAssigneeId, 10) : null;
+    task.assignee_id = assigneeIdNum;
+
+    if (assigneeIdNum) {
+        const found = assignableUsers.value.find(u => u.id === assigneeIdNum);
+        task.assignee = found || null;
+    } else {
+        task.assignee = null;
+    }
+
+    try {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        await fetch(`/tasks/${task.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token || '',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                assignee_id: assigneeIdNum
+            })
+        });
+    } catch (err) {
+        console.error('Error updating task assignee:', err);
+        task.assignee_id = oldAssigneeId;
+        task.assignee = oldAssignee;
+    }
+}
 
 const searchQuery = ref('');
 const filterEpic = ref('');
@@ -1976,5 +2085,102 @@ onMounted(() => {
 .timeline-task-row.is-inline-row {
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
+}
+
+/* Status Select Dropdown Badge */
+.status-dropdown-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeline-status-select {
+    border: none;
+    border-radius: 12px;
+    padding: 3px 18px 3px 10px;
+    font-size: 10.5px;
+    font-weight: 700;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 7px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+    transition: transform 0.15s ease, filter 0.15s ease;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.timeline-status-select:hover {
+    filter: brightness(0.92);
+    transform: scale(1.05);
+}
+
+.status-select-todo {
+    background-color: #6c757d;
+    color: #ffffff;
+}
+
+.status-select-in_progress {
+    background-color: #0d6efd;
+    color: #ffffff;
+}
+
+.status-select-done {
+    background-color: #198754;
+    color: #ffffff;
+}
+
+/* Assignee Select Wrapper & Overlay */
+.assignee-select-wrapper {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.timeline-assignee-select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.assignee-pill-overlay {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.unassigned-avatar-circle {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed #cbd5e1;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.assignee-select-wrapper:hover .unassigned-avatar-circle {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+    color: #475569;
 }
 </style>

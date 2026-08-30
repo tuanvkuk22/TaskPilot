@@ -108,6 +108,7 @@ class ProjectsController extends Controller
     public function timeline(Project $project): View
     {
         $project->load([
+            'users',
             'tasks.assignee',
             'tasks.reporter',
             'tasks.parent',
