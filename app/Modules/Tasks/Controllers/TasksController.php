@@ -76,9 +76,9 @@ class TasksController extends Controller
      *
      * @param Request $request
      *
-     * @return RedirectResponse
+     * @return RedirectResponse|\Illuminate\Http\JsonResponse
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $request->validate([
             'project_id' => ['required', 'integer', 'exists:projects,id'],
@@ -96,6 +96,10 @@ class TasksController extends Controller
         ]);
 
         $task = $this->storeTaskHandler->handle(Auth::id(), $request->all());
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'task' => $task->fresh(['project', 'assignee', 'reporter', 'parent'])]);
+        }
 
         return redirect()->route('tasks.index', ['project_id' => $task->project_id])
             ->with('success', 'Task created successfully.');
