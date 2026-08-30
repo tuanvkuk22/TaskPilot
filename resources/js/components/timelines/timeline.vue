@@ -331,13 +331,24 @@
                                     <div
                                         v-if="!task.isVirtualGroup && !task.isInlineTaskRow"
                                         class="gantt-bar"
-                                        :class="[`bar-status-${task.status || 'todo'}`, `bar-type-${task.issue_type || 'task'}`]"
+                                        :class="[
+                                            `bar-status-${task.status || 'todo'}`,
+                                            `bar-type-${task.issue_type || 'task'}`,
+                                            { 'is-dragging': activeDragTask?.id === task.id }
+                                        ]"
                                         :style="getBarStyle(task)"
                                         @mouseenter="hoveredTaskId = task.id"
                                         @mouseleave="hoveredTaskId = null"
-                                        @mousedown="handleBarMouseDown($event, task)"
-                                        @click.stop="openDetailDrawer(task)"
+                                        @mousedown="handleBarMouseDown($event, task, 'move')"
+                                        @click.stop="handleTaskClick(task)"
                                     >
+                                        <!-- Left Drag Resize Handle -->
+                                        <div
+                                            class="gantt-resize-handle gantt-resize-handle-left"
+                                            title="Kéo để thay đổi ngày bắt đầu"
+                                            @mousedown.stop="handleBarMouseDown($event, task, 'left')"
+                                        ></div>
+
                                         <!-- Progress fill inside Epic bar -->
                                         <div
                                             v-if="task.issue_type === 'epic'"
@@ -350,11 +361,21 @@
                                             {{ getTaskKey(task) }} - {{ task.name }}
                                         </span>
 
-                                        <!-- Drag Resize Handle -->
-                                        <div class="gantt-resize-handle" title="Kéo để thay đổi hạn hoàn thành"></div>
+                                        <!-- Live Floating Badge during Drag -->
+                                        <div v-if="activeDragTask?.id === task.id" class="gantt-drag-live-badge shadow-lg">
+                                            <i class="fa fa-calendar-check-o me-1"></i>
+                                            {{ getLiveDragDates(task) }}
+                                        </div>
 
-                                        <!-- Tooltip Hover -->
-                                        <div class="gantt-tooltip">
+                                        <!-- Right Drag Resize Handle -->
+                                        <div
+                                            class="gantt-resize-handle gantt-resize-handle-right"
+                                            title="Kéo để thay đổi hạn hoàn thành"
+                                            @mousedown.stop="handleBarMouseDown($event, task, 'right')"
+                                        ></div>
+
+                                        <!-- Tooltip Hover (when not dragging) -->
+                                        <div v-if="activeDragTask?.id !== task.id" class="gantt-tooltip">
                                             <div class="tooltip-title">{{ getTaskKey(task) }} - {{ task.name }}</div>
                                             <div class="tooltip-meta">
                                                 <div><i class="fa fa-calendar me-1"></i> {{ formatDate(task.start_date || task.created_at) }} → {{ formatDate(task.due_date || task.end_date) }}</div>
@@ -898,23 +919,81 @@ function getBarStyle(task) {
     const startRange = timeRange.value.start.getTime();
     const totalMs = timeRange.value.totalMs;
 
-    const taskStart = new Date(task.start_date || task.created_at || Date.now()).getTime();
+    let taskStart = new Date(task.start_date || task.created_at || Date.now()).getTime();
     let taskEnd = new Date(task.due_date || task.end_date || taskStart + 7 * 86400000).getTime();
-
     if (taskEnd <= taskStart) {
         taskEnd = taskStart + 7 * 86400000;
+    }
+
+    if (activeDragTask.value && activeDragTask.value.id === task.id) {
+        const canvasWidth = ganttBodyPane.value ? ganttBodyPane.value.scrollWidth : 1000;
+        const deltaMs = (currentDragPx.value / canvasWidth) * totalMs;
+        const DAY_MS = 86400000;
+
+        if (dragMode === 'left') {
+            taskStart = Math.min(initialStartMs + deltaMs, initialDueMs - DAY_MS);
+            taskEnd = initialDueMs;
+        } else if (dragMode === 'right') {
+            taskStart = initialStartMs;
+            taskEnd = Math.max(initialDueMs + deltaMs, initialStartMs + DAY_MS);
+        } else {
+            taskStart = initialStartMs + deltaMs;
+            taskEnd = initialDueMs + deltaMs;
+        }
+
+        let left = ((taskStart - startRange) / totalMs) * 100;
+        let width = ((taskEnd - taskStart) / totalMs) * 100;
+
+        left = Math.max(0, Math.min(95, left));
+        width = Math.max(2, Math.min(100 - left, width));
+
+        return {
+            left: `${left.toFixed(3)}%`,
+            width: `${width.toFixed(3)}%`,
+            transition: 'none',
+            willChange: 'left, width',
+        };
     }
 
     let left = ((taskStart - startRange) / totalMs) * 100;
     let width = ((taskEnd - taskStart) / totalMs) * 100;
 
     left = Math.max(0, Math.min(95, left));
-    width = Math.max(3, Math.min(100 - left, width));
+    width = Math.max(2, Math.min(100 - left, width));
 
     return {
         left: `${left.toFixed(2)}%`,
         width: `${width.toFixed(2)}%`,
     };
+}
+
+function getLiveDragDates(task) {
+    if (!activeDragTask.value || activeDragTask.value.id !== task.id) {
+        return `${formatDate(task.start_date || task.created_at)} → ${formatDate(task.due_date || task.end_date)}`;
+    }
+
+    const totalMs = timeRange.value.totalMs;
+    const canvasWidth = ganttBodyPane.value ? ganttBodyPane.value.scrollWidth : 1000;
+    const deltaMs = (currentDragPx.value / canvasWidth) * totalMs;
+    const DAY_MS = 86400000;
+
+    let sMs = initialStartMs;
+    let dMs = initialDueMs;
+
+    if (dragMode === 'left') {
+        sMs = Math.min(initialStartMs + deltaMs, initialDueMs - DAY_MS);
+    } else if (dragMode === 'right') {
+        dMs = Math.max(initialDueMs + deltaMs, initialStartMs + DAY_MS);
+    } else {
+        sMs = initialStartMs + deltaMs;
+        dMs = initialDueMs + deltaMs;
+    }
+
+    const sStr = formatDate(new Date(sMs).toISOString().split('T')[0]);
+    const dStr = formatDate(new Date(dMs).toISOString().split('T')[0]);
+
+    const durationDays = Math.max(1, Math.round((dMs - sMs) / DAY_MS));
+    return `${sStr} → ${dStr} (${durationDays} ngày)`;
 }
 
 function getEpicProgress(epicTask) {
@@ -1013,67 +1092,133 @@ async function handleCreateInlineEpic() {
 }
 
 // Drag & Resize Gantt Bar Handlers
-let activeDragTask = null;
-let isResizing = false;
-let startMouseX = 0;
+const activeDragTask = ref(null);
+const currentDragPx = ref(0);
+let dragMode = 'move'; // 'move', 'left', 'right'
+let initialMouseX = 0;
+let initialStartMs = 0;
+let initialDueMs = 0;
+let hasDragged = false;
+let animFrameId = null;
 
-function handleBarMouseDown(event, task) {
+function handleBarMouseDown(event, task, mode = 'move') {
     if (task.isVirtualGroup) return;
     event.stopPropagation();
 
-    isResizing = event.target.classList.contains('gantt-resize-handle');
-    activeDragTask = task;
-    startMouseX = event.clientX;
+    if (event.target.classList.contains('gantt-resize-handle-left')) {
+        dragMode = 'left';
+    } else if (event.target.classList.contains('gantt-resize-handle-right')) {
+        dragMode = 'right';
+    } else {
+        dragMode = mode;
+    }
+
+    activeDragTask.value = task;
+    currentDragPx.value = 0;
+    initialMouseX = event.clientX;
+    hasDragged = false;
+
+    const startDateObj = new Date(task.start_date || task.created_at || Date.now());
+    initialStartMs = isNaN(startDateObj.getTime()) ? Date.now() : startDateObj.getTime();
+
+    const dueDateObj = new Date(task.due_date || task.end_date || initialStartMs + 7 * 86400000);
+    initialDueMs = isNaN(dueDateObj.getTime()) ? initialStartMs + 7 * 86400000 : dueDateObj.getTime();
+
+    document.body.style.userSelect = 'none';
+    if (dragMode === 'move') {
+        document.body.style.cursor = 'grabbing';
+    } else {
+        document.body.style.cursor = 'col-resize';
+    }
 
     window.addEventListener('mousemove', handleBarMouseMove);
     window.addEventListener('mouseup', handleBarMouseUp);
 }
 
 function handleBarMouseMove(event) {
-    if (!activeDragTask) return;
-    const deltaX = event.clientX - startMouseX;
-    const canvasWidth = ganttBodyPane.value ? ganttBodyPane.value.scrollWidth : 1000;
-    const deltaMs = (deltaX / canvasWidth) * timeRange.value.totalMs;
+    if (!activeDragTask.value) return;
+    const deltaX = event.clientX - initialMouseX;
 
-    if (isResizing) {
-        const currentEnd = new Date(activeDragTask.due_date || activeDragTask.end_date || Date.now()).getTime();
-        activeDragTask.due_date = new Date(currentEnd + deltaMs).toISOString().split('T')[0];
-    } else {
-        const currentStart = new Date(activeDragTask.start_date || activeDragTask.created_at || Date.now()).getTime();
-        const currentEnd = new Date(activeDragTask.due_date || activeDragTask.end_date || currentStart + 7 * 86400000).getTime();
-
-        activeDragTask.start_date = new Date(currentStart + deltaMs).toISOString().split('T')[0];
-        activeDragTask.due_date = new Date(currentEnd + deltaMs).toISOString().split('T')[0];
+    if (Math.abs(deltaX) > 3) {
+        hasDragged = true;
     }
-    startMouseX = event.clientX;
+
+    if (animFrameId) cancelAnimationFrame(animFrameId);
+    animFrameId = requestAnimationFrame(() => {
+        currentDragPx.value = deltaX;
+    });
 }
 
 async function handleBarMouseUp() {
     window.removeEventListener('mousemove', handleBarMouseMove);
     window.removeEventListener('mouseup', handleBarMouseUp);
 
-    if (!activeDragTask) return;
-    const taskToSave = activeDragTask;
-    activeDragTask = null;
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
 
-    try {
-        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        await fetch(`/tasks/${taskToSave.id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': token || '',
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                start_date: taskToSave.start_date,
-                due_date: taskToSave.due_date
-            })
-        });
-    } catch (err) {
-        console.error('Error updating task dates:', err);
+    if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
     }
+
+    if (!activeDragTask.value) return;
+    const taskToSave = activeDragTask.value;
+    const didDrag = hasDragged;
+
+    const totalMs = timeRange.value.totalMs;
+    const canvasWidth = ganttBodyPane.value ? ganttBodyPane.value.scrollWidth : 1000;
+    const deltaMs = (currentDragPx.value / canvasWidth) * totalMs;
+    const DAY_MS = 86400000;
+
+    let finalStartMs = initialStartMs;
+    let finalDueMs = initialDueMs;
+
+    if (dragMode === 'left') {
+        finalStartMs = Math.min(initialStartMs + deltaMs, initialDueMs - DAY_MS);
+    } else if (dragMode === 'right') {
+        finalDueMs = Math.max(initialDueMs + deltaMs, initialStartMs + DAY_MS);
+    } else {
+        finalStartMs = initialStartMs + deltaMs;
+        finalDueMs = initialDueMs + deltaMs;
+    }
+
+    taskToSave.start_date = new Date(finalStartMs).toISOString().split('T')[0];
+    taskToSave.due_date = new Date(finalDueMs).toISOString().split('T')[0];
+    taskToSave.end_date = taskToSave.due_date;
+
+    currentDragPx.value = 0;
+    activeDragTask.value = null;
+    dragMode = 'move';
+
+    if (didDrag) {
+        try {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            await fetch(`/tasks/${taskToSave.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token || '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    start_date: taskToSave.start_date,
+                    due_date: taskToSave.due_date,
+                    end_date: taskToSave.due_date
+                })
+            });
+        } catch (err) {
+            console.error('Error updating task dates on backend:', err);
+        }
+    }
+}
+
+function handleTaskClick(task) {
+    if (hasDragged) {
+        hasDragged = false;
+        return;
+    }
+    openDetailDrawer(task);
 }
 
 async function toggleSubtaskStatus(subtask) {
@@ -1474,13 +1619,22 @@ onMounted(() => {
     padding: 0 8px;
     cursor: grab;
     box-shadow: 0 1px 3px rgba(9, 30, 66, 0.1);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
     user-select: none;
-    overflow: hidden;
+    overflow: visible;
 }
 
-.gantt-bar:active {
-    cursor: grabbing;
+.gantt-bar:hover {
+    box-shadow: 0 3px 8px rgba(9, 30, 66, 0.2);
+    z-index: 20 !important;
+}
+
+.gantt-bar.is-dragging {
+    cursor: grabbing !important;
+    box-shadow: 0 8px 22px rgba(37, 99, 235, 0.45) !important;
+    z-index: 100 !important;
+    transform: scaleY(1.06);
+    outline: 2px solid #ffffff;
 }
 
 .bar-type-epic {
@@ -1493,15 +1647,77 @@ onMounted(() => {
 .bar-status-in_progress { background: #388bff; }
 .bar-status-todo { background: #a5adba; }
 
+/* Left & Right Drag Handles */
 .gantt-resize-handle {
     position: absolute;
-    right: 0;
     top: 0;
     bottom: 0;
-    width: 8px;
-    cursor: e-resize;
-    background: rgba(255, 255, 255, 0.4);
-    z-index: 10;
+    width: 12px;
+    z-index: 25;
+    transition: background 0.15s ease, opacity 0.15s ease;
+    opacity: 0.7;
+}
+
+.gantt-resize-handle-left {
+    left: 0;
+    cursor: col-resize;
+    border-radius: 6px 0 0 6px;
+}
+
+.gantt-resize-handle-right {
+    right: 0;
+    cursor: col-resize;
+    border-radius: 0 6px 6px 0;
+}
+
+.gantt-resize-handle:hover {
+    background: rgba(255, 255, 255, 0.55);
+    opacity: 1;
+}
+
+/* Live Floating Drag Badge */
+.gantt-drag-live-badge {
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a;
+    color: #ffffff;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.4);
+    z-index: 150;
+    pointer-events: none;
+    border: 1px solid #388bff;
+}
+
+/* Floating Toast Notification */
+.timeline-toast-notification {
+    position: fixed;
+    top: 70px;
+    right: 24px;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    border: 1px solid #334155;
+}
+
+.fade-enter-active, .fade-leave-active {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+    opacity: 0;
+    transform: translateY(-10px);
 }
 
 .gantt-bar-progress {
