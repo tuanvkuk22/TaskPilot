@@ -473,20 +473,150 @@
 
                 <!-- Body -->
                 <div class="jira-drawer-body">
-                    <h2 class="jira-drawer-title mb-3">{{ selectedTaskForDetail.name }}</h2>
+                    <!-- Parent Task Breadcrumb for Subtasks -->
+                    <div v-if="selectedTaskForDetail.issue_type === 'subtask'" class="mb-3 p-2 bg-light rounded border border-info">
+                        <span class="text-muted small">Thuộc Task cha: </span>
+                        <a
+                            v-if="getParentTask(selectedTaskForDetail.parent_id)"
+                            href="javascript:void(0)"
+                            class="font-weight-bold text-primary text-decoration-none small ms-1"
+                            @click="openDetailDrawer(getParentTask(selectedTaskForDetail.parent_id))"
+                        >
+                            <i class="fa fa-level-up me-1"></i>
+                            {{ getTaskKey(getParentTask(selectedTaskForDetail.parent_id)) }} - {{ getParentTask(selectedTaskForDetail.parent_id).name }}
+                        </a>
+                        <span v-else class="text-muted small font-weight-bold">#{{ selectedTaskForDetail.parent_id }}</span>
+                    </div>
 
-                    <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
-                        <div>
-                            <span class="text-muted small d-block mb-1">Trạng thái</span>
-                            <StatusBadge :status="selectedTaskForDetail.status" />
+                    <!-- Editable Title -->
+                    <div class="jira-drawer-title-wrapper mb-3 d-flex align-items-center gap-2">
+                        <template v-if="isEditing('name')">
+                            <input
+                                type="text"
+                                v-model="drawerEditForm.name"
+                                @keyup.enter="$event.target.blur()"
+                                @keyup.esc="cancelEdit"
+                                @blur="manualSaveField('name')"
+                                class="form-control font-weight-bold text-dark border-0 bg-white px-2 py-1 font-size-18 text-edit-hover flex-grow-1"
+                                style="min-width: 0; box-shadow: inset 0 0 0 2px #2563eb !important; border-radius: 6px;"
+                                placeholder="Nhập tên công việc..."
+                                title="Bấm Enter để lưu, Esc để hủy"
+                                ref="nameInputRef"
+                            />
+                        </template>
+                        <template v-else>
+                            <h2
+                                class="jira-drawer-title-display flex-grow-1"
+                                @click="startEdit('name')"
+                                title="Bấm để chỉnh sửa tên"
+                            >
+                                {{ drawerEditForm.name || 'Nhập tên công việc...' }}
+                            </h2>
+                        </template>
+                        <span class="drawer-save-indicator" :class="getSaveStateClass('name')" :title="getSaveStateTitle('name')">
+                            <i :class="getSaveIcon('name')"></i>
+                        </span>
+                    </div>
+
+                    <!-- Quick Edit Properties Bar -->
+                    <div class="row g-2 mb-4 pb-3 border-bottom align-items-center">
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <span class="text-muted small d-block mb-1 font-weight-bold">Loại Issue</span>
+                            <div class="d-flex align-items-center gap-1">
+                                <select v-if="isEditing('issue_type')" class="form-select form-select-sm font-size-12 flex-grow-1" v-model="drawerEditForm.issue_type" @change="saveDrawerField('issue_type')" @blur="cancelEdit">
+                                    <option value="task">Task</option>
+                                    <option value="bug">Bug</option>
+                                    <option value="story">Story</option>
+                                    <option value="epic">Epic</option>
+                                    <option value="subtask">Sub-task</option>
+                                </select>
+                                <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('issue_type')" title="Bấm để chỉnh sửa">
+                                    {{ displayIssueType(drawerEditForm.issue_type) }}
+                                </span>
+                                <span class="drawer-save-indicator" :class="getSaveStateClass('issue_type')" :title="getSaveStateTitle('issue_type')">
+                                    <i :class="getSaveIcon('issue_type')"></i>
+                                </span>
+                            </div>
                         </div>
-                        <div>
-                            <span class="text-muted small d-block mb-1">Độ ưu tiên</span>
-                            <PriorityBadge :priority="selectedTaskForDetail.priority" />
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <span class="text-muted small d-block mb-1 font-weight-bold">Trạng thái</span>
+                            <div class="d-flex align-items-center gap-1">
+                                <select v-if="isEditing('status')" class="form-select form-select-sm font-size-12 flex-grow-1" v-model="drawerEditForm.status" @change="saveDrawerField('status')" @blur="cancelEdit">
+                                    <option value="todo">Chưa làm (To-Do)</option>
+                                    <option value="in_progress">Đang làm (In Progress)</option>
+                                    <option value="done">Hoàn thành (Done)</option>
+                                </select>
+                                <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('status')" title="Bấm để chỉnh sửa">
+                                    {{ displayStatusLabel(drawerEditForm.status) }}
+                                </span>
+                                <span class="drawer-save-indicator" :class="getSaveStateClass('status')" :title="getSaveStateTitle('status')">
+                                    <i :class="getSaveIcon('status')"></i>
+                                </span>
+                            </div>
                         </div>
-                        <div v-if="selectedTaskForDetail.story_points">
-                            <span class="text-muted small d-block mb-1">Story Points</span>
-                            <span class="points-badge">{{ selectedTaskForDetail.story_points }} pts</span>
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <span class="text-muted small d-block mb-1 font-weight-bold">Độ ưu tiên</span>
+                            <div class="d-flex align-items-center gap-1">
+                                <select v-if="isEditing('priority')" class="form-select form-select-sm font-size-12 flex-grow-1" v-model="drawerEditForm.priority" @change="saveDrawerField('priority')" @blur="cancelEdit">
+                                    <option value="low">Thấp</option>
+                                    <option value="medium">Trung bình</option>
+                                    <option value="high">Cao / Gấp</option>
+                                </select>
+                                <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('priority')" title="Bấm để chỉnh sửa">
+                                    {{ displayPriority(drawerEditForm.priority) }}
+                                </span>
+                                <span class="drawer-save-indicator" :class="getSaveStateClass('priority')" :title="getSaveStateTitle('priority')">
+                                    <i :class="getSaveIcon('priority')"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <span class="text-muted small d-block mb-1 font-weight-bold">Story Points</span>
+                            <div class="d-flex align-items-center gap-1">
+                                <input v-if="isEditing('story_points')" type="number" step="0.5" min="0" class="form-control form-control-sm font-size-12 flex-grow-1" v-model.number="drawerEditForm.story_points" @keyup.enter="$event.target.blur()" @keyup.esc="cancelEdit" @blur="manualSaveField('story_points')" placeholder="Points" />
+                                <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('story_points')" title="Bấm để chỉnh sửa">
+                                    {{ displayLabel(drawerEditForm.story_points, '—') }}
+                                </span>
+                                <button type="button" class="drawer-save-indicator drawer-save-btn" :class="getSaveStateClass('story_points')" :title="getSaveStateTitle('story_points')" @click="manualSaveField('story_points')">
+                                    <i :class="getSaveIcon('story_points')"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description Section -->
+                    <div class="jira-drawer-section mb-4">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <label class="font-size-13 font-weight-bold text-dark m-0">
+                                <i class="fa fa-align-left text-muted me-1"></i> Mô tả công việc
+                            </label>
+                            <span class="drawer-save-indicator" :class="getSaveStateClass('description')" :title="getSaveStateTitle('description')">
+                                <i :class="getSaveIcon('description')"></i>
+                            </span>
+                        </div>
+                        <template v-if="isEditing('description')">
+                            <textarea
+                                v-model="drawerEditForm.description"
+                                @keyup.esc="cancelEdit"
+                                class="form-control font-size-13"
+                                rows="4"
+                                placeholder="Thêm mô tả chi tiết công việc..."
+                                ref="descriptionInputRef"
+                            ></textarea>
+                            <div class="d-flex align-items-center gap-2 mt-2">
+                                <button type="button" class="tp-btn tp-btn-primary btn-sm" :disabled="fieldSaveState.description === 'saving'" @click="manualSaveField('description')">
+                                    <i v-if="fieldSaveState.description === 'saving'" class="fa fa-spinner fa-spin me-1"></i>
+                                    <i v-else class="fa fa-save me-1"></i> Lưu
+                                </button>
+                                <button type="button" class="tp-btn tp-btn-light btn-sm" @click="cancelEdit">
+                                    <i class="fa fa-times me-1"></i> Hủy
+                                </button>
+                                <span class="text-muted font-size-11 ms-auto"><i class="fa fa-keyboard-o me-1"></i>Esc để hủy, Enter+Shift để xuống dòng</span>
+                            </div>
+                        </template>
+                        <div v-else class="drawer-display-block" @click="startEdit('description')" title="Bấm để chỉnh sửa mô tả">
+                            <span v-if="drawerEditForm.description" v-html="drawerEditForm.description"></span>
+                            <span v-else class="text-muted font-italic">Bấm để thêm mô tả chi tiết công việc...</span>
                         </div>
                     </div>
 
@@ -509,8 +639,9 @@
                             <div
                                 v-for="child in getEpicChildTasks(selectedTaskForDetail.id)"
                                 :key="child.id"
-                                class="epic-child-row"
+                                class="epic-child-row clickable-child-row"
                                 @click="openDetailDrawer(child)"
+                                title="Bấm để xem/sửa thông tin Task này"
                             >
                                 <IssueTypeBadge :type="child.issue_type" />
                                 <span class="task-key font-size-11 me-1">{{ getTaskKey(child) }}</span>
@@ -523,7 +654,7 @@
                         </div>
                     </div>
 
-                    <!-- Task Section -->
+                    <!-- Task Section (Subtasks) -->
                     <div v-else-if="selectedTaskForDetail.issue_type !== 'subtask'" class="jira-drawer-section mb-4">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <h3 class="font-size-14 font-weight-bold m-0 text-dark">
@@ -535,42 +666,145 @@
                             <div
                                 v-for="sub in getSubtasks(selectedTaskForDetail.id)"
                                 :key="sub.id"
-                                class="epic-child-row"
+                                class="epic-child-row clickable-child-row d-flex align-items-center justify-content-between"
                             >
-                                <input
-                                    type="checkbox"
-                                    :checked="['done', 'completed'].includes(sub.status)"
-                                    @change="toggleSubtaskStatus(sub)"
-                                    class="form-check-input me-2"
-                                >
-                                <span class="text-dark flex-grow-1 text-truncate font-size-13" :style="['done', 'completed'].includes(sub.status) ? 'text-decoration: line-through; color: #94a3b8;' : ''">
-                                    {{ sub.name }}
-                                </span>
+                                <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden" @click="openDetailDrawer(sub)">
+                                    <input
+                                        type="checkbox"
+                                        :checked="['done', 'completed'].includes(sub.status)"
+                                        @click.stop
+                                        @change="toggleSubtaskStatus(sub)"
+                                        class="form-check-input"
+                                    >
+                                    <IssueTypeBadge :type="sub.issue_type || 'subtask'" />
+                                    <span class="task-key font-size-11 text-muted">{{ getTaskKey(sub) }}</span>
+                                    <span class="text-dark text-truncate font-size-13" :style="['done', 'completed'].includes(sub.status) ? 'text-decoration: line-through; color: #94a3b8;' : ''">
+                                        {{ sub.name }}
+                                    </span>
+                                </div>
                                 <StatusBadge :status="sub.status" />
                             </div>
                             <div v-if="!getSubtasks(selectedTaskForDetail.id).length" class="text-muted small p-2 text-center border rounded background-light">
                                 Chưa có sub-task nào.
                             </div>
                         </div>
+
+                        <!-- Quick Add Subtask -->
+                        <div class="d-flex gap-2 mt-2">
+                            <input
+                                type="text"
+                                v-model="newSubtaskTitleInDrawer"
+                                @keyup.enter="handleCreateSubtaskInDrawer"
+                                class="form-control form-control-sm font-size-13"
+                                placeholder="Tên sub-task mới..."
+                            />
+                            <button type="button" class="tp-btn tp-btn-primary btn-sm" @click="handleCreateSubtaskInDrawer" style="white-space: nowrap;">
+                                <i class="fa fa-plus me-1"></i> Thêm Sub-task
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Meta Details -->
                     <div class="jira-drawer-details border-top pt-3 mt-3">
-                        <div class="detail-row mb-2">
-                            <span class="detail-label">Người thực hiện:</span>
-                            <UserAvatarPill :name="selectedTaskForDetail.assignee?.name || 'Chưa gán'" />
+                        <div class="row g-2 mb-2 align-items-center">
+                            <div class="col-4 text-muted font-size-13">Người thực hiện:</div>
+                            <div class="col-8">
+                                <div class="d-flex align-items-center gap-2">
+                                    <select v-if="isEditing('assignee_id')" class="form-select form-select-sm font-size-13 flex-grow-1" v-model="drawerEditForm.assignee_id" @change="saveDrawerField('assignee_id')" @blur="cancelEdit">
+                                        <option :value="null">Chưa gán</option>
+                                        <option v-for="u in assignableUsers" :key="u.id" :value="u.id">{{ u.name }}</option>
+                                    </select>
+                                    <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('assignee_id')" title="Bấm để chỉnh sửa">
+                                        {{ displayUserName(drawerEditForm.assignee_id) }}
+                                    </span>
+                                    <span class="drawer-save-indicator" :class="getSaveStateClass('assignee_id')" :title="getSaveStateTitle('assignee_id')">
+                                        <i :class="getSaveIcon('assignee_id')"></i>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="detail-row mb-2">
-                            <span class="detail-label">Người báo cáo:</span>
-                            <span class="font-size-13 text-dark">{{ selectedTaskForDetail.reporter?.name || 'Chưa rõ' }}</span>
+                        <div class="row g-2 mb-2 align-items-center">
+                            <div class="col-4 text-muted font-size-13">Người báo cáo:</div>
+                            <div class="col-8">
+                                <div class="d-flex align-items-center gap-2">
+                                    <select v-if="isEditing('reporter_id')" class="form-select form-select-sm font-size-13 flex-grow-1" v-model="drawerEditForm.reporter_id" @change="saveDrawerField('reporter_id')" @blur="cancelEdit">
+                                        <option :value="null">Chưa rõ</option>
+                                        <option v-for="u in assignableUsers" :key="u.id" :value="u.id">{{ u.name }}</option>
+                                    </select>
+                                    <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('reporter_id')" title="Bấm để chỉnh sửa">
+                                        {{ displayUserName(drawerEditForm.reporter_id) }}
+                                    </span>
+                                    <span class="drawer-save-indicator" :class="getSaveStateClass('reporter_id')" :title="getSaveStateTitle('reporter_id')">
+                                        <i :class="getSaveIcon('reporter_id')"></i>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="detail-row mb-2">
-                            <span class="detail-label">Ngày bắt đầu:</span>
-                            <span class="font-size-13 text-dark">{{ formatDate(selectedTaskForDetail.start_date || selectedTaskForDetail.created_at) }}</span>
+                        <div class="row g-2 mb-2 align-items-center">
+                            <div class="col-4 text-muted font-size-13">Ngày bắt đầu:</div>
+                            <div class="col-8">
+                                <div class="d-flex align-items-center gap-2">
+                                    <input v-if="isEditing('start_date')" type="date" class="form-control form-control-sm font-size-13 flex-grow-1" v-model="drawerEditForm.start_date" @change="saveDrawerField('start_date')" @blur="cancelEdit" />
+                                    <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('start_date')" title="Bấm để chỉnh sửa">
+                                        {{ displayDate(drawerEditForm.start_date) }}
+                                    </span>
+                                    <span class="drawer-save-indicator" :class="getSaveStateClass('start_date')" :title="getSaveStateTitle('start_date')">
+                                        <i :class="getSaveIcon('start_date')"></i>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="detail-row mb-2">
-                            <span class="detail-label">Hạn hoàn thành:</span>
-                            <span class="font-size-13 text-dark">{{ formatDate(selectedTaskForDetail.due_date || selectedTaskForDetail.end_date) }}</span>
+                        <div class="row g-2 mb-2 align-items-center">
+                            <div class="col-4 text-muted font-size-13">Hạn hoàn thành:</div>
+                            <div class="col-8">
+                                <div class="d-flex align-items-center gap-2">
+                                    <input v-if="isEditing('due_date')" type="date" class="form-control form-control-sm font-size-13 flex-grow-1" v-model="drawerEditForm.due_date" @change="saveDrawerField('due_date')" @blur="cancelEdit" />
+                                    <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('due_date')" title="Bấm để chỉnh sửa">
+                                        {{ displayDate(drawerEditForm.due_date) }}
+                                    </span>
+                                    <span class="drawer-save-indicator" :class="getSaveStateClass('due_date')" :title="getSaveStateTitle('due_date')">
+                                        <i :class="getSaveIcon('due_date')"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments Section (CKEditor) -->
+                    <div class="jira-drawer-comments border-top pt-3 mt-4">
+                        <h3 class="font-size-14 font-weight-bold mb-3 text-dark d-flex align-items-center justify-content-between">
+                            <span><i class="fa fa-comments-o text-primary me-2"></i>Bình luận ({{ drawerComments.length }})</span>
+                            <span v-if="loadingComments" class="text-muted font-size-12"><i class="fa fa-spinner fa-spin me-1"></i>Đang tải...</span>
+                        </h3>
+
+                        <!-- List of Comments -->
+                        <div class="comments-list mb-3 pe-1" style="max-height: 280px; overflow-y: auto;">
+                            <div v-for="c in drawerComments" :key="c.id" class="comment-item p-2 mb-2 border rounded bg-light shadow-sm">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <UserAvatarPill :name="c.user?.name || 'User'" />
+                                        <span class="font-weight-bold font-size-13 text-dark">{{ c.user?.name || 'Thành viên' }}</span>
+                                    </div>
+                                    <span class="text-muted font-size-11">{{ formatCommentTime(c.created_at) }}</span>
+                                </div>
+                                <div class="comment-body font-size-13 text-dark mt-1 ps-2 border-start border-2 border-primary ms-2" v-html="c.body"></div>
+                            </div>
+                            <div v-if="!loadingComments && drawerComments.length === 0" class="text-muted small text-center p-3 border rounded background-light">
+                                Chưa có bình luận nào. Hãy gửi bình luận đầu tiên!
+                            </div>
+                        </div>
+
+                        <!-- CKEditor Input Box -->
+                        <div class="add-comment-wrapper mt-3">
+                            <label class="form-label font-size-12 font-weight-bold text-muted mb-1">Thêm bình luận mới:</label>
+                            <textarea id="timeline-drawer-comment-editor" class="form-control" rows="3" placeholder="Nhập nội dung bình luận..."></textarea>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <span class="text-muted font-size-11"><i class="fa fa-info-circle me-1"></i>Định dạng văn bản với CKEditor</span>
+                                <button type="button" class="tp-btn tp-btn-primary btn-sm" :disabled="submittingComment" @click="submitDrawerComment">
+                                    <i v-if="submittingComment" class="fa fa-spinner fa-spin me-1"></i>
+                                    <i v-else class="fa fa-paper-plane me-1"></i> Gửi bình luận
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -703,6 +937,109 @@ const ganttBodyPane = ref(null);
 
 const showDetailDrawer = ref(false);
 const selectedTaskForDetail = ref(null);
+
+const drawerEditForm = ref({
+    name: '',
+    issue_type: 'task',
+    status: 'todo',
+    priority: 'medium',
+    assignee_id: null,
+    reporter_id: null,
+    start_date: '',
+    due_date: '',
+    story_points: null,
+    description: ''
+});
+
+const drawerComments = ref([]);
+const loadingComments = ref(false);
+const submittingComment = ref(false);
+const newSubtaskTitleInDrawer = ref('');
+
+// Per-field save indicator (idle | dirty | saving | saved | error)
+const fieldSaveState = ref({});
+
+// Per-field edit mode (inline click-to-edit)
+const editingField = ref(null);
+const nameInputRef = ref(null);
+const descriptionInputRef = ref(null);
+
+function startEdit(field) {
+    editingField.value = field;
+    fieldSaveState.value = { ...fieldSaveState.value, [field]: fieldSaveState.value[field] || 'idle' };
+}
+function isEditing(field) {
+    return editingField.value === field;
+}
+function cancelEdit() {
+    editingField.value = null;
+}
+
+watch(editingField, async (newVal) => {
+    await nextTick();
+    if (newVal === 'name' && nameInputRef.value) {
+        nameInputRef.value.focus();
+        nameInputRef.value.select?.();
+    }
+    if (newVal === 'description' && descriptionInputRef.value) {
+        descriptionInputRef.value.focus();
+    }
+});
+
+function getSaveStateClass(field) {
+    const state = fieldSaveState.value[field] || 'idle';
+    return `drawer-save-state-${state}`;
+}
+function getSaveStateTitle(field) {
+    const state = fieldSaveState.value[field] || 'idle';
+    return {
+        idle: 'Chưa có thay đổi',
+        dirty: 'Có thay đổi chưa lưu — bấm để lưu',
+        saving: 'Đang lưu...',
+        saved: 'Đã lưu thành công',
+        error: 'Lỗi khi lưu — bấm để thử lại',
+    }[state];
+}
+function getSaveIcon(field) {
+    const state = fieldSaveState.value[field] || 'idle';
+    return {
+        idle: 'fa fa-pencil',
+        dirty: 'fa fa-save',
+        saving: 'fa fa-spinner fa-spin',
+        saved: 'fa fa-check',
+        error: 'fa fa-exclamation-triangle',
+    }[state];
+}
+function markFieldDirty(field) {
+    fieldSaveState.value = { ...fieldSaveState.value, [field]: 'dirty' };
+}
+function manualSaveField(field) {
+    return saveDrawerField(field, true);
+}
+
+// Display label helpers
+function displayLabel(value, fallback = 'Chưa đặt') {
+    if (value === null || value === undefined || value === '') return fallback;
+    return value;
+}
+function displayDate(value) {
+    if (!value) return 'Chưa đặt';
+    return formatDate(value);
+}
+function displayUserName(id) {
+    if (!id) return 'Chưa gán';
+    const u = assignableUsers.value.find(x => x.id == id);
+    return u ? u.name : `User #${id}`;
+}
+function displayStatusLabel(status) {
+    return ({ todo: 'Chưa làm', in_progress: 'Đang làm', done: 'Hoàn thành' })[status] || status || '—';
+}
+function displayIssueType(type) {
+    return ({ task: 'Task', bug: 'Bug', story: 'Story', epic: 'Epic', subtask: 'Sub-task' })[type] || type || '—';
+}
+function displayPriority(p) {
+    return ({ low: 'Thấp', medium: 'Trung bình', high: 'Cao / Gấp' })[p] || p || '—';
+}
 
 const showInlineEpicCreate = ref(false);
 const newEpicInlineTitle = ref('');
@@ -1132,15 +1469,268 @@ function getSubtasks(taskId) {
     return (taskList.value || []).filter(t => t.parent_id == taskId);
 }
 
-function openDetailDrawer(task) {
+function populateDrawerForm(task) {
+    if (!task) return;
+    drawerEditForm.value = {
+        name: task.name || '',
+        issue_type: task.issue_type || 'task',
+        status: task.status || 'todo',
+        priority: task.priority || 'medium',
+        assignee_id: task.assignee_id || null,
+        reporter_id: task.reporter_id || null,
+        start_date: formatDateForInput(task.start_date || task.created_at),
+        due_date: formatDateForInput(task.due_date || task.end_date),
+        story_points: task.story_points ?? null,
+        description: task.description || ''
+    };
+    fieldSaveState.value = {};
+    editingField.value = null;
+}
+
+function formatDateForInput(dateStr) {
+    if (!dateStr) return '';
+    if (typeof dateStr === 'string' && dateStr.length >= 10) {
+        return dateStr.substring(0, 10);
+    }
+    return '';
+}
+
+function formatCommentTime(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+}
+
+function getParentTask(parentId) {
+    if (!parentId) return null;
+    return (taskList.value || []).find(t => t.id == parentId);
+}
+
+async function saveDrawerField(field, manual = false) {
+    if (!selectedTaskForDetail.value) return;
+    const task = selectedTaskForDetail.value;
+    const val = drawerEditForm.value[field];
+
+    const payload = {};
+    payload[field] = val;
+
+    task[field] = val;
+    if (field === 'assignee_id') {
+        const found = assignableUsers.value.find(u => u.id == val);
+        task.assignee = found || null;
+    }
+    if (field === 'reporter_id') {
+        const found = assignableUsers.value.find(u => u.id == val);
+        task.reporter = found || null;
+    }
+
+    const targetInList = (taskList.value || []).find(t => t.id === task.id);
+    if (targetInList) {
+        targetInList[field] = val;
+        if (field === 'assignee_id') targetInList.assignee = task.assignee;
+        if (field === 'reporter_id') targetInList.reporter = task.reporter;
+    }
+
+    fieldSaveState.value = { ...fieldSaveState.value, [field]: 'saving' };
+
+    try {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const res = await fetch(`/tasks/${task.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token || '',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success && data.task) {
+            Object.assign(task, data.task);
+            if (targetInList) {
+                Object.assign(targetInList, data.task);
+            }
+            fieldSaveState.value = { ...fieldSaveState.value, [field]: 'saved' };
+            if (editingField.value === field) editingField.value = null;
+            setTimeout(() => {
+                if (fieldSaveState.value[field] === 'saved') {
+                    fieldSaveState.value = { ...fieldSaveState.value, [field]: 'idle' };
+                }
+            }, 1800);
+        } else {
+            fieldSaveState.value = { ...fieldSaveState.value, [field]: 'error' };
+        }
+    } catch (err) {
+        console.error(`Error saving field ${field}:`, err);
+        fieldSaveState.value = { ...fieldSaveState.value, [field]: 'error' };
+    }
+}
+
+async function openDetailDrawer(task) {
     if (!task || task.isVirtualGroup) return;
+
+    destroyCKEditorForComments();
+
     selectedTaskForDetail.value = task;
+    populateDrawerForm(task);
     showDetailDrawer.value = true;
+
+    await fetchDrawerComments(task.id);
+
+    await nextTick();
+    initCKEditorForComments();
 }
 
 function closeDetailDrawer() {
+    destroyCKEditorForComments();
     showDetailDrawer.value = false;
     selectedTaskForDetail.value = null;
+    drawerComments.value = [];
+    editingField.value = null;
+}
+
+async function fetchDrawerComments(taskId) {
+    loadingComments.value = true;
+    drawerComments.value = [];
+    try {
+        const res = await fetch(`/comments?commentable_id=${taskId}&commentable_type=ProjectsManager%5CTask`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
+        const data = await res.json();
+        if (data.success) {
+            drawerComments.value = data.comments || [];
+        }
+    } catch (e) {
+        console.error('Error fetching comments:', e);
+    } finally {
+        loadingComments.value = false;
+    }
+}
+
+function initCKEditorForComments() {
+    if (typeof window !== 'undefined' && window.CKEDITOR) {
+        window.CKEDITOR.config.versionCheck = false;
+        destroyCKEditorForComments();
+        const el = document.getElementById('timeline-drawer-comment-editor');
+        if (el) {
+            window.CKEDITOR.replace('timeline-drawer-comment-editor', {
+                height: 120,
+                toolbar: [
+                    { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike'] },
+                    { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Blockquote'] },
+                    { name: 'links', items: ['Link', 'Unlink'] },
+                    { name: 'styles', items: ['Format'] },
+                    { name: 'tools', items: ['Maximize'] }
+                ]
+            });
+        }
+    }
+}
+
+function destroyCKEditorForComments() {
+    if (typeof window !== 'undefined' && window.CKEDITOR && window.CKEDITOR.instances['timeline-drawer-comment-editor']) {
+        try {
+            window.CKEDITOR.instances['timeline-drawer-comment-editor'].destroy(true);
+        } catch (e) {
+            console.error('Error destroying CKEditor:', e);
+        }
+    }
+}
+
+async function submitDrawerComment() {
+    if (!selectedTaskForDetail.value) return;
+
+    let body = '';
+    if (typeof window !== 'undefined' && window.CKEDITOR && window.CKEDITOR.instances['timeline-drawer-comment-editor']) {
+        body = window.CKEDITOR.instances['timeline-drawer-comment-editor'].getData();
+    } else {
+        const el = document.getElementById('timeline-drawer-comment-editor');
+        body = el ? el.value : '';
+    }
+
+    if (!body || !body.trim() || body.trim() === '<p></p>') {
+        alert('Vui lòng nhập nội dung bình luận.');
+        return;
+    }
+
+    submittingComment.value = true;
+    try {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const res = await fetch('/comments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token || '',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                body: body,
+                commentable_type: 'ProjectsManager\\Task',
+                commentable_id: selectedTaskForDetail.value.id
+            })
+        });
+        const data = await res.json();
+        if (data.success && data.comment) {
+            drawerComments.value.unshift(data.comment);
+            if (window.CKEDITOR && window.CKEDITOR.instances['timeline-drawer-comment-editor']) {
+                window.CKEDITOR.instances['timeline-drawer-comment-editor'].setData('');
+            }
+        } else {
+            alert('Không thể lưu bình luận: ' + (data.message || 'Lỗi hệ thống'));
+        }
+    } catch (e) {
+        console.error('Error submitting comment:', e);
+        alert('Đã xảy ra lỗi khi gửi bình luận.');
+    } finally {
+        submittingComment.value = false;
+    }
+}
+
+async function handleCreateSubtaskInDrawer() {
+    if (!newSubtaskTitleInDrawer.value.trim() || !selectedTaskForDetail.value) return;
+    const title = newSubtaskTitleInDrawer.value.trim();
+    const parentId = selectedTaskForDetail.value.id;
+
+    try {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const res = await fetch('/tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token || '',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                project_id: props.project.id,
+                parent_id: parentId,
+                name: title,
+                status: 'todo',
+                issue_type: 'subtask',
+                priority: 'medium'
+            })
+        });
+
+        const data = await res.json();
+        if (data.success && data.task) {
+            taskList.value.push(data.task);
+            newSubtaskTitleInDrawer.value = '';
+        }
+    } catch (err) {
+        console.error('Error creating subtask:', err);
+    }
 }
 
 function toggleCollapse(id) {
@@ -1956,17 +2546,20 @@ onMounted(() => {
     z-index: 1050;
     display: flex;
     justify-content: flex-end;
+    overflow: hidden;
 }
 
 .jira-drawer-content {
-    width: 520px;
-    max-width: 90vw;
+    width: 720px;
+    max-width: 95vw;
     height: 100%;
     background: #ffffff;
     box-shadow: -8px 0 32px rgba(9, 30, 66, 0.25);
     display: flex;
     flex-direction: column;
     animation: slideInRight 0.25s ease-out;
+    min-width: 0;
+    overflow: hidden;
 }
 
 @keyframes slideInRight {
@@ -2000,6 +2593,8 @@ onMounted(() => {
     flex: 1;
     padding: 24px;
     overflow-y: auto;
+    overflow-x: hidden;
+    min-width: 0;
 }
 
 .jira-drawer-title {
@@ -2182,5 +2777,197 @@ onMounted(() => {
     background: #e2e8f0;
     border-color: #94a3b8;
     color: #475569;
+}
+
+.clickable-child-row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.clickable-child-row:hover {
+    background-color: #f1f5f9;
+}
+
+.text-edit-hover {
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.text-edit-hover:hover,
+.text-edit-hover:focus {
+    background-color: #ffffff !important;
+    box-shadow: inset 0 0 0 1px #0d6efd !important;
+    border-radius: 4px;
+}
+
+/* Drawer Editable Title Wrapper Fix */
+.jira-drawer-title-wrapper {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.jira-drawer-title-wrapper .form-control {
+    height: auto;
+    min-height: 38px;
+}
+
+/* Title display mode (click to edit) */
+.jira-drawer-title-display {
+    color: #172b4d;
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.3;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: text;
+    min-width: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    word-break: break-word;
+}
+
+.jira-drawer-title-display:hover {
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+/* Display mode field (click-to-edit inline value) */
+.drawer-display-field {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 5px 10px;
+    font-size: 13px;
+    color: #172b4d;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.drawer-display-field:hover {
+    background: #ffffff;
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.drawer-display-field:active {
+    background: #eff6ff;
+    border-color: #2563eb;
+}
+
+/* Display block for description */
+.drawer-display-block {
+    min-height: 60px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #172b4d;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    word-break: break-word;
+}
+
+.drawer-display-block:hover {
+    background: #ffffff;
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Per-Field Save State Indicator (icon next to editable inputs) */
+.drawer-save-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    font-size: 12px;
+    flex-shrink: 0;
+    color: #94a3b8;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    transition: all 0.18s ease;
+}
+
+.drawer-save-state-idle {
+    color: #cbd5e1;
+    background: #f8fafc;
+    border-color: #f1f5f9;
+}
+
+.drawer-save-state-dirty {
+    color: #b45309;
+    background: #fef3c7;
+    border-color: #fcd34d;
+    cursor: pointer;
+}
+
+.drawer-save-state-dirty:hover {
+    background: #fde68a;
+    color: #92400e;
+}
+
+.drawer-save-state-saving {
+    color: #1d4ed8;
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+
+.drawer-save-state-saved {
+    color: #047857;
+    background: #d1fae5;
+    border-color: #6ee7b7;
+}
+
+.drawer-save-state-error {
+    color: #b91c1c;
+    background: #fee2e2;
+    border-color: #fca5a5;
+}
+
+.drawer-save-btn {
+    cursor: pointer;
+    padding: 0;
+}
+
+.drawer-save-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Drawer section padding fix so content does not overflow drawer width */
+.jira-drawer-body .form-control,
+.jira-drawer-body .form-select {
+    max-width: 100%;
+}
+
+/* Fix Bootstrap row inside drawer — prevent horizontal scroll */
+.jira-drawer-body .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* Subtle hover affordance on editable drawer rows */
+.jira-drawer-details .form-control,
+.jira-drawer-details .form-select {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.jira-drawer-details .form-control:hover,
+.jira-drawer-details .form-select:hover,
+.jira-drawer-details .form-control:focus,
+.jira-drawer-details .form-select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
 }
 </style>
