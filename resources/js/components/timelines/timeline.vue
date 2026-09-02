@@ -125,14 +125,14 @@
                 <!-- Left Pane Table (Columns: Work | Status | Assignee) -->
                 <div class="timeline-left-pane">
                     <div class="pane-header d-flex align-items-center">
-                        <div style="width: 32px; text-align: center;">
+                        <div style="width: 24px;" class="flex-shrink-0 text-center">
                             <input type="checkbox" class="form-check-input">
                         </div>
-                        <div class="flex-grow-1 font-weight-bold" style="padding-left: 6px;">
+                        <div class="flex-grow-1 font-weight-bold text-truncate me-2" style="min-width: 0; padding-left: 6px;">
                             <i class="fa fa-chevron-right me-1 text-muted font-size-11"></i> Work
                         </div>
-                        <div style="width: 110px;" class="font-weight-bold">Status</div>
-                        <div style="width: 120px;" class="font-weight-bold">Assignee</div>
+                        <div style="width: 110px;" class="flex-shrink-0 font-weight-bold text-center">Status</div>
+                        <div style="width: 70px;" class="flex-shrink-0 font-weight-bold text-center">Assignee</div>
                     </div>
 
                     <div class="pane-body" ref="leftPaneBody" @scroll="syncVerticalScroll('left')">
@@ -143,65 +143,133 @@
                                 class="timeline-task-row"
                                 :class="[
                                     `level-${task.level || 0}`,
-                                    { 'is-epic': task.issue_type === 'epic', 'is-virtual': task.isVirtualGroup, 'is-selected': selectedTaskForDetail?.id === task.id }
+                                    {
+                                        'is-epic': task.issue_type === 'epic',
+                                        'is-virtual': task.isVirtualGroup,
+                                        'is-inline-row': task.isInlineTaskRow,
+                                        'is-selected': selectedTaskForDetail?.id === task.id
+                                    }
                                 ]"
-                                @click="openDetailDrawer(task)"
+                                @click="!task.isInlineTaskRow && openDetailDrawer(task)"
                                 @mouseenter="hoveredTaskId = task.id"
                                 @mouseleave="hoveredTaskId = null"
                             >
-                                <!-- Checkbox column -->
-                                <div style="width: 24px; text-align: center;" @click.stop>
-                                    <input type="checkbox" class="form-check-input" v-if="!task.isVirtualGroup">
-                                </div>
-
-                                <!-- Work Column -->
-                                <div class="d-flex align-items-center flex-grow-1 text-truncate" :style="{ paddingLeft: (task.level * 16) + 'px' }">
-                                    <button
-                                        v-if="hasChildren(task)"
-                                        @click.stop="toggleCollapse(task.id)"
-                                        class="collapse-btn"
-                                    >
-                                        <i :class="['fa', collapsedSet.has(String(task.id)) ? 'fa-chevron-right' : 'fa-chevron-down']"></i>
-                                    </button>
-                                    <span v-else class="tree-leaf-spacer"></span>
-
-                                    <!-- Issue Type Icon -->
-                                    <i v-if="task.isVirtualGroup" class="fa fa-folder-open text-muted me-1"></i>
-                                    <i v-else-if="task.issue_type === 'epic'" class="fa fa-bolt text-purple me-1 font-size-13"></i>
-                                    <i v-else-if="task.issue_type === 'story'" class="fa fa-bookmark text-success me-1 font-size-12"></i>
-                                    <i v-else-if="task.issue_type === 'bug'" class="fa fa-bug text-danger me-1 font-size-12"></i>
-                                    <i v-else-if="task.issue_type === 'subtask'" class="fa fa-level-up fa-rotate-90 text-info font-size-11 me-1"></i>
-                                    <i v-else class="fa fa-check-square-o text-primary me-1 font-size-12"></i>
-
-                                    <!-- Issue Key Badge -->
-                                    <span v-if="!task.isVirtualGroup" class="task-key-blue me-1">{{ getTaskKey(task) }}</span>
-
-                                    <!-- Single Line Task Name -->
-                                    <span
-                                        class="task-name-text text-truncate"
-                                        :class="{ 'font-weight-bold': task.issue_type === 'epic' || task.isVirtualGroup }"
-                                        :title="task.name"
-                                    >
-                                        {{ task.name }}
-                                    </span>
-                                </div>
-
-                                <!-- Status Column -->
-                                <div style="width: 110px;" class="flex-shrink-0" @click.stop>
-                                    <div v-if="task.issue_type === 'epic'" class="epic-status-segment-bar">
-                                        <div class="seg-in-progress" :style="{ width: getEpicSegmentPercent(task, 'in_progress') + '%' }"></div>
-                                        <div class="seg-done" :style="{ width: getEpicSegmentPercent(task, 'done') + '%' }"></div>
+                                <!-- Inline Creation Row under Epic -->
+                                <template v-if="task.isInlineTaskRow">
+                                    <div style="width: 24px;" class="flex-shrink-0"></div>
+                                    <div class="d-flex align-items-center flex-grow-1 gap-2 me-2" style="min-width: 0;" :style="{ paddingLeft: (task.level * 14) + 'px' }" @click.stop>
+                                        <i class="fa fa-plus-circle text-primary font-size-13 flex-shrink-0"></i>
+                                        <input
+                                            ref="inlineTaskInput"
+                                            type="text"
+                                            v-model="inlineTaskTitle"
+                                            class="edit-input input-sm flex-grow-1"
+                                            style="height: 28px; font-size: 12.5px; border-radius: 4px; min-width: 0;"
+                                            placeholder="Nhập tên task mới và nhấn Enter..."
+                                            @keyup.enter="handleCreateTaskForEpic(task.parentEpicId)"
+                                            @keyup.esc="inlineCreateEpicId = null"
+                                        >
+                                        <button type="button" class="tp-btn tp-btn-primary btn-xs flex-shrink-0" style="height: 28px; padding: 0 10px; font-size: 11px;" @click="handleCreateTaskForEpic(task.parentEpicId)">Tạo Task</button>
+                                        <button type="button" class="tp-btn tp-btn-light btn-xs flex-shrink-0" style="height: 28px; padding: 0 8px;" @click="inlineCreateEpicId = null"><i class="fa fa-times"></i></button>
                                     </div>
-                                    <StatusBadge v-else-if="!task.isVirtualGroup" :status="task.status || 'todo'" />
-                                </div>
+                                    <div style="width: 110px;" class="flex-shrink-0"></div>
+                                    <div style="width: 70px;" class="flex-shrink-0"></div>
+                                </template>
 
-                                <!-- Assignee Column -->
-                                <div style="width: 120px;" class="flex-shrink-0 text-truncate" @click.stop>
-                                    <UserAvatarPill v-if="!task.isVirtualGroup && task.assignee" :name="task.assignee ? task.assignee.name : ''" />
-                                    <span v-else-if="!task.isVirtualGroup" class="text-muted small">
-                                        <i class="fa fa-user-o me-1"></i> Unassigned
-                                    </span>
-                                </div>
+                                <!-- Standard Task / Epic Row -->
+                                <template v-else>
+                                    <!-- Checkbox column -->
+                                    <div style="width: 24px;" class="flex-shrink-0 text-center" @click.stop>
+                                        <input type="checkbox" class="form-check-input" v-if="!task.isVirtualGroup">
+                                    </div>
+
+                                    <!-- Work Column -->
+                                    <div class="d-flex align-items-center flex-grow-1 text-truncate me-2" style="min-width: 0; overflow: hidden;" :style="{ paddingLeft: (task.level * 14) + 'px' }">
+                                        <button
+                                            v-if="hasChildren(task)"
+                                            @click.stop="toggleCollapse(task.id)"
+                                            class="collapse-btn flex-shrink-0"
+                                        >
+                                            <i :class="['fa', collapsedSet.has(String(task.id)) ? 'fa-chevron-right' : 'fa-chevron-down']"></i>
+                                        </button>
+                                        <span v-else class="tree-leaf-spacer flex-shrink-0"></span>
+
+                                        <!-- Issue Type Icon -->
+                                        <i v-if="task.isVirtualGroup" class="fa fa-folder-open text-muted me-1 flex-shrink-0"></i>
+                                        <i v-else-if="task.issue_type === 'epic'" class="fa fa-bolt text-purple me-1 font-size-13 flex-shrink-0"></i>
+                                        <i v-else-if="task.issue_type === 'story'" class="fa fa-bookmark text-success me-1 font-size-12 flex-shrink-0"></i>
+                                        <i v-else-if="task.issue_type === 'bug'" class="fa fa-bug text-danger me-1 font-size-12 flex-shrink-0"></i>
+                                        <i v-else-if="task.issue_type === 'subtask'" class="fa fa-level-up fa-rotate-90 text-info font-size-11 me-1 flex-shrink-0"></i>
+                                        <i v-else class="fa fa-check-square-o text-primary me-1 font-size-12 flex-shrink-0"></i>
+
+                                        <!-- Issue Key Badge -->
+                                        <span v-if="!task.isVirtualGroup" class="task-key-blue me-1 flex-shrink-0">{{ getTaskKey(task) }}</span>
+
+                                        <!-- Single Line Task Name -->
+                                        <span
+                                            class="task-name-text text-truncate flex-grow-1"
+                                            style="min-width: 0;"
+                                            :class="{ 'font-weight-bold': task.issue_type === 'epic' || task.isVirtualGroup }"
+                                            :title="task.name"
+                                        >
+                                            {{ task.name }}
+                                        </span>
+
+                                        <!-- Plus Icon for Epic to Create Task -->
+                                        <button
+                                            v-if="task.issue_type === 'epic'"
+                                            type="button"
+                                            class="epic-quick-add-btn ms-1 flex-shrink-0"
+                                            title="Tạo task mới thuộc Epic này"
+                                            @click.stop="toggleInlineTaskForEpic(task.id)"
+                                        >
+                                            <i class="fa fa-plus"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Status Column: Interactive Inline Select -->
+                                    <div style="width: 110px;" class="flex-shrink-0 d-flex justify-content-center align-items-center" @click.stop>
+                                        <div v-if="task.issue_type === 'epic'" class="epic-status-segment-bar mx-auto">
+                                            <div class="seg-in-progress" :style="{ width: getEpicSegmentPercent(task, 'in_progress') + '%' }"></div>
+                                            <div class="seg-done" :style="{ width: getEpicSegmentPercent(task, 'done') + '%' }"></div>
+                                        </div>
+                                        <div v-else-if="!task.isVirtualGroup" class="status-dropdown-wrapper">
+                                            <select
+                                                class="timeline-status-select"
+                                                :class="`status-select-${task.status || 'todo'}`"
+                                                :value="task.status || 'todo'"
+                                                @change="handleStatusChange(task, $event.target.value)"
+                                                title="Bấm để thay đổi trạng thái"
+                                            >
+                                                <option value="todo">CẦN LÀM</option>
+                                                <option value="in_progress">ĐANG LÀM</option>
+                                                <option value="done">HOÀN THÀNH</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Assignee Column: Interactive Inline User Select -->
+                                    <div style="width: 70px;" class="flex-shrink-0 d-flex justify-content-center align-items-center" @click.stop>
+                                        <template v-if="!task.isVirtualGroup && task.issue_type !== 'epic'">
+                                            <div class="assignee-select-wrapper" :title="task.assignee ? `Người thực hiện: ${task.assignee.name} (Bấm để thay đổi)` : 'Chưa phân công (Bấm để chọn)'">
+                                                <select
+                                                    class="timeline-assignee-select"
+                                                    :value="task.assignee_id || ''"
+                                                    @change="handleAssigneeChange(task, $event.target.value)"
+                                                >
+                                                    <option value="">- Chưa phân công -</option>
+                                                    <option v-for="user in assignableUsers" :key="user.id" :value="user.id">
+                                                        {{ user.name }}
+                                                    </option>
+                                                </select>
+                                                <div class="assignee-pill-overlay">
+                                                    <UserAvatarPill v-if="task.assignee" :name="task.assignee.name" :only-avatar="true" />
+                                                    <span v-else class="unassigned-avatar-circle">?</span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
                             </div>
                         </template>
                         <div v-else class="timeline-empty-left">
@@ -287,15 +355,26 @@
                                     :class="{ 'is-hovered': hoveredTaskId === task.id }"
                                 >
                                     <div
-                                        v-if="!task.isVirtualGroup"
+                                        v-if="!task.isVirtualGroup && !task.isInlineTaskRow"
                                         class="gantt-bar"
-                                        :class="[`bar-status-${task.status || 'todo'}`, `bar-type-${task.issue_type || 'task'}`]"
+                                        :class="[
+                                            `bar-status-${task.status || 'todo'}`,
+                                            `bar-type-${task.issue_type || 'task'}`,
+                                            { 'is-dragging': activeDragTask?.id === task.id }
+                                        ]"
                                         :style="getBarStyle(task)"
                                         @mouseenter="hoveredTaskId = task.id"
                                         @mouseleave="hoveredTaskId = null"
-                                        @mousedown="handleBarMouseDown($event, task)"
-                                        @click.stop="openDetailDrawer(task)"
+                                        @mousedown="handleBarMouseDown($event, task, 'move')"
+                                        @click.stop="handleTaskClick(task)"
                                     >
+                                        <!-- Left Drag Resize Handle -->
+                                        <div
+                                            class="gantt-resize-handle gantt-resize-handle-left"
+                                            title="Kéo để thay đổi ngày bắt đầu"
+                                            @mousedown.stop="handleBarMouseDown($event, task, 'left')"
+                                        ></div>
+
                                         <!-- Progress fill inside Epic bar -->
                                         <div
                                             v-if="task.issue_type === 'epic'"
@@ -308,11 +387,21 @@
                                             {{ getTaskKey(task) }} - {{ task.name }}
                                         </span>
 
-                                        <!-- Drag Resize Handle -->
-                                        <div class="gantt-resize-handle" title="Kéo để thay đổi hạn hoàn thành"></div>
+                                        <!-- Live Floating Badge during Drag -->
+                                        <div v-if="activeDragTask?.id === task.id" class="gantt-drag-live-badge shadow-lg">
+                                            <i class="fa fa-calendar-check-o me-1"></i>
+                                            {{ getLiveDragDates(task) }}
+                                        </div>
 
-                                        <!-- Tooltip Hover -->
-                                        <div class="gantt-tooltip">
+                                        <!-- Right Drag Resize Handle -->
+                                        <div
+                                            class="gantt-resize-handle gantt-resize-handle-right"
+                                            title="Kéo để thay đổi hạn hoàn thành"
+                                            @mousedown.stop="handleBarMouseDown($event, task, 'right')"
+                                        ></div>
+
+                                        <!-- Tooltip Hover (when not dragging) -->
+                                        <div v-if="activeDragTask?.id !== task.id" class="gantt-tooltip">
                                             <div class="tooltip-title">{{ getTaskKey(task) }} - {{ task.name }}</div>
                                             <div class="tooltip-meta">
                                                 <div><i class="fa fa-calendar me-1"></i> {{ formatDate(task.start_date || task.created_at) }} → {{ formatDate(task.due_date || task.end_date) }}</div>
@@ -501,7 +590,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import StatusBadge from '../common/StatusBadge.vue';
 import PriorityBadge from '../common/PriorityBadge.vue';
 import IssueTypeBadge from '../common/IssueTypeBadge.vue';
@@ -515,6 +604,89 @@ const props = defineProps({
 
 // Reactive Task List from DB
 const taskList = ref([...props.tasks]);
+
+// List of assignable users for inline assignee picker
+const assignableUsers = computed(() => {
+    const list = [];
+    const map = new Map();
+
+    if (props.project?.users && Array.isArray(props.project.users)) {
+        props.project.users.forEach(u => {
+            if (u && u.id && !map.has(u.id)) {
+                map.set(u.id, u);
+                list.push(u);
+            }
+        });
+    }
+
+    (taskList.value || []).forEach(t => {
+        if (t.assignee && t.assignee.id && !map.has(t.assignee.id)) {
+            map.set(t.assignee.id, t.assignee);
+            list.push(t.assignee);
+        }
+    });
+
+    return list;
+});
+
+async function handleStatusChange(task, newStatus) {
+    if (!task || task.status === newStatus) return;
+    const oldStatus = task.status;
+    task.status = newStatus;
+
+    try {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        await fetch(`/tasks/${task.id}/move`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token || '',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+    } catch (err) {
+        console.error('Error changing task status:', err);
+        task.status = oldStatus;
+    }
+}
+
+async function handleAssigneeChange(task, newAssigneeId) {
+    if (!task) return;
+    const oldAssigneeId = task.assignee_id;
+    const oldAssignee = task.assignee;
+
+    const assigneeIdNum = newAssigneeId ? parseInt(newAssigneeId, 10) : null;
+    task.assignee_id = assigneeIdNum;
+
+    if (assigneeIdNum) {
+        const found = assignableUsers.value.find(u => u.id === assigneeIdNum);
+        task.assignee = found || null;
+    } else {
+        task.assignee = null;
+    }
+
+    try {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        await fetch(`/tasks/${task.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token || '',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                assignee_id: assigneeIdNum
+            })
+        });
+    } catch (err) {
+        console.error('Error updating task assignee:', err);
+        task.assignee_id = oldAssigneeId;
+        task.assignee = oldAssignee;
+    }
+}
 
 const searchQuery = ref('');
 const filterEpic = ref('');
@@ -534,6 +706,65 @@ const selectedTaskForDetail = ref(null);
 
 const showInlineEpicCreate = ref(false);
 const newEpicInlineTitle = ref('');
+
+const inlineCreateEpicId = ref(null);
+const inlineTaskTitle = ref('');
+const inlineTaskInput = ref(null);
+
+watch(inlineCreateEpicId, async (newVal) => {
+    if (newVal) {
+        await nextTick();
+        inlineTaskInput.value?.focus();
+    }
+});
+
+function toggleInlineTaskForEpic(epicId) {
+    if (inlineCreateEpicId.value === epicId) {
+        inlineCreateEpicId.value = null;
+    } else {
+        inlineCreateEpicId.value = epicId;
+        inlineTaskTitle.value = '';
+        collapsedSet.value.delete(String(epicId));
+    }
+}
+
+async function handleCreateTaskForEpic(epicId) {
+    if (!inlineTaskTitle.value.trim()) return;
+    const title = inlineTaskTitle.value.trim();
+
+    try {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const res = await fetch('/tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token || '',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                project_id: props.project.id,
+                parent_id: epicId,
+                name: title,
+                status: 'todo',
+                issue_type: 'task',
+                priority: 'medium'
+            })
+        });
+
+        const data = await res.json();
+        if (data.success || data.id || data.task) {
+            const newTask = data.task || data;
+            taskList.value.push(newTask);
+            inlineTaskTitle.value = '';
+            inlineCreateEpicId.value = null;
+        } else {
+            alert('Không thể tạo Task mới.');
+        }
+    } catch (err) {
+        console.error('Error creating Task for Epic:', err);
+    }
+}
 
 const epicOptions = computed(() => {
     return (taskList.value || []).filter(t => t.issue_type === 'epic');
@@ -656,6 +887,16 @@ const visibleRows = computed(() => {
     function traverse(nodes) {
         nodes.forEach(node => {
             list.push(node);
+
+            if (inlineCreateEpicId.value === node.id) {
+                list.push({
+                    id: `inline-create-${node.id}`,
+                    isInlineTaskRow: true,
+                    parentEpicId: node.id,
+                    level: (node.level || 0) + 1
+                });
+            }
+
             const isCollapsed = collapsedSet.value.has(String(node.id));
             if (!isCollapsed && node.children && node.children.length > 0) {
                 traverse(node.children);
@@ -787,23 +1028,81 @@ function getBarStyle(task) {
     const startRange = timeRange.value.start.getTime();
     const totalMs = timeRange.value.totalMs;
 
-    const taskStart = new Date(task.start_date || task.created_at || Date.now()).getTime();
+    let taskStart = new Date(task.start_date || task.created_at || Date.now()).getTime();
     let taskEnd = new Date(task.due_date || task.end_date || taskStart + 7 * 86400000).getTime();
-
     if (taskEnd <= taskStart) {
         taskEnd = taskStart + 7 * 86400000;
+    }
+
+    if (activeDragTask.value && activeDragTask.value.id === task.id) {
+        const canvasWidth = ganttBodyPane.value ? ganttBodyPane.value.scrollWidth : 1000;
+        const deltaMs = (currentDragPx.value / canvasWidth) * totalMs;
+        const DAY_MS = 86400000;
+
+        if (dragMode === 'left') {
+            taskStart = Math.min(initialStartMs + deltaMs, initialDueMs - DAY_MS);
+            taskEnd = initialDueMs;
+        } else if (dragMode === 'right') {
+            taskStart = initialStartMs;
+            taskEnd = Math.max(initialDueMs + deltaMs, initialStartMs + DAY_MS);
+        } else {
+            taskStart = initialStartMs + deltaMs;
+            taskEnd = initialDueMs + deltaMs;
+        }
+
+        let left = ((taskStart - startRange) / totalMs) * 100;
+        let width = ((taskEnd - taskStart) / totalMs) * 100;
+
+        left = Math.max(0, Math.min(95, left));
+        width = Math.max(2, Math.min(100 - left, width));
+
+        return {
+            left: `${left.toFixed(3)}%`,
+            width: `${width.toFixed(3)}%`,
+            transition: 'none',
+            willChange: 'left, width',
+        };
     }
 
     let left = ((taskStart - startRange) / totalMs) * 100;
     let width = ((taskEnd - taskStart) / totalMs) * 100;
 
     left = Math.max(0, Math.min(95, left));
-    width = Math.max(3, Math.min(100 - left, width));
+    width = Math.max(2, Math.min(100 - left, width));
 
     return {
         left: `${left.toFixed(2)}%`,
         width: `${width.toFixed(2)}%`,
     };
+}
+
+function getLiveDragDates(task) {
+    if (!activeDragTask.value || activeDragTask.value.id !== task.id) {
+        return `${formatDate(task.start_date || task.created_at)} → ${formatDate(task.due_date || task.end_date)}`;
+    }
+
+    const totalMs = timeRange.value.totalMs;
+    const canvasWidth = ganttBodyPane.value ? ganttBodyPane.value.scrollWidth : 1000;
+    const deltaMs = (currentDragPx.value / canvasWidth) * totalMs;
+    const DAY_MS = 86400000;
+
+    let sMs = initialStartMs;
+    let dMs = initialDueMs;
+
+    if (dragMode === 'left') {
+        sMs = Math.min(initialStartMs + deltaMs, initialDueMs - DAY_MS);
+    } else if (dragMode === 'right') {
+        dMs = Math.max(initialDueMs + deltaMs, initialStartMs + DAY_MS);
+    } else {
+        sMs = initialStartMs + deltaMs;
+        dMs = initialDueMs + deltaMs;
+    }
+
+    const sStr = formatDate(new Date(sMs).toISOString().split('T')[0]);
+    const dStr = formatDate(new Date(dMs).toISOString().split('T')[0]);
+
+    const durationDays = Math.max(1, Math.round((dMs - sMs) / DAY_MS));
+    return `${sStr} → ${dStr} (${durationDays} ngày)`;
 }
 
 function getEpicProgress(epicTask) {
@@ -902,67 +1201,133 @@ async function handleCreateInlineEpic() {
 }
 
 // Drag & Resize Gantt Bar Handlers
-let activeDragTask = null;
-let isResizing = false;
-let startMouseX = 0;
+const activeDragTask = ref(null);
+const currentDragPx = ref(0);
+let dragMode = 'move'; // 'move', 'left', 'right'
+let initialMouseX = 0;
+let initialStartMs = 0;
+let initialDueMs = 0;
+let hasDragged = false;
+let animFrameId = null;
 
-function handleBarMouseDown(event, task) {
+function handleBarMouseDown(event, task, mode = 'move') {
     if (task.isVirtualGroup) return;
     event.stopPropagation();
 
-    isResizing = event.target.classList.contains('gantt-resize-handle');
-    activeDragTask = task;
-    startMouseX = event.clientX;
+    if (event.target.classList.contains('gantt-resize-handle-left')) {
+        dragMode = 'left';
+    } else if (event.target.classList.contains('gantt-resize-handle-right')) {
+        dragMode = 'right';
+    } else {
+        dragMode = mode;
+    }
+
+    activeDragTask.value = task;
+    currentDragPx.value = 0;
+    initialMouseX = event.clientX;
+    hasDragged = false;
+
+    const startDateObj = new Date(task.start_date || task.created_at || Date.now());
+    initialStartMs = isNaN(startDateObj.getTime()) ? Date.now() : startDateObj.getTime();
+
+    const dueDateObj = new Date(task.due_date || task.end_date || initialStartMs + 7 * 86400000);
+    initialDueMs = isNaN(dueDateObj.getTime()) ? initialStartMs + 7 * 86400000 : dueDateObj.getTime();
+
+    document.body.style.userSelect = 'none';
+    if (dragMode === 'move') {
+        document.body.style.cursor = 'grabbing';
+    } else {
+        document.body.style.cursor = 'col-resize';
+    }
 
     window.addEventListener('mousemove', handleBarMouseMove);
     window.addEventListener('mouseup', handleBarMouseUp);
 }
 
 function handleBarMouseMove(event) {
-    if (!activeDragTask) return;
-    const deltaX = event.clientX - startMouseX;
-    const canvasWidth = ganttBodyPane.value ? ganttBodyPane.value.scrollWidth : 1000;
-    const deltaMs = (deltaX / canvasWidth) * timeRange.value.totalMs;
+    if (!activeDragTask.value) return;
+    const deltaX = event.clientX - initialMouseX;
 
-    if (isResizing) {
-        const currentEnd = new Date(activeDragTask.due_date || activeDragTask.end_date || Date.now()).getTime();
-        activeDragTask.due_date = new Date(currentEnd + deltaMs).toISOString().split('T')[0];
-    } else {
-        const currentStart = new Date(activeDragTask.start_date || activeDragTask.created_at || Date.now()).getTime();
-        const currentEnd = new Date(activeDragTask.due_date || activeDragTask.end_date || currentStart + 7 * 86400000).getTime();
-
-        activeDragTask.start_date = new Date(currentStart + deltaMs).toISOString().split('T')[0];
-        activeDragTask.due_date = new Date(currentEnd + deltaMs).toISOString().split('T')[0];
+    if (Math.abs(deltaX) > 3) {
+        hasDragged = true;
     }
-    startMouseX = event.clientX;
+
+    if (animFrameId) cancelAnimationFrame(animFrameId);
+    animFrameId = requestAnimationFrame(() => {
+        currentDragPx.value = deltaX;
+    });
 }
 
 async function handleBarMouseUp() {
     window.removeEventListener('mousemove', handleBarMouseMove);
     window.removeEventListener('mouseup', handleBarMouseUp);
 
-    if (!activeDragTask) return;
-    const taskToSave = activeDragTask;
-    activeDragTask = null;
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
 
-    try {
-        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        await fetch(`/tasks/${taskToSave.id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': token || '',
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                start_date: taskToSave.start_date,
-                due_date: taskToSave.due_date
-            })
-        });
-    } catch (err) {
-        console.error('Error updating task dates:', err);
+    if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
     }
+
+    if (!activeDragTask.value) return;
+    const taskToSave = activeDragTask.value;
+    const didDrag = hasDragged;
+
+    const totalMs = timeRange.value.totalMs;
+    const canvasWidth = ganttBodyPane.value ? ganttBodyPane.value.scrollWidth : 1000;
+    const deltaMs = (currentDragPx.value / canvasWidth) * totalMs;
+    const DAY_MS = 86400000;
+
+    let finalStartMs = initialStartMs;
+    let finalDueMs = initialDueMs;
+
+    if (dragMode === 'left') {
+        finalStartMs = Math.min(initialStartMs + deltaMs, initialDueMs - DAY_MS);
+    } else if (dragMode === 'right') {
+        finalDueMs = Math.max(initialDueMs + deltaMs, initialStartMs + DAY_MS);
+    } else {
+        finalStartMs = initialStartMs + deltaMs;
+        finalDueMs = initialDueMs + deltaMs;
+    }
+
+    taskToSave.start_date = new Date(finalStartMs).toISOString().split('T')[0];
+    taskToSave.due_date = new Date(finalDueMs).toISOString().split('T')[0];
+    taskToSave.end_date = taskToSave.due_date;
+
+    currentDragPx.value = 0;
+    activeDragTask.value = null;
+    dragMode = 'move';
+
+    if (didDrag) {
+        try {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            await fetch(`/tasks/${taskToSave.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token || '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    start_date: taskToSave.start_date,
+                    due_date: taskToSave.due_date,
+                    end_date: taskToSave.due_date
+                })
+            });
+        } catch (err) {
+            console.error('Error updating task dates on backend:', err);
+        }
+    }
+}
+
+function handleTaskClick(task) {
+    if (hasDragged) {
+        hasDragged = false;
+        return;
+    }
+    openDetailDrawer(task);
 }
 
 async function toggleSubtaskStatus(subtask) {
@@ -1363,13 +1728,22 @@ onMounted(() => {
     padding: 0 8px;
     cursor: grab;
     box-shadow: 0 1px 3px rgba(9, 30, 66, 0.1);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
     user-select: none;
-    overflow: hidden;
+    overflow: visible;
 }
 
-.gantt-bar:active {
-    cursor: grabbing;
+.gantt-bar:hover {
+    box-shadow: 0 3px 8px rgba(9, 30, 66, 0.2);
+    z-index: 20 !important;
+}
+
+.gantt-bar.is-dragging {
+    cursor: grabbing !important;
+    box-shadow: 0 8px 22px rgba(37, 99, 235, 0.45) !important;
+    z-index: 100 !important;
+    transform: scaleY(1.06);
+    outline: 2px solid #ffffff;
 }
 
 .bar-type-epic {
@@ -1382,15 +1756,77 @@ onMounted(() => {
 .bar-status-in_progress { background: #388bff; }
 .bar-status-todo { background: #a5adba; }
 
+/* Left & Right Drag Handles */
 .gantt-resize-handle {
     position: absolute;
-    right: 0;
     top: 0;
     bottom: 0;
-    width: 8px;
-    cursor: e-resize;
-    background: rgba(255, 255, 255, 0.4);
-    z-index: 10;
+    width: 12px;
+    z-index: 25;
+    transition: background 0.15s ease, opacity 0.15s ease;
+    opacity: 0.7;
+}
+
+.gantt-resize-handle-left {
+    left: 0;
+    cursor: col-resize;
+    border-radius: 6px 0 0 6px;
+}
+
+.gantt-resize-handle-right {
+    right: 0;
+    cursor: col-resize;
+    border-radius: 0 6px 6px 0;
+}
+
+.gantt-resize-handle:hover {
+    background: rgba(255, 255, 255, 0.55);
+    opacity: 1;
+}
+
+/* Live Floating Drag Badge */
+.gantt-drag-live-badge {
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a;
+    color: #ffffff;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.4);
+    z-index: 150;
+    pointer-events: none;
+    border: 1px solid #388bff;
+}
+
+/* Floating Toast Notification */
+.timeline-toast-notification {
+    position: fixed;
+    top: 70px;
+    right: 24px;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    border: 1px solid #334155;
+}
+
+.fade-enter-active, .fade-leave-active {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+    opacity: 0;
+    transform: translateY(-10px);
 }
 
 .gantt-bar-progress {
@@ -1620,5 +2056,131 @@ onMounted(() => {
     background: #f4f5f7;
     display: flex;
     justify-content: flex-end;
+}
+
+.epic-quick-add-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    border: 1px dashed #8b5cf6;
+    background: #f5f3ff;
+    color: #7c3aed;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 0;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.epic-quick-add-btn:hover {
+    background: #7c3aed;
+    color: #ffffff !important;
+    border-style: solid;
+    transform: scale(1.08);
+}
+
+.timeline-task-row.is-inline-row {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* Status Select Dropdown Badge */
+.status-dropdown-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeline-status-select {
+    border: none;
+    border-radius: 12px;
+    padding: 3px 18px 3px 10px;
+    font-size: 10.5px;
+    font-weight: 700;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 7px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+    transition: transform 0.15s ease, filter 0.15s ease;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.timeline-status-select:hover {
+    filter: brightness(0.92);
+    transform: scale(1.05);
+}
+
+.status-select-todo {
+    background-color: #6c757d;
+    color: #ffffff;
+}
+
+.status-select-in_progress {
+    background-color: #0d6efd;
+    color: #ffffff;
+}
+
+.status-select-done {
+    background-color: #198754;
+    color: #ffffff;
+}
+
+/* Assignee Select Wrapper & Overlay */
+.assignee-select-wrapper {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.timeline-assignee-select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.assignee-pill-overlay {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.unassigned-avatar-circle {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed #cbd5e1;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.assignee-select-wrapper:hover .unassigned-avatar-circle {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+    color: #475569;
 }
 </style>
