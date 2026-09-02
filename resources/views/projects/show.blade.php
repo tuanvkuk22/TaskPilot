@@ -15,6 +15,7 @@
         project: @json($project),
         tasks: @json($project->tasks),
         comments: @json($comments),
+        activities: @json($activities),
     };
 </script>
 <script type="module" src="{{ asset('build/assets/project-dashboard.js') }}?v={{ file_exists(public_path('build/assets/project-dashboard.js')) ? filemtime(public_path('build/assets/project-dashboard.js')) : time() }}"></script>

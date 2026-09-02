@@ -60,98 +60,11 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(1);
-(function webpackMissingModule() { throw new Error("Cannot find module \"/home/tuantn1807/project/TaskPilot/resources/sass/app.scss\""); }());
-
-
-/***/ }),
-/* 1 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-throw new Error("Cannot find module \"vue\"");
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_edit_shared_css__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_edit_shared_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__css_edit_shared_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__components_ProjectCreate_vue__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__components_ProjectCreate_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__components_ProjectCreate_vue__);
-
-
-
-
-var d = window.projectCreateData || {};
-
-var app = Object(__WEBPACK_IMPORTED_MODULE_0_vue__["createApp"])(__WEBPACK_IMPORTED_MODULE_2__components_ProjectCreate_vue__["default"], {
-    companies: d.companies || [],
-    categories: d.categories || [],
-    teams: d.teams || [],
-    projectCodePreview: d.project_code_preview || '',
-    companyId: d.company_id || null,
-    errors: d.errors || {},
-    old: d.old || {},
-    storeUrl: d.store_url || '/projects',
-    categoryStoreUrl: d.category_store_url || '',
-    companyStoreUrl: d.company_store_url || '',
-    csrfToken: d.csrf_token || '',
-    projectsIndexUrl: d.projects_index_url || '/projects'
-});
-
-app.mount('#project-create-app');
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(3);
-if(typeof content === 'string') content = [[module.i, content, '']];
-// Prepare cssTransformation
-var transform;
-
-var options = {}
-options.transform = transform
-// add the styles to the DOM
-var update = __webpack_require__(5)(content, options);
-if(content.locals) module.exports = content.locals;
-// Hot Module Replacement
-if(false) {
-	// When the styles change, update the <style> tags
-	if(!content.locals) {
-		module.hot.accept("!!../../node_modules/css-loader/index.js!./edit-shared.css", function() {
-			var newContent = require("!!../../node_modules/css-loader/index.js!./edit-shared.css");
-			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-			update(newContent);
-		});
-	}
-	// When the module is disposed, remove the <style> tags
-	module.hot.dispose(function() { update(); });
-}
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(4)(false);
-// imports
-exports.push([module.i, "@import url(https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap);", ""]);
-
-// module
-exports.push([module.i, ".project-edit-form,\n.project-create-form {\n    max-width: 1200px;\n    max-height: 90vh;\n    overflow-y: auto;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-grid {\n    display: grid;\n    grid-template-columns: 1fr 380px;\n    gap: 24px;\n    align-items: stretch;\n}\n\n.edit-col {\n    display: flex;\n    flex-direction: column;\n    gap: 20px;\n    height: 100%;\n}\n\n.edit-card {\n    background: #fff;\n    border: 1px solid #e2e8f0;\n    border-radius: 12px;\n    box-shadow: 0 1px 3px rgba(0,0,0,0.04);\n    overflow: hidden;\n    display: flex;\n    flex-direction: column;\n}\n\n.edit-col:first-child .edit-card {\n    flex: 1;\n}\n\n.edit-card-header {\n    padding: 20px 24px;\n    border-bottom: 1px solid #e2e8f0;\n    background: #f8fafc;\n    flex-shrink: 0;\n}\n\n.edit-card-title {\n    margin: 0;\n    font-size: 14px;\n    font-weight: 500;\n    color: #172033;\n    display: flex;\n    align-items: center;\n    gap: 8px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-card-title i {\n    color: #2563eb;\n    font-size: 14px;\n}\n\n.edit-card-desc {\n    margin: 4px 0 0;\n    font-size: 12px;\n    color: #64748b;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-card-body {\n    padding: 24px;\n    flex: 1;\n}\n\n.edit-card-actions {\n    background: #fff;\n    flex-shrink: 0;\n}\n\n.edit-field {\n    display: flex;\n    flex-direction: column;\n    gap: 6px;\n    margin-bottom: 18px;\n}\n\n.edit-field:last-child {\n    margin-bottom: 0;\n}\n\n.edit-field label {\n    font-size: 12px;\n    font-weight: 500;\n    color: #334155;\n    letter-spacing: 0.01em;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.required {\n    color: #dc2626;\n    margin-left: 2px;\n}\n\n.edit-input {\n    height: 40px;\n    padding: 0 12px;\n    border: 1px solid #cbd5e1;\n    border-radius: 8px;\n    background: #fff;\n    color: #172033;\n    font-size: 13px;\n    font-weight: 500;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    outline: none;\n    transition: all 0.15s ease;\n    width: 100%;\n    box-sizing: border-box;\n}\n\n.edit-textarea {\n    min-height: 72px;\n    height: auto !important;\n    padding: 8px 12px !important;\n    border: 1px solid #cbd5e1;\n    border-radius: 8px;\n    background: #fff;\n    color: #172033;\n    font-size: 13px;\n    font-weight: 500;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    outline: none;\n    width: 100%;\n    box-sizing: border-box;\n    transition: all 0.15s ease;\n    resize: vertical;\n}\n\n.edit-input:focus {\n    border-color: #2563eb;\n    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);\n}\n\n.edit-textarea:focus {\n    border-color: #2563eb;\n    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);\n}\n\n.edit-input.is-invalid {\n    border-color: #dc2626;\n    background: #fef2f2;\n}\n\n.edit-input::placeholder {\n    color: #94a3b8;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    font-size: 13px;\n}\n\n.edit-select-wrapper {\n    position: relative;\n    display: flex;\n    align-items: center;\n}\n\n.edit-select {\n    width: 100%;\n    height: 40px;\n    padding: 0 36px 0 12px;\n    border: 1px solid #cbd5e1;\n    border-radius: 8px;\n    background: #fff;\n    color: #172033;\n    font-size: 13px;\n    font-weight: 500;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    outline: none;\n    appearance: none;\n    cursor: pointer;\n    transition: all 0.15s ease;\n}\n\n.edit-select:focus {\n    border-color: #2563eb;\n    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);\n}\n\n.edit-select.is-invalid {\n    border-color: #dc2626;\n    background: #fef2f2;\n}\n\n.edit-select-icon {\n    position: absolute;\n    right: 12px;\n    color: #64748b;\n    font-size: 12px;\n    pointer-events: none;\n}\n\n.edit-quick-add {\n    position: absolute;\n    right: 32px;\n    width: 26px;\n    height: 26px;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    border: 1px solid #e2e8f0;\n    border-radius: 6px;\n    background: #fff;\n    color: #2563eb;\n    cursor: pointer;\n    font-size: 11px;\n    transition: all 0.15s ease;\n}\n\n.edit-quick-add:hover {\n    background: #2563eb;\n    border-color: #2563eb;\n    color: #fff;\n}\n\n.edit-input-group {\n    display: flex;\n    align-items: stretch;\n}\n\n.edit-input-group .edit-input {\n    border-top-right-radius: 0;\n    border-bottom-right-radius: 0;\n    flex: 1;\n}\n\n.edit-input-addon {\n    display: inline-flex;\n    align-items: center;\n    padding: 0 12px;\n    background: #f1f5f9;\n    border: 1px solid #cbd5e1;\n    border-left: none;\n    border-radius: 0 8px 8px 0;\n    color: #64748b;\n    font-size: 12px;\n    font-weight: 600;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    white-space: nowrap;\n}\n\n.edit-row {\n    display: grid;\n    grid-template-columns: repeat(2, 1fr);\n    gap: 16px;\n}\n\n.edit-error {\n    font-size: 11px;\n    color: #dc2626;\n    font-weight: 500;\n    margin-top: 2px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-hint {\n    font-size: 11px;\n    color: #94a3b8;\n    margin-top: 4px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-btn {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    gap: 8px;\n    padding: 8px 16px;\n    border: 1px solid transparent;\n    border-radius: 8px;\n    font-size: 12px;\n    font-weight: 500;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    cursor: pointer;\n    transition: all 0.15s ease;\n    margin-bottom: 10px;\n}\n\n.edit-btn:last-child {\n    margin-bottom: 0;\n}\n\n.edit-btn-primary {\n    background: #2563eb;\n    border-color: #2563eb;\n    color: #fff;\n}\n\n.edit-btn-primary:hover {\n    background: #1d4ed8;\n    border-color: #1d4ed8;\n}\n\n.edit-btn-secondary {\n    background: #fff;\n    border-color: #e2e8f0;\n    color: #475569;\n}\n\n.edit-btn-secondary:hover {\n    background: #f8fafc;\n    border-color: #cbd5e1;\n    color: #172033;\n}\n\n.edit-modal-overlay {\n    position: fixed;\n    inset: 0;\n    background: rgba(15, 23, 42, 0.4);\n    backdrop-filter: blur(4px);\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    z-index: 1050;\n    padding: 20px;\n}\n\n.edit-modal {\n    background: #fff;\n    border-radius: 12px;\n    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);\n    width: 100%;\n    max-width: 520px;\n    max-height: 90vh;\n    overflow-y: auto;\n}\n\n.edit-modal-header {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    padding: 20px 24px;\n    border-bottom: 1px solid #e2e8f0;\n    background: #f8fafc;\n}\n\n.edit-modal-header h3 {\n    margin: 0;\n    font-size: 15px;\n    font-weight: 500;\n    color: #172033;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-modal-close {\n    width: 32px;\n    height: 32px;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    border: none;\n    border-radius: 6px;\n    background: transparent;\n    color: #64748b;\n    font-size: 20px;\n    cursor: pointer;\n    transition: all 0.15s ease;\n}\n\n.edit-modal-close:hover {\n    background: #e2e8f0;\n    color: #172033;\n}\n\n.edit-modal-body {\n    padding: 24px;\n}\n\n.edit-modal-body label {\n    display: block;\n    font-size: 12px;\n    font-weight: 500;\n    color: #334155;\n    margin-bottom: 6px;\n    margin-top: 14px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-modal-body label:first-child {\n    margin-top: 0;\n}\n\n.edit-modal-body input::placeholder,\n.edit-modal-body textarea::placeholder {\n    color: #94a3b8;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-modal-footer {\n    display: flex;\n    align-items: center;\n    justify-content: flex-end;\n    gap: 10px;\n    padding: 16px 24px;\n    border-top: 1px solid #e2e8f0;\n    background: #f8fafc;\n}\n\n.edit-modal-footer .edit-btn {\n    width: auto;\n    margin-bottom: 0;\n    min-width: 100px;\n}\n\n.edit-image-upload {\n    display: flex;\n    align-items: stretch;\n    gap: 12px;\n    width: fit-content;\n}\n\n.edit-image-placeholder,\n.edit-image-preview {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    width: 160px;\n    height: 80px;\n    border: 2px dashed #cbd5e1;\n    border-radius: 8px;\n    background: #f8fafc;\n    color: #94a3b8;\n    font-size: 11px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    overflow: hidden;\n    flex-shrink: 0;\n    position: relative;\n}\n\n.edit-image-placeholder i {\n    font-size: 20px;\n    display: block;\n}\n\n.edit-image-thumb {\n    width: 100%;\n    height: 100%;\n    object-fit: cover;\n}\n\n.edit-image-clear {\n    position: absolute;\n    top: 4px;\n    right: 4px;\n    width: 16px;\n    height: 16px;\n    border-radius: 4px;\n    background: rgba(0,0,0,0.5);\n    color: #fff;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    border: none;\n    cursor: pointer;\n    font-size: 10px;\n}\n\n.edit-image-btn {\n    display: inline-flex;\n    align-items: center;\n    gap: 6px;\n    padding: 0 14px;\n    background: #f1f5f9;\n    border: 1px solid #cbd5e1;\n    border-radius: 8px;\n    color: #475569;\n    font-size: 12px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    cursor: pointer;\n    transition: all 0.15s ease;\n    height: 40px;\n}\n\n.edit-image-btn:hover {\n    background: #e2e8f0;\n}\n\n.edit-image-input {\n    display: none;\n}\n\n.quill-editor {\n    min-height: 100px;\n    border: 1px solid #cbd5e1;\n    border-radius: 8px;\n    background: #fff;\n    padding: 8px 12px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.quill-editor .ql-toolbar {\n    border: none;\n    border-bottom: 1px solid #e2e8f0;\n    background: #f8fafc;\n    padding: 4px 10px;\n}\n\n.quill-editor .ql-container {\n    border: none;\n    font-size: 13px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-member-input {\n    display: flex;\n    flex-wrap: wrap;\n    align-items: center;\n    gap: 6px;\n    min-height: 42px;\n    padding: 6px 12px;\n    border: 1px solid #cbd5e1;\n    border-radius: 8px;\n    background: #fff;\n    cursor: text;\n    transition: all 0.15s ease;\n}\n\n.edit-member-input:focus-within {\n    border-color: #2563eb;\n    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);\n}\n\n.edit-member-tag {\n    display: inline-flex;\n    align-items: center;\n    gap: 6px;\n    padding: 4px 10px;\n    background: #eff6ff;\n    border: 1px solid #bfdbfe;\n    border-radius: 6px;\n    color: #1d4ed8;\n    font-size: 12px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-member-tag i {\n    cursor: pointer;\n    color: #2563eb;\n}\n\n.edit-member-text {\n    border: none;\n    outline: none;\n    background: transparent;\n    flex: 1;\n    min-width: 120px;\n    padding: 4px 0;\n    font-size: 13px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    color: #172033;\n}\n\n.edit-member-text::placeholder {\n    color: #94a3b8;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n@media (max-width: 1024px) {\n    .edit-grid {\n        grid-template-columns: 1fr;\n    }\n}\n\n@media (max-width: 768px) {\n    .edit-card-body {\n        padding: 16px;\n    }\n\n    .edit-row {\n        grid-template-columns: 1fr;\n    }\n}\n", ""]);
-
-// exports
-
-
-/***/ }),
-/* 4 */
 /***/ (function(module, exports) {
 
 /*
@@ -233,7 +146,7 @@ function toComment(sourceMap) {
 
 
 /***/ }),
-/* 5 */
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -279,7 +192,7 @@ var singleton = null;
 var	singletonCounter = 0;
 var	stylesInsertedAtTop = [];
 
-var	fixUrls = __webpack_require__(6);
+var	fixUrls = __webpack_require__(4);
 
 module.exports = function(list, options) {
 	if (typeof DEBUG !== "undefined" && DEBUG) {
@@ -592,7 +505,52 @@ function updateLink (link, options, obj) {
 
 
 /***/ }),
-/* 6 */
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(3);
+if(typeof content === 'string') content = [[module.i, content, '']];
+// Prepare cssTransformation
+var transform;
+
+var options = {}
+options.transform = transform
+// add the styles to the DOM
+var update = __webpack_require__(1)(content, options);
+if(content.locals) module.exports = content.locals;
+// Hot Module Replacement
+if(false) {
+	// When the styles change, update the <style> tags
+	if(!content.locals) {
+		module.hot.accept("!!../../node_modules/css-loader/index.js!./edit-shared.css", function() {
+			var newContent = require("!!../../node_modules/css-loader/index.js!./edit-shared.css");
+			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+			update(newContent);
+		});
+	}
+	// When the module is disposed, remove the <style> tags
+	module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(0)(false);
+// imports
+exports.push([module.i, "@import url(https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap);", ""]);
+
+// module
+exports.push([module.i, ".project-edit-form,\n.project-create-form {\n    max-width: 1200px;\n    max-height: 90vh;\n    overflow-y: auto;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-grid {\n    display: grid;\n    grid-template-columns: 1fr 380px;\n    gap: 24px;\n    align-items: stretch;\n}\n\n.edit-col {\n    display: flex;\n    flex-direction: column;\n    gap: 20px;\n    height: 100%;\n}\n\n.edit-card {\n    background: #fff;\n    border: 1px solid #e2e8f0;\n    border-radius: 12px;\n    box-shadow: 0 1px 3px rgba(0,0,0,0.04);\n    overflow: hidden;\n    display: flex;\n    flex-direction: column;\n}\n\n.edit-col:first-child .edit-card {\n    flex: 1;\n}\n\n.edit-card-header {\n    padding: 20px 24px;\n    border-bottom: 1px solid #e2e8f0;\n    background: #f8fafc;\n    flex-shrink: 0;\n}\n\n.edit-card-title {\n    margin: 0;\n    font-size: 14px;\n    font-weight: 500;\n    color: #172033;\n    display: flex;\n    align-items: center;\n    gap: 8px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-card-title i {\n    color: #2563eb;\n    font-size: 14px;\n}\n\n.edit-card-desc {\n    margin: 4px 0 0;\n    font-size: 12px;\n    color: #64748b;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-card-body {\n    padding: 24px;\n    flex: 1;\n}\n\n.edit-card-actions {\n    background: #fff;\n    flex-shrink: 0;\n}\n\n.edit-field {\n    display: flex;\n    flex-direction: column;\n    gap: 6px;\n    margin-bottom: 18px;\n}\n\n.edit-field:last-child {\n    margin-bottom: 0;\n}\n\n.edit-field label {\n    font-size: 12px;\n    font-weight: 500;\n    color: #334155;\n    letter-spacing: 0.01em;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.required {\n    color: #dc2626;\n    margin-left: 2px;\n}\n\n.edit-input {\n    height: 40px;\n    padding: 0 12px;\n    border: 1px solid #cbd5e1;\n    border-radius: 8px;\n    background: #fff;\n    color: #172033;\n    font-size: 13px;\n    font-weight: 500;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    outline: none;\n    transition: all 0.15s ease;\n    width: 100%;\n    box-sizing: border-box;\n}\n\n.edit-textarea {\n    min-height: 72px;\n    height: auto !important;\n    padding: 8px 12px !important;\n    border: 1px solid #cbd5e1;\n    border-radius: 8px;\n    background: #fff;\n    color: #172033;\n    font-size: 13px;\n    font-weight: 500;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    outline: none;\n    width: 100%;\n    box-sizing: border-box;\n    transition: all 0.15s ease;\n    resize: vertical;\n}\n\n.edit-input:focus {\n    border-color: #2563eb;\n    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);\n}\n\n.edit-textarea:focus {\n    border-color: #2563eb;\n    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);\n}\n\n.edit-input.is-invalid {\n    border-color: #dc2626;\n    background: #fef2f2;\n}\n\n.edit-input::placeholder {\n    color: #94a3b8;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    font-size: 13px;\n}\n\n.edit-select-wrapper {\n    position: relative;\n    display: flex;\n    align-items: center;\n}\n\n.edit-select {\n    width: 100%;\n    height: 40px;\n    padding: 0 36px 0 12px;\n    border: 1px solid #cbd5e1;\n    border-radius: 8px;\n    background: #fff;\n    color: #172033;\n    font-size: 13px;\n    font-weight: 500;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    outline: none;\n    appearance: none;\n    cursor: pointer;\n    transition: all 0.15s ease;\n}\n\n.edit-select:focus {\n    border-color: #2563eb;\n    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);\n}\n\n.edit-select.is-invalid {\n    border-color: #dc2626;\n    background: #fef2f2;\n}\n\n.edit-select-icon {\n    position: absolute;\n    right: 12px;\n    color: #64748b;\n    font-size: 12px;\n    pointer-events: none;\n}\n\n.edit-quick-add {\n    position: absolute;\n    right: 32px;\n    width: 26px;\n    height: 26px;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    border: 1px solid #e2e8f0;\n    border-radius: 6px;\n    background: #fff;\n    color: #2563eb;\n    cursor: pointer;\n    font-size: 11px;\n    transition: all 0.15s ease;\n}\n\n.edit-quick-add:hover {\n    background: #2563eb;\n    border-color: #2563eb;\n    color: #fff;\n}\n\n.edit-input-group {\n    display: flex;\n    align-items: stretch;\n}\n\n.edit-input-group .edit-input {\n    border-top-right-radius: 0;\n    border-bottom-right-radius: 0;\n    flex: 1;\n}\n\n.edit-input-addon {\n    display: inline-flex;\n    align-items: center;\n    padding: 0 12px;\n    background: #f1f5f9;\n    border: 1px solid #cbd5e1;\n    border-left: none;\n    border-radius: 0 8px 8px 0;\n    color: #64748b;\n    font-size: 12px;\n    font-weight: 600;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    white-space: nowrap;\n}\n\n.edit-row {\n    display: grid;\n    grid-template-columns: repeat(2, 1fr);\n    gap: 16px;\n}\n\n.edit-error {\n    font-size: 11px;\n    color: #dc2626;\n    font-weight: 500;\n    margin-top: 2px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-hint {\n    font-size: 11px;\n    color: #94a3b8;\n    margin-top: 4px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-btn {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    gap: 8px;\n    padding: 8px 16px;\n    border: 1px solid transparent;\n    border-radius: 8px;\n    font-size: 12px;\n    font-weight: 500;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    cursor: pointer;\n    transition: all 0.15s ease;\n    margin-bottom: 10px;\n}\n\n.edit-btn:last-child {\n    margin-bottom: 0;\n}\n\n.edit-btn-primary {\n    background: #2563eb;\n    border-color: #2563eb;\n    color: #fff;\n}\n\n.edit-btn-primary:hover {\n    background: #1d4ed8;\n    border-color: #1d4ed8;\n}\n\n.edit-btn-secondary {\n    background: #fff;\n    border-color: #e2e8f0;\n    color: #475569;\n}\n\n.edit-btn-secondary:hover {\n    background: #f8fafc;\n    border-color: #cbd5e1;\n    color: #172033;\n}\n\n.edit-modal-overlay {\n    position: fixed;\n    inset: 0;\n    background: rgba(15, 23, 42, 0.4);\n    backdrop-filter: blur(4px);\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    z-index: 1050;\n    padding: 20px;\n}\n\n.edit-modal {\n    background: #fff;\n    border-radius: 12px;\n    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);\n    width: 100%;\n    max-width: 520px;\n    max-height: 90vh;\n    overflow-y: auto;\n}\n\n.edit-modal-header {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    padding: 20px 24px;\n    border-bottom: 1px solid #e2e8f0;\n    background: #f8fafc;\n}\n\n.edit-modal-header h3 {\n    margin: 0;\n    font-size: 15px;\n    font-weight: 500;\n    color: #172033;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-modal-close {\n    width: 32px;\n    height: 32px;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    border: none;\n    border-radius: 6px;\n    background: transparent;\n    color: #64748b;\n    font-size: 20px;\n    cursor: pointer;\n    transition: all 0.15s ease;\n}\n\n.edit-modal-close:hover {\n    background: #e2e8f0;\n    color: #172033;\n}\n\n.edit-modal-body {\n    padding: 24px;\n}\n\n.edit-modal-body label {\n    display: block;\n    font-size: 12px;\n    font-weight: 500;\n    color: #334155;\n    margin-bottom: 6px;\n    margin-top: 14px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-modal-body label:first-child {\n    margin-top: 0;\n}\n\n.edit-modal-body input::placeholder,\n.edit-modal-body textarea::placeholder {\n    color: #94a3b8;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-modal-footer {\n    display: flex;\n    align-items: center;\n    justify-content: flex-end;\n    gap: 10px;\n    padding: 16px 24px;\n    border-top: 1px solid #e2e8f0;\n    background: #f8fafc;\n}\n\n.edit-modal-footer .edit-btn {\n    width: auto;\n    margin-bottom: 0;\n    min-width: 100px;\n}\n\n.edit-image-upload {\n    display: flex;\n    align-items: stretch;\n    gap: 12px;\n    width: fit-content;\n}\n\n.edit-image-placeholder,\n.edit-image-preview {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    width: 160px;\n    height: 80px;\n    border: 2px dashed #cbd5e1;\n    border-radius: 8px;\n    background: #f8fafc;\n    color: #94a3b8;\n    font-size: 11px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    overflow: hidden;\n    flex-shrink: 0;\n    position: relative;\n}\n\n.edit-image-placeholder i {\n    font-size: 20px;\n    display: block;\n}\n\n.edit-image-thumb {\n    width: 100%;\n    height: 100%;\n    object-fit: cover;\n}\n\n.edit-image-clear {\n    position: absolute;\n    top: 4px;\n    right: 4px;\n    width: 16px;\n    height: 16px;\n    border-radius: 4px;\n    background: rgba(0,0,0,0.5);\n    color: #fff;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    border: none;\n    cursor: pointer;\n    font-size: 10px;\n}\n\n.edit-image-btn {\n    display: inline-flex;\n    align-items: center;\n    gap: 6px;\n    padding: 0 14px;\n    background: #f1f5f9;\n    border: 1px solid #cbd5e1;\n    border-radius: 8px;\n    color: #475569;\n    font-size: 12px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    cursor: pointer;\n    transition: all 0.15s ease;\n    height: 40px;\n}\n\n.edit-image-btn:hover {\n    background: #e2e8f0;\n}\n\n.edit-image-input {\n    display: none;\n}\n\n.quill-editor {\n    min-height: 100px;\n    border: 1px solid #cbd5e1;\n    border-radius: 8px;\n    background: #fff;\n    padding: 8px 12px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.quill-editor .ql-toolbar {\n    border: none;\n    border-bottom: 1px solid #e2e8f0;\n    background: #f8fafc;\n    padding: 4px 10px;\n}\n\n.quill-editor .ql-container {\n    border: none;\n    font-size: 13px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-member-input {\n    display: flex;\n    flex-wrap: wrap;\n    align-items: center;\n    gap: 6px;\n    min-height: 42px;\n    padding: 6px 12px;\n    border: 1px solid #cbd5e1;\n    border-radius: 8px;\n    background: #fff;\n    cursor: text;\n    transition: all 0.15s ease;\n}\n\n.edit-member-input:focus-within {\n    border-color: #2563eb;\n    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);\n}\n\n.edit-member-tag {\n    display: inline-flex;\n    align-items: center;\n    gap: 6px;\n    padding: 4px 10px;\n    background: #eff6ff;\n    border: 1px solid #bfdbfe;\n    border-radius: 6px;\n    color: #1d4ed8;\n    font-size: 12px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n.edit-member-tag i {\n    cursor: pointer;\n    color: #2563eb;\n}\n\n.edit-member-text {\n    border: none;\n    outline: none;\n    background: transparent;\n    flex: 1;\n    min-width: 120px;\n    padding: 4px 0;\n    font-size: 13px;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n    color: #172033;\n}\n\n.edit-member-text::placeholder {\n    color: #94a3b8;\n    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;\n}\n\n@media (max-width: 1024px) {\n    .edit-grid {\n        grid-template-columns: 1fr;\n    }\n}\n\n@media (max-width: 768px) {\n    .edit-card-body {\n        padding: 16px;\n    }\n\n    .edit-row {\n        grid-template-columns: 1fr;\n    }\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports) {
 
 
@@ -685,6 +643,48 @@ module.exports = function (css) {
 	return fixedCss;
 };
 
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(6);
+(function webpackMissingModule() { throw new Error("Cannot find module \"/home/tuantn1807/project/TaskPilot/resources/sass/app.scss\""); }());
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+throw new Error("Cannot find module \"vue\"");
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_edit_shared_css__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__css_edit_shared_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__css_edit_shared_css__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__components_projects_ProjectCreate_vue__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__components_projects_ProjectCreate_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__components_projects_ProjectCreate_vue__);
+
+
+
+
+var d = window.projectCreateData || {};
+
+var app = Object(__WEBPACK_IMPORTED_MODULE_0_vue__["createApp"])(__WEBPACK_IMPORTED_MODULE_2__components_projects_ProjectCreate_vue__["default"], {
+    companies: d.companies || [],
+    categories: d.categories || [],
+    teams: d.teams || [],
+    projectCodePreview: d.project_code_preview || '',
+    companyId: d.company_id || null,
+    errors: d.errors || {},
+    old: d.old || {},
+    storeUrl: d.store_url || '/projects',
+    categoryStoreUrl: d.category_store_url || '',
+    companyStoreUrl: d.company_store_url || '',
+    csrfToken: d.csrf_token || '',
+    projectsIndexUrl: d.projects_index_url || '/projects'
+});
+
+app.mount('#project-create-app');
 
 /***/ }),
 /* 7 */

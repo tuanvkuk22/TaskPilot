@@ -47,6 +47,7 @@ class Project extends Model
     public function documents() { return $this->hasMany(ProjectDocument::class); }
     public function forms() { return $this->hasMany(ProjectForm::class); }
     public function developmentLinks() { return $this->hasMany(ProjectDevelopmentLink::class); }
+    public function activities() { return $this->hasMany(ProjectActivity::class)->latest('created_at'); }
 
     public function scopeStatusFilter($query, $status)
     {

@@ -49,6 +49,7 @@
             <a :href="`/sprints?project_id=${project.id}`" class="pd-nav-item">Backlog / Sprint</a>
             <a :href="`/projects/${project.id}/timeline`" class="pd-nav-item">Timeline</a>
             <a :href="`/projects/${project.id}/roadmap`" class="pd-nav-item">Roadmap</a>
+            <a :href="`#activity`" class="pd-nav-item" :class="{ active: currentTab === 'activity' }" @click.prevent="currentTab = 'activity'">Nhật ký hoạt động</a>
         </div>
 
         <!-- 3. REAL-TIME REACTIVE KPI STATS ROW (Updates instantly on drag-and-drop) -->
@@ -419,6 +420,61 @@
                 </table>
             </div>
         </div>
+
+        <!-- 6. PROJECT ACTIVITY FEED -->
+        <div v-if="currentTab === 'activity'" class="pd-activity-section mt-4">
+            <div class="pd-jira-card">
+                <div class="pd-jira-card-header d-flex justify-content-between align-items-center">
+                    <h2 class="pd-jira-card-title">
+                        <i class="fa fa-history text-primary me-2"></i>Nhật ký hoạt động của dự án
+                    </h2>
+                    <div class="d-flex gap-2">
+                        <select v-model="activityFilter" class="edit-input" style="min-width: 180px;">
+                            <option value="">Tất cả hoạt động</option>
+                            <option value="created">Tạo mới</option>
+                            <option value="updated">Cập nhật</option>
+                            <option value="deleted">Đã xóa</option>
+                            <option value="invited">Mời thành viên</option>
+                            <option value="removed">Xóa thành viên</option>
+                            <option value="commented">Bình luận</option>
+                            <option value="comment_edited">Sửa bình luận</option>
+                            <option value="comment_deleted">Xóa bình luận</option>
+                            <option value="logged_time">Ghi nhận giờ</option>
+                            <option value="archived">Lưu trữ</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pd-jira-card-body">
+                    <div v-if="filteredActivities.length === 0" class="pd-empty-small">
+                        <i class="fa fa-clock-o me-1"></i> Chưa có hoạt động nào được ghi nhận.
+                    </div>
+                    <ul v-else class="pd-activity-list">
+                        <li v-for="item in filteredActivities" :key="item.id" class="pd-activity-item">
+                            <div class="pd-activity-icon" :class="'pd-activity-' + item.action">
+                                <i :class="activityIcon(item.action)"></i>
+                            </div>
+                            <div class="pd-activity-body">
+                                <div class="pd-activity-text">
+                                    <strong>{{ item.user?.name || 'Hệ thống' }}</strong>
+                                    {{ activityVerb(item) }}
+                                    <span v-if="item.subject_label" class="pd-activity-subject">{{ item.subject_label }}</span>
+                                    <span v-if="item.meta" class="pd-activity-meta"> · {{ item.meta }}</span>
+                                </div>
+                                <div v-if="item.changes && Object.keys(item.changes).length" class="pd-activity-changes">
+                                    <span v-for="(change, field) in item.changes" :key="field" class="pd-activity-change">
+                                        <span class="pd-activity-field">{{ field }}</span>:
+                                        <span class="pd-activity-old">{{ change.old ?? '∅' }}</span>
+                                        →
+                                        <span class="pd-activity-new">{{ change.new ?? '∅' }}</span>
+                                    </span>
+                                </div>
+                                <div class="pd-activity-time">{{ formatRelativeTime(item.created_at) }}</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -433,10 +489,12 @@ const props = defineProps({
     project: { type: Object, required: true },
     tasks: { type: Array, default: () => [] },
     comments: { type: Array, default: () => [] },
+    activities: { type: Array, default: () => [] },
     initialTab: { type: String, default: 'overview' },
 });
 
 const currentTab = ref(props.initialTab || 'overview');
+const activityFilter = ref('');
 const searchQuery = ref('');
 const selectedAssigneeFilter = ref('');
 const selectedReporterFilter = ref('');
@@ -725,5 +783,62 @@ function formatNumber(val) {
 
 function priorityLabel(p) {
     return { high: 'Cao', medium: 'Trung bình', low: 'Thấp' }[p] || p || 'Thấp';
+}
+
+const filteredActivities = computed(() => {
+    if (!activityFilter.value) return props.activities;
+    return props.activities.filter(a => a.action === activityFilter.value);
+});
+
+const ACTIVITY_VERBS = {
+    created: 'đã tạo',
+    updated: 'đã cập nhật',
+    deleted: 'đã xóa',
+    invited: 'đã mời',
+    removed: 'đã xóa khỏi dự án',
+    commented: 'đã bình luận về',
+    comment_edited: 'đã chỉnh sửa bình luận trên',
+    comment_deleted: 'đã xóa bình luận trên',
+    logged_time: 'đã ghi nhận',
+    archived: 'đã lưu trữ',
+    restored: 'đã khôi phục',
+};
+
+const ACTIVITY_ICONS = {
+    created: 'fa fa-plus-circle text-success',
+    updated: 'fa fa-pencil text-primary',
+    deleted: 'fa fa-trash text-danger',
+    invited: 'fa fa-user-plus text-info',
+    removed: 'fa fa-user-times text-danger',
+    commented: 'fa fa-comment text-primary',
+    comment_edited: 'fa fa-commenting text-warning',
+    comment_deleted: 'fa fa-comment-o text-muted',
+    logged_time: 'fa fa-clock-o text-success',
+    archived: 'fa fa-archive text-muted',
+    restored: 'fa fa-undo text-info',
+};
+
+function activityVerb(item) {
+    return ACTIVITY_VERBS[item.action] || item.action;
+}
+
+function activityIcon(action) {
+    return ACTIVITY_ICONS[action] || 'fa fa-circle text-muted';
+}
+
+function formatRelativeTime(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date)) return '';
+    const diffMs = Date.now() - date.getTime();
+    const sec = Math.round(diffMs / 1000);
+    if (sec < 60) return 'vừa xong';
+    const min = Math.round(sec / 60);
+    if (min < 60) return `${min} phút trước`;
+    const hr = Math.round(min / 60);
+    if (hr < 24) return `${hr} giờ trước`;
+    const day = Math.round(hr / 24);
+    if (day < 7) return `${day} ngày trước`;
+    return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
 }
 </script>

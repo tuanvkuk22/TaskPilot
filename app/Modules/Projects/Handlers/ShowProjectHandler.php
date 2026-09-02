@@ -15,7 +15,16 @@ class ShowProjectHandler
      */
     public function handle(Project $project): Project
     {
-        $project->load(['users', 'permissions', 'comments', 'tasks', 'category', 'team', 'roles']);
+        $project->load([
+            'users',
+            'permissions',
+            'comments.user',
+            'tasks',
+            'category',
+            'team',
+            'roles',
+            'activities.user',
+        ]);
 
         return $project;
     }
