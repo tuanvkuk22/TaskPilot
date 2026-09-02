@@ -26,6 +26,7 @@ use ProjectsManager\Modules\Projects\Handlers\UpdateProjectRoleHandler;
 use ProjectsManager\Modules\Projects\Repositories\ProjectRepository;
 use ProjectsManager\Modules\Companies\Handlers\StoreCompanyHandler;
 use ProjectsManager\Project;
+use ProjectsManager\Services\ActivityLogger;
 use ProjectsManager\ProjectPermission;
 use ProjectsManager\ProjectRole;
 use ProjectsManager\ProjectRoleConstants;
@@ -229,6 +230,7 @@ class ProjectsController extends Controller
         return view('projects.show', [
             'project' => $project,
             'comments' => $project->comments,
+            'activities' => $project->activities,
         ]);
     }
 
@@ -329,6 +331,14 @@ class ProjectsController extends Controller
 
             return back()->withErrors(['member' => $result['error']]);
         }
+
+        ActivityLogger::record(
+            projectId: (int) $request->input('project_id'),
+            action: ActivityLogger::ACTION_INVITED,
+            userId: Auth::id(),
+            subjectLabel: $request->input('email'),
+            meta: (string) $request->input('role', 'member'),
+        );
 
         return back()->with('success', $result['message']);
     }
@@ -548,6 +558,15 @@ class ProjectsController extends Controller
                 $memberData['email'],
                 $memberData['role'] ?? 'member'
             );
+            if ($result['success']) {
+                ActivityLogger::record(
+                    projectId: $project->id,
+                    action: ActivityLogger::ACTION_INVITED,
+                    userId: Auth::id(),
+                    subjectLabel: $memberData['email'],
+                    meta: (string) ($memberData['role'] ?? 'member'),
+                );
+            }
             $results[] = $result;
         }
 
@@ -582,6 +601,13 @@ class ProjectsController extends Controller
         ]);
 
         $project->users()->detach((int) $data['user_id']);
+
+        ActivityLogger::record(
+            projectId: $project->id,
+            action: ActivityLogger::ACTION_REMOVED,
+            userId: Auth::id(),
+            subjectLabel: 'User #' . $data['user_id'],
+        );
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -619,6 +645,14 @@ class ProjectsController extends Controller
 
             return back()->with('error', $result['error']);
         }
+
+        ActivityLogger::record(
+            projectId: $project->id,
+            action: ActivityLogger::ACTION_INVITED,
+            userId: Auth::id(),
+            subjectLabel: $data['email'],
+            meta: $data['role'],
+        );
 
         if ($request->expectsJson()) {
             return response()->json([

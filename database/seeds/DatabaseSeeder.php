@@ -5,6 +5,7 @@ use ProjectsManager\Role;
 use ProjectsManager\User;
 use ProjectsManager\Project;
 use ProjectsManager\Task;
+use ProjectsManager\Worklog;
 
 class DatabaseSeeder extends Seeder
 {
@@ -252,5 +253,29 @@ class DatabaseSeeder extends Seeder
             'start_date' => '2026-08-15',
             'due_date' => '2026-09-25',
         ]);
+
+        // 5. Worklogs for testing the time tracking screens
+        $worklogTasks = Task::whereIn('project_id', [$proj1->id, $proj2->id])
+            ->where('issue_type', '!=', 'epic')
+            ->orderBy('id')
+            ->take(6)
+            ->get();
+
+        $worklogData = [
+            ['hours' => 2.50, 'logged_at' => '2026-08-18', 'description' => 'Phân tích yêu cầu và chuẩn bị công việc.', 'user_id' => $user1->id],
+            ['hours' => 4.00, 'logged_at' => '2026-08-19', 'description' => 'Phát triển chức năng chính.', 'user_id' => $user2->id],
+            ['hours' => 1.75, 'logged_at' => '2026-08-20', 'description' => 'Kiểm thử luồng xử lý.', 'user_id' => $user3->id],
+            ['hours' => 3.25, 'logged_at' => '2026-08-21', 'description' => 'Sửa lỗi và hoàn thiện giao diện.', 'user_id' => $user1->id],
+            ['hours' => 5.00, 'logged_at' => '2026-08-22', 'description' => 'Tích hợp và kiểm tra trên môi trường phát triển.', 'user_id' => $user2->id],
+            ['hours' => 2.00, 'logged_at' => '2026-08-25', 'description' => 'Rà soát kết quả và cập nhật tài liệu.', 'user_id' => $user3->id],
+        ];
+
+        foreach ($worklogTasks as $index => $task) {
+            if (!isset($worklogData[$index])) {
+                break;
+            }
+
+            Worklog::create($worklogData[$index] + ['task_id' => $task->id]);
+        }
     }
 }

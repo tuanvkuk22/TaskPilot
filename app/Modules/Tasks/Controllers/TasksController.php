@@ -119,7 +119,7 @@ class TasksController extends Controller
 
         return view('tasks.show', array_merge($formData, [
             'task' => $task,
-            'worklogs' => $task->worklogs()->with('user')->latest('logged_at')->get(),
+            'worklogs' => $task->worklogs()->with(['user', 'assignee'])->latest('logged_at')->get(),
             'comments' => $task->comments()->with('user')->latest()->get(),
         ]));
     }
@@ -129,10 +129,21 @@ class TasksController extends Controller
         $data = $request->validate([
             'hours' => ['required', 'numeric', 'min:0.1', 'max:24'],
             'logged_at' => ['required', 'date'],
+            'started_at' => ['nullable', 'date'],
+            'ended_at' => ['nullable', 'date', 'after_or_equal:started_at'],
+            'assignee_id' => ['nullable', 'integer', 'exists:users,id'],
             'description' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $task->worklogs()->create($data + ['user_id' => Auth::id()]);
+        $assigneeId = $data['assignee_id'] ?? Auth::id();
+
+        if (!empty($data['started_at']) && !empty($data['ended_at'])) {
+            $data['hours'] = round((strtotime($data['ended_at']) - strtotime($data['started_at'])) / 3600, 2);
+        }
+
+        unset($data['started_at'], $data['ended_at']);
+
+        $task->worklogs()->create($data + ['user_id' => Auth::id(), 'assignee_id' => $assigneeId]);
 
         return back()->with('success', 'Worklog đã được ghi nhận.');
     }

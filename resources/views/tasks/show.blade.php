@@ -318,14 +318,40 @@
                                     <h5 class="form-title mb-3">Ghi nhận thời gian làm việc</h5>
                                     <div class="row g-2 align-items-end">
                                         <div class="col-md-3">
-                                            <label class="small text-muted mb-1">Số giờ (giờ)</label>
+                                            <label class="small text-muted mb-1">Người thực hiện</label>
+                                            @php
+                                            $memberOptions = collect();
+                                            if ($task->assignee) {
+                                                $memberOptions->push($task->assignee);
+                                            }
+                                            $memberOptions = $memberOptions->merge($task->project?->users ?? collect())->unique('id')->filter();
+                                        @endphp
+                                        <select name="assignee_id" class="edit-input">
+                                            <option value="">-- Mặc định (tôi) --</option>
+                                            @foreach($memberOptions as $member)
+                                                <option value="{{ $member->id }}">{{ $member->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="small text-muted mb-1">Bắt đầu</label>
+                                            <input type="datetime-local" name="started_at" class="edit-input">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="small text-muted mb-1">Kết thúc</label>
+                                            <input type="datetime-local" name="ended_at" class="edit-input">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="small text-muted mb-1">Số giờ</label>
                                             <input type="number" name="hours" class="edit-input" min="0.1" max="24" step="0.25" placeholder="Ví dụ: 2.5" required>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <label class="small text-muted mb-1">Ngày làm việc</label>
                                             <input type="date" name="logged_at" class="edit-input" value="{{ now()->format('Y-m-d') }}" required>
                                         </div>
-                                        <div class="col-md-4">
+                                    </div>
+                                    <div class="row g-2 align-items-end mt-2">
+                                        <div class="col-md-10">
                                             <label class="small text-muted mb-1">Ghi chú công việc</label>
                                             <input type="text" name="description" class="edit-input" placeholder="Mô tả công việc đã xử lý...">
                                         </div>
@@ -361,7 +387,7 @@
                                             </div>
                                             <div class="worklog-user">
                                                 <i class="fa fa-user-circle-o me-1 text-muted"></i>
-                                                {{ $worklog->user->name ?? 'Thành viên' }}
+                                                {{ $worklog->assignee->name ?? $worklog->user->name ?? 'Thành viên' }}
                                             </div>
                                         </div>
                                     @empty

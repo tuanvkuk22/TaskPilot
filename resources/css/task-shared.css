@@ -1747,7 +1747,12 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     padding: 6px 8px;
     display: flex;
     overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: thin;
 }
+.pd-project-nav::-webkit-scrollbar { height: 6px; }
+.pd-project-nav::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.pd-project-nav::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
 
 .pd-nav-item {
     color: #475569;
@@ -2022,6 +2027,62 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     padding: 16px;
     font-size: 13px;
 }
+
+.pd-activity-section .pd-jira-card { margin-top: 12px; }
+.pd-activity-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 640px;
+    overflow-y: auto;
+}
+.pd-activity-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 4px;
+    border-bottom: 1px solid #eef2f7;
+}
+.pd-activity-item:last-child { border-bottom: 0; }
+.pd-activity-icon {
+    flex: 0 0 36px;
+    height: 36px;
+    width: 36px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563eb;
+}
+.pd-activity-icon.pd-activity-deleted,
+.pd-activity-icon.pd-activity-comment_deleted,
+.pd-activity-icon.pd-activity-removed { background: #fef2f2; color: #dc2626; }
+.pd-activity-icon.pd-activity-created,
+.pd-activity-icon.pd-activity-logged_time { background: #ecfdf5; color: #059669; }
+.pd-activity-icon.pd-activity-invited,
+.pd-activity-icon.pd-activity-restored { background: #eff6ff; color: #2563eb; }
+.pd-activity-body { flex: 1 1 auto; min-width: 0; }
+.pd-activity-text { font-size: 14px; color: #1f2937; line-height: 1.5; word-break: break-word; }
+.pd-activity-subject { font-weight: 600; color: #2563eb; }
+.pd-activity-meta { color: #6b7280; font-size: 13px; }
+.pd-activity-time { color: #94a3b8; font-size: 12px; margin-top: 4px; }
+.pd-activity-changes {
+    margin-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.pd-activity-change {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 12px;
+    color: #334155;
+}
+.pd-activity-field { font-weight: 600; color: #1e293b; }
+.pd-activity-old { color: #dc2626; text-decoration: line-through; }
+.pd-activity-new { color: #059669; font-weight: 600; }
 
 @media (max-width: 1024px) {
     .pd-grid {
