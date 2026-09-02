@@ -2,6 +2,7 @@
 
 namespace ProjectsManager\Modules\Comments\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -31,10 +32,27 @@ class CommentsController extends Controller
     /**
      * Display a listing of comments.
      *
-     * @return View|RedirectResponse
+     * @param Request $request
+     *
+     * @return View|RedirectResponse|JsonResponse
      */
-    public function index(): View|RedirectResponse
+    public function index(Request $request): View|RedirectResponse|JsonResponse
     {
+        if ($request->wantsJson() || $request->ajax()) {
+            $commentableId = $request->input('commentable_id');
+            $commentableType = $request->input('commentable_type', 'ProjectsManager\Task');
+
+            $query = Comment::query()->with('user');
+            if ($commentableId) {
+                $query->where('commentable_id', $commentableId)
+                    ->where('commentable_type', $commentableType);
+            }
+
+            $comments = $query->latest()->get();
+
+            return response()->json(['success' => true, 'comments' => $comments]);
+        }
+
         if (! Auth::check()) {
             return view('auth.login');
         }
@@ -49,11 +67,15 @@ class CommentsController extends Controller
      *
      * @param Request $request
      *
-     * @return RedirectResponse
+     * @return RedirectResponse|JsonResponse
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         if (! Auth::check()) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
             return back()->withInput()->with('errors', 'Error creating new comment');
         }
 
@@ -66,7 +88,16 @@ class CommentsController extends Controller
         $comment = $this->storeCommentHandler->handle(Auth::id(), $request->all());
 
         if ($comment) {
+            $comment->load('user');
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => true, 'comment' => $comment]);
+            }
+
             return back();
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => false, 'message' => 'Error creating new comment'], 500);
         }
 
         return back()->withInput()->with('errors', 'Error creating new comment');
