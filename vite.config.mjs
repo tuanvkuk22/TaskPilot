@@ -27,6 +27,8 @@ export default defineConfig({
                 __dirname + '/resources/js/task-index.js',
                 __dirname + '/resources/js/project-timeline.js',
                 __dirname + '/resources/css/task-shared.css',
+                __dirname + '/resources/js/login.js',
+                __dirname + '/resources/js/welcome.js',
             ],
             output: {
                 entryFileNames: 'assets/[name].js',
