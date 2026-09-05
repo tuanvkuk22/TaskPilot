@@ -22,6 +22,7 @@
         old_labels: @json(old('labels')),
         csrf_token: @json(csrf_token()),
         store_url: @json(route('tasks.store')),
+        recommend_url: @json(route('tasks.recommend-assignee')),
         tasks_index_url: @json(route('tasks.index')),
     };
 </script>
