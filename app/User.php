@@ -33,6 +33,8 @@ class User extends Authenticatable
         'job_title',
         'department',
         'timezone',
+        'email_notifications',
+        'in_app_notifications',
     ];
 
     /**

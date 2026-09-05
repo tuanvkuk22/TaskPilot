@@ -2090,3 +2090,135 @@ body {
 .tp-project-show .tp-member-info small {
     font-size: 13px;
 }
+
+/* Notification Bell */
+.tp-notification-bell {
+    position: relative;
+    margin-right: 10px;
+}
+
+.tp-notification-bell .tp-notification-toggle {
+    padding: 18px 14px !important;
+    position: relative;
+    cursor: pointer;
+}
+
+.tp-notification-bell .tp-notification-toggle:hover {
+    color: var(--tp-primary);
+}
+
+.tp-notification-bell .tp-unread-count {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 2px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #fff;
+    background-color: #ea5455;
+    border-radius: 50%;
+    text-align: center;
+}
+
+.tp-notification-bell .fa-bell-o {
+    font-size: 18px;
+}
+
+.tp-notification-dropdown {
+    width: 380px !important;
+    max-height: 500px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.tp-dropdown-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e6eef8;
+}
+
+.tp-dropdown-body {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.tp-notification-item {
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s ease;
+}
+
+.tp-notification-item:hover {
+    background-color: #f8f9fa;
+}
+
+.tp-notification-item.tp-unread {
+    background-color: #fff8f8;
+}
+
+.tp-notification-item.tp-unread .tp-notification-content {
+    border-left: 3px solid #0052cc;
+    padding-left: 10px;
+}
+
+.tp-notification-icon {
+    min-width: 36px;
+    height: 36px;
+    border-radius: 50%;
+}
+
+.tp-notification-content .fw-semibold {
+    color: #172b4d;
+    font-size: 14px;
+}
+
+.tp-notification-content .text-small {
+    font-size: 13px;
+}
+
+.tp-notification-actions .btn-link {
+    padding: 2px 6px;
+    opacity: 0.6;
+}
+
+.tp-notification-actions .btn-link:hover {
+    opacity: 1;
+}
+
+.tp-dropdown-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #e6eef8;
+}
+
+.tp-view-all {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Notification Center Page */
+.tp-notification-list .tp-notification-item {
+    border-bottom: 1px solid #e6eef8;
+    padding: 16px;
+    margin: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.tp-notification-list .tp-notification-item.tp-unread {
+    background-color: #fff8f8;
+}
+
+.tp-notification-content {
+    flex: 1;
+}
+
+.tp-notification-content .fw-semibold {
+    font-size: 14px;
+}
+
+.tp-notification-time {
+    font-size: 12px;
+}
