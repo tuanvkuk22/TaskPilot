@@ -5,6 +5,9 @@ namespace ProjectsManager\Modules\Projects\Handlers;
 use ProjectsManager\Project;
 use ProjectsManager\Modules\Projects\Repositories\ProjectRepository;
 use ProjectsManager\ProjectRole;
+use ProjectsManager\Services\NotificationService;
+use Illuminate\Support\Facades\Auth;
+use ProjectsManager\User;
 
 class StoreProjectHandler
 {
@@ -85,6 +88,8 @@ class StoreProjectHandler
             'report.view',
         ]);
 
+        $addedMembers = [];
+
         foreach ($memberEmails as $email) {
             $user = $this->repository->findUserByEmail($email);
 
@@ -100,6 +105,8 @@ class StoreProjectHandler
                     'meeting.view', 'meeting.create',
                     'comment.create', 'comment.view',
                 ]);
+
+                $addedMembers[] = $user;
             }
         }
 
@@ -118,8 +125,24 @@ class StoreProjectHandler
                         'meeting.view', 'meeting.create',
                         'comment.create', 'comment.view',
                     ]);
+
+                    $addedMembers[] = $teamUser;
                 }
             }
+        }
+
+        $actor = User::find($userId);
+
+        foreach ($addedMembers as $member) {
+            NotificationService::sendToUser(
+                $member,
+                NotificationService::EVENT_PROJECT_MEMBER_ADDED,
+                'Thành viên mới trong dự án: ' . $project->name,
+                $actor?->name . ' đã thêm bạn vào dự án "' . $project->name . '".',
+                $actor,
+                ['project_id' => $project->id, 'project_name' => $project->name],
+                '/projects/' . $project->id,
+            );
         }
 
         return ['success' => true, 'project' => $project];

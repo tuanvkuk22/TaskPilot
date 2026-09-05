@@ -3,7 +3,9 @@
 namespace ProjectsManager\Modules\Teams\Handlers;
 
 use ProjectsManager\Modules\Teams\Repositories\TeamRepository;
+use ProjectsManager\Services\NotificationService;
 use ProjectsManager\Team;
+use Illuminate\Support\Facades\Auth;
 
 class InviteTeamMemberHandler
 {
@@ -49,11 +51,21 @@ class InviteTeamMemberHandler
             try {
                 if ($user->email) {
                     \Illuminate\Support\Facades\Mail::to($user->email)
-                        ->send(new \ProjectsManager\Mail\TeamInvitationMail($team, \Illuminate\Support\Facades\Auth::user()));
+                        ->send(new \ProjectsManager\Mail\TeamInvitationMail($team, Auth::user()));
                 }
             } catch (\Throwable $e) {
                 // Ignore mail sending failure if environment variables are not configured
             }
+
+            NotificationService::sendToUser(
+                $user,
+                NotificationService::EVENT_TEAM_INVITATION,
+                'Lời mời tham gia đội nhóm: ' . $team->name,
+                Auth::user()->name . ' đã mời bạn vào đội nhóm "' . $team->name . '".',
+                Auth::user(),
+                ['team_id' => $team->id, 'team_name' => $team->name],
+                '/teams/' . $team->id,
+            );
         }
 
         return ['success' => true, 'message' => 'Mời thành viên thành công.'];

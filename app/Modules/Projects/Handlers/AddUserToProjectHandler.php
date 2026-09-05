@@ -4,6 +4,9 @@ namespace ProjectsManager\Modules\Projects\Handlers;
 
 use ProjectsManager\Modules\Projects\Repositories\ProjectRepository;
 use ProjectsManager\ProjectCategory;
+use ProjectsManager\Services\NotificationService;
+use Illuminate\Support\Facades\Auth;
+use ProjectsManager\User;
 
 class AddUserToProjectHandler
 {
@@ -68,11 +71,21 @@ class AddUserToProjectHandler
             try {
                 if ($user->email) {
                     \Illuminate\Support\Facades\Mail::to($user->email)
-                        ->send(new \ProjectsManager\Mail\ProjectInvitationMail($project, \Illuminate\Support\Facades\Auth::user()));
+                        ->send(new \ProjectsManager\Mail\ProjectInvitationMail($project, Auth::user()));
                 }
             } catch (\Throwable $e) {
                 // Ignore mail sending failure if environment variables are not configured
             }
+
+            NotificationService::sendToUser(
+                $user,
+                NotificationService::EVENT_PROJECT_MEMBER_ADDED,
+                'Thành viên mới trong dự án: ' . $project->name,
+                Auth::user()->name . ' đã thêm bạn vào dự án "' . $project->name . '" với vai trò "' . $role . '".',
+                Auth::user(),
+                ['project_id' => $project->id, 'project_name' => $project->name, 'role' => $role],
+                '/projects/' . $project->id,
+            );
         }
 
         return ['success' => true, 'message' => 'Thành viên đã được thêm vào dự án thành công.'];

@@ -3,7 +3,9 @@
 namespace ProjectsManager\Observers;
 
 use ProjectsManager\Services\ActivityLogger;
+use ProjectsManager\Services\NotificationService;
 use ProjectsManager\Sprint;
+use ProjectsManager\User;
 
 class SprintObserver
 {
@@ -20,6 +22,27 @@ class SprintObserver
             subject: $sprint,
             meta: 'sprint',
         );
+
+        $project = $sprint->project;
+        if (! $project) {
+            return;
+        }
+
+        $actor = User::find(auth()->id());
+
+        $project->load('users');
+
+        if ($project->users->isNotEmpty()) {
+            NotificationService::sendToProject(
+                $project,
+                NotificationService::EVENT_SPRINT_CREATED,
+                'Sprint mới: ' . $sprint->name,
+                $actor?->name . ' đã tạo sprint "' . $sprint->name . '" trong dự án "' . $project->name . '".',
+                $actor,
+                ['sprint_name' => $sprint->name, 'project' => $project->name],
+                '/projects/' . $project->id . '/sprints',
+            );
+        }
     }
 
     public function updated(Sprint $sprint): void
@@ -42,5 +65,28 @@ class SprintObserver
             subject: $sprint,
             changes: $changes,
         );
+
+        $project = $sprint->project;
+        if (! $project) {
+            return;
+        }
+
+        $actor = User::find(auth()->id());
+        $project->load('users');
+
+        $changedFields = array_keys($changes);
+        $changedFieldsText = implode(', ', $changedFields);
+
+        if ($project->users->isNotEmpty()) {
+            NotificationService::sendToProject(
+                $project,
+                NotificationService::EVENT_SPRINT_UPDATED,
+                'Sprint được cập nhật: ' . $sprint->name,
+                $actor?->name . ' đã cập nhật sprint "' . $sprint->name . '" (' . $changedFieldsText . ').',
+                $actor,
+                ['sprint_name' => $sprint->name, 'changed_fields' => $changedFields],
+                '/projects/' . $project->id . '/sprints',
+            );
+        }
     }
 }

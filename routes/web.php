@@ -18,6 +18,7 @@ use ProjectsManager\Modules\Projects\Controllers\ProjectDevelopmentController;
 use ProjectsManager\Modules\Tasks\Controllers\SprintsController;
 use ProjectsManager\Modules\Tasks\Controllers\TasksController;
 use ProjectsManager\Modules\Teams\Controllers\TeamsController;
+use ProjectsManager\Modules\Notifications\Controllers\NotificationController;
 
 Route::view('/', 'welcome')->name('welcome');
 
@@ -124,4 +125,13 @@ Route::middleware('auth')->group(function (): void {
     Route::get('projects/{project}/development', [ProjectDevelopmentController::class, 'index'])->name('projects.development.index');
     Route::post('projects/{project}/development', [ProjectDevelopmentController::class, 'store'])->name('projects.development.store');
     Route::delete('projects/{project}/development/{link}', [ProjectDevelopmentController::class, 'destroy'])->name('projects.development.destroy');
+
+    Route::name('notifications.')->middleware('auth')->group(function (): void {
+        Route::get('notifications', [NotificationController::class, 'index'])->name('index');
+        Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
+        Route::get('notifications/recent', [NotificationController::class, 'recentNotifications'])->name('recent');
+        Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
+        Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('read-all');
+        Route::delete('notifications/{id}', [NotificationController::class, 'destroy'])->name('destroy');
+    });
 });

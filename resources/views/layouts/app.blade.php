@@ -51,6 +51,7 @@
                         <li><a href="{{ route('login') }}"><i class="fa fa-sign-in"></i> Đăng nhập</a></li>
                         <li><a href="{{ route('register') }}"><i class="fa fa-user-plus"></i> Đăng ký</a></li>
                     @else
+                        @include('partials.notification_bell')
                         <li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
                                 <i class="fa fa-user-circle-o"></i> {{ auth()->user()->name }} <span class="caret"></span>
@@ -74,6 +75,34 @@
       </div>
     </main>
 </div>
- @yield('jqueryScript')
+    @yield('jqueryScript')
+    <script>
+    (function() {
+        if (typeof jQuery === 'undefined' && !window.bootstrap) {
+            var toggles = document.querySelectorAll('[data-toggle="dropdown"]');
+            toggles.forEach(function(toggle) {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var menu = this.nextElementSibling;
+                    if (menu && menu.classList.contains('dropdown-menu')) {
+                        var isOpen = menu.style.display === 'block';
+                        menu.style.display = isOpen ? 'none' : 'block';
+                        if (!isOpen) {
+                            var closeFn = function(ev) {
+                                if (!menu.contains(ev.target) && !toggle.contains(ev.target)) {
+                                    menu.style.display = 'none';
+                                    document.removeEventListener('click', closeFn);
+                                }
+                            };
+                            document.addEventListener('click', closeFn);
+                        }
+                    }
+                });
+            });
+        }
+    })();
+    </script>
+    @stack('scripts')
 </body>
 </html>
