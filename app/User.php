@@ -91,4 +91,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Team::class, 'user_id');
     }
+
+    public function skills()
+    {
+        return $this->hasMany(UserSkill::class, 'user_id');
+    }
+
+    public function aiRecommendations()
+    {
+        return $this->hasMany(AiAssigneeRecommendation::class, 'user_id');
+    }
 }

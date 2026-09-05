@@ -48,4 +48,6 @@ class Task extends Model
     public function parent() { return $this->belongsTo(self::class, 'parent_id'); }
     public function children() { return $this->hasMany(self::class, 'parent_id'); }
     public function worklogs() { return $this->hasMany(Worklog::class); }
+    public function skills() { return $this->hasMany(TaskSkill::class, 'task_id'); }
+    public function aiRecommendations() { return $this->hasMany(AiAssigneeRecommendation::class, 'task_id'); }
 }
