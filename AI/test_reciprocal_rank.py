@@ -131,6 +131,198 @@ class RecommendationPayloadTest(unittest.TestCase):
         self.assertEqual(row["active_tasks_count"], 2)
         self.assertIsInstance(row["confidence_percent"], int)
 
+    def test_heuristic_ignores_list_order_and_generic_admin(self):
+        rows = heuristic_recommendations(
+            {
+                "summary": "Ambari should work on nodes with puppet already installed",
+                "projectname": "AMBARI",
+                "components": "ambari-agent",
+                "candidate_users": [
+                    {"id": 1, "name": "Admin", "username": "", "job_title": "", "skills": []},
+                    {
+                        "id": 2,
+                        "name": "Jitendra Nath Pandey",
+                        "username": "jnp",
+                        "job_title": "ambari-agent",
+                        "skills": ["ambari-agent"],
+                    },
+                ],
+            },
+            top_k=3,
+        )
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["user_id"], 2)
+        self.assertNotEqual(rows[0]["confidence_percent"], 60)
+        self.assertLess(rows[0]["confidence_percent"], 100)
+
+    def test_heuristic_test_skill_does_not_match_testing_substring(self):
+        rows = heuristic_recommendations(
+            {
+                "summary": "Utility to initialize in memory action db for testing",
+                "candidate_users": [
+                    {
+                        "id": 3,
+                        "name": "Venkat Ranganathan",
+                        "username": "venkatnrangan",
+                        "job_title": "Test",
+                        "skills": ["Test"],
+                    }
+                ],
+            },
+            top_k=3,
+        )
+        self.assertEqual(rows, [])
+
+    def test_heuristic_uses_assignment_history(self):
+        rows = heuristic_recommendations(
+            {
+                "summary": "ooziedb.sh should be invoked after setup",
+                "projectname": "AMBARI",
+                "candidate_users": [
+                    {"id": 1, "name": "Admin", "username": "", "skills": []},
+                    {"id": 2, "name": "Jitendra", "username": "jnp", "skills": []},
+                ],
+                "history": [
+                    {"summary": "invoke ooziedb.sh after ambari setup", "assignee": "jnp", "issuetype": "bug"},
+                ],
+            },
+            top_k=3,
+        )
+        self.assertEqual(rows[0]["user_id"], 2)
+
+    def _ambari_users(self):
+        return [
+            {"id": 1, "name": "Yusaku Sako", "username": "u39kun", "job_title": "ambari-web", "skills": ["ambari-web"]},
+            {
+                "id": 2,
+                "name": "Jitendra Nath Pandey",
+                "username": "jnp",
+                "job_title": "ambari-agent",
+                "skills": ["ambari-agent", "ambari-server"],
+            },
+            {"id": 3, "name": "Mahadev Konar", "username": "mahadev", "job_title": "ambari-agent", "skills": ["ambari-agent"]},
+        ]
+
+    def _sparse_history(self):
+        return [
+            {
+                "summary": "If possible, the Project Information link on the website should unfold by default",
+                "assignee": "u39kun",
+                "issuetype": "bug",
+                "components": "",
+            },
+            {"summary": "Add jce policy file.", "assignee": "jnp", "issuetype": "bug", "components": ""},
+            {
+                "summary": "Ambari should work on nodes with puppet already installed.",
+                "assignee": "mahadev",
+                "issuetype": "bug",
+                "components": "ambari-agent",
+            },
+        ]
+
+    def test_project_name_overlap_is_not_100_percent(self):
+        rows = heuristic_recommendations(
+            {
+                "summary": "Bug fix in jaxb serialization for maps.",
+                "projectname": "AMBARI",
+                "issuetype": "subtask",
+                "candidate_users": self._ambari_users(),
+                "history": self._sparse_history(),
+            },
+            top_k=3,
+        )
+        self.assertTrue(rows)
+        self.assertLess(rows[0]["confidence_percent"], 100)
+        self.assertLessEqual(rows[0]["confidence_percent"], 93)
+
+    def test_singleton_match_never_reports_100(self):
+        rows = heuristic_recommendations(
+            {
+                "summary": "Fix mysql leak",
+                "description": "database connection",
+                "candidate_users": [
+                    {
+                        "id": 10,
+                        "name": "Tuấn TP",
+                        "username": "tuan",
+                        "job_title": "Backend Engineer",
+                        "skills": ["php", "mysql"],
+                    }
+                ],
+            },
+            top_k=3,
+        )
+        self.assertEqual(len(rows), 1)
+        self.assertLess(rows[0]["confidence_percent"], 100)
+        self.assertLessEqual(rows[0]["confidence_percent"], 93)
+
+    def test_web_in_title_does_not_match_ambari_web_skill(self):
+        rows = heuristic_recommendations(
+            {
+                "summary": "Create a key value get/put API for web UI to use for tmp storage.",
+                "projectname": "AMBARI",
+                "issuetype": "subtask",
+                "candidate_users": self._ambari_users(),
+                "history": self._sparse_history(),
+            },
+            top_k=3,
+        )
+        self.assertTrue(rows)
+        for row in rows:
+            if row["user_id"] == 1:
+                self.assertFalse(any("Kỹ năng khớp nội dung: ambari-web" in reason for reason in row["match_reasons"]))
+
+    def test_server_in_title_does_not_match_ambari_server_skill(self):
+        rows = heuristic_recommendations(
+            {
+                "summary": "Make API authentication configurable at the server. For testing its useful to switch off authentication for the APIs",
+                "projectname": "AMBARI",
+                "issuetype": "subtask",
+                "candidate_users": self._ambari_users(),
+                "history": self._sparse_history(),
+            },
+            top_k=3,
+        )
+        self.assertTrue(rows)
+        for row in rows:
+            self.assertFalse(any("Kỹ năng khớp nội dung: ambari-server" in reason for reason in row["match_reasons"]))
+
+    def test_ambari_web_component_still_ranks_web_developer(self):
+        rows = heuristic_recommendations(
+            {
+                "summary": "Add Hadoop stack selection to the Installer",
+                "projectname": "AMBARI",
+                "issuetype": "subtask",
+                "components": "ambari-web",
+                "candidate_users": self._ambari_users(),
+                "history": self._sparse_history(),
+            },
+            top_k=3,
+        )
+        self.assertTrue(rows)
+        self.assertEqual(rows[0]["user_id"], 1)
+        self.assertLess(rows[0]["confidence_percent"], 100)
+
+    def test_generic_history_tokens_are_ignored(self):
+        rows = heuristic_recommendations(
+            {
+                "summary": "ooziedb.sh should be invoked after setup.",
+                "projectname": "AMBARI",
+                "issuetype": "bug",
+                "candidate_users": self._ambari_users(),
+                "history": [
+                    {
+                        "summary": "Invoking browser back action on any step after the Add Hosts step",
+                        "assignee": "u39kun",
+                        "components": "",
+                    }
+                ],
+            },
+            top_k=3,
+        )
+        self.assertTrue(rows)
+        self.assertNotEqual(rows[0]["user_id"], 1)
+
     def test_predict_stdout_includes_vue_fields(self):
         from contextlib import redirect_stdout
         from io import StringIO

@@ -21,6 +21,7 @@
             </div>
             <!-- Create Buttons -->
             <div class="d-flex align-items-center gap-2">
+                <AiBatchSuggest :tasks="unassignedOpenTasks" :project-id="project.id" @applied="applyBatchResults" @reset="applyAiTestReset" />
                 <button type="button" @click="showInlineEpicCreate = true" class="tp-btn tp-btn-secondary timeline-create-btn" style="background: #8b5cf6; border-color: #8b5cf6; height: 34px; padding: 0 14px; font-size: 13px;">
                     <i class="fa fa-bolt" style="color: #ffffff !important;"></i>
                     <span>+ Tạo Epic</span>
@@ -829,6 +830,8 @@ import StatusBadge from '../common/StatusBadge.vue';
 import PriorityBadge from '../common/PriorityBadge.vue';
 import IssueTypeBadge from '../common/IssueTypeBadge.vue';
 import UserAvatarPill from '../common/UserAvatarPill.vue';
+import AiBatchSuggest from '../common/AiBatchSuggest.vue';
+import { assigneeFromCandidate } from '../../composables/useAiAssignee';
 
 const props = defineProps({
     project: { type: Object, required: true },
@@ -838,6 +841,15 @@ const props = defineProps({
 
 // Reactive Task List from DB
 const taskList = ref([...props.tasks]);
+
+const unassignedOpenTasks = computed(() => {
+    return (taskList.value || []).filter((task) => {
+        if (['done', 'completed', 'resolved', 'closed'].includes(task.status)) {
+            return false;
+        }
+        return !task.assignee_id && !task.assignee;
+    });
+});
 
 // List of assignable users for inline assignee picker
 const assignableUsers = computed(() => {
@@ -920,6 +932,27 @@ async function handleAssigneeChange(task, newAssigneeId) {
         task.assignee_id = oldAssigneeId;
         task.assignee = oldAssignee;
     }
+}
+
+function applyBatchResults(assignments) {
+    assignments.forEach(({ taskId, candidate }) => {
+        const task = taskList.value.find(item => item.id === taskId);
+        if (!task) {
+            return;
+        }
+        task.assignee_id = candidate.user_id;
+        task.assignee = assigneeFromCandidate(candidate);
+    });
+}
+
+function applyAiTestReset(tasks) {
+    (tasks || []).forEach((fresh) => {
+        const task = taskList.value.find(item => item.id === fresh.id);
+        if (task) {
+            task.assignee_id = null;
+            task.assignee = null;
+        }
+    });
 }
 
 const searchQuery = ref('');

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import math
 import os
 import random
 import re
@@ -20,6 +21,41 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
+GENERIC_TOKENS = {
+    "a", "an", "the", "and", "or", "to", "of", "in", "on", "for", "with", "from",
+    "this", "that", "should", "file", "add", "fix", "bug", "task", "user", "member",
+    "developer", "engineer", "dev", "test", "tests", "testing", "tested", "page",
+    "some", "case", "more", "its", "by", "be", "is", "are", "at", "as", "it",
+    "subtask", "story", "epic", "improvement", "issue", "issues",
+}
+# Component tokens that are too coarse to infer from free text ("web UI", "at the server").
+WEAK_COMPONENT_TOKENS = {"web", "ui", "api", "apis", "server", "servers", "agent", "core", "common"}
+HISTORY_STOP_TOKENS = {
+    "back", "after", "before", "action", "create", "use", "using", "make", "get", "put",
+    "info", "show", "improve", "value", "tmp", "data", "various", "their", "version",
+    "maps", "found", "when", "fixing", "fixes", "field", "label", "step", "steps",
+    "same", "kind", "invoked", "invoke",
+}
+DOMAIN_HINTS = (
+    (
+        {
+            "website", "installer", "installation", "browser", "safari", "wizard",
+            "javascript", "dialog", "modal", "button", "stages", "confirm",
+        },
+        ("ambari-web",),
+    ),
+    ({"puppet", "nagios"}, ("ambari-agent",)),
+    (
+        {
+            "jaxb", "oozie", "ooziedb", "mapred", "heapsize", "blueprint",
+            "authentication", "serialization", "policy", "jce", "mysql",
+        },
+        ("ambari-server",),
+    ),
+    ({"ganglia", "zookeeper", "hdfs"}, ("ambari-agent", "ambari-server")),
+)
+CONFIDENCE_CAP = 0.93
+FALLBACK_CAP = 0.58
 DEFAULT_DATASET = Path(__file__).resolve().parent / "dataset"
 DEFAULT_CHECKPOINT = Path(__file__).resolve().parent / "models" / "assignee_recommender.pt"
 
@@ -120,6 +156,63 @@ def normalize(value) -> str:
 
 def tokenize(value: str) -> list[str]:
     return TOKEN_PATTERN.findall(normalize(value).lower())
+
+
+def content_tokens(*parts) -> set[str]:
+    tokens = set()
+    for part in parts:
+        tokens.update(
+            token for token in tokenize(str(part or "")) if token not in GENERIC_TOKENS and len(token) > 2
+        )
+    return tokens
+
+
+def skill_token_set(skill: str) -> set[str]:
+    return content_tokens(skill)
+
+
+def skill_matches(
+    skill: str,
+    text_tokens: set[str],
+    component_tokens: set[str],
+    project_tokens: set[str],
+) -> bool:
+    """Match a skill on components, or on specific free-text tokens — not project name / web / server / agent alone."""
+    tokens = skill_token_set(skill)
+    if not tokens:
+        return False
+    distinctive = tokens - project_tokens
+    if component_tokens and distinctive and distinctive <= component_tokens:
+        return True
+    if tokens <= component_tokens:
+        return True
+    if not distinctive or distinctive <= WEAK_COMPONENT_TOKENS:
+        return False
+    return distinctive <= (text_tokens | component_tokens)
+
+
+def domain_hint_skills(issue_tokens: set[str], skills: list[str], job_title: str) -> list[str]:
+    haystack = {normalize(skill) for skill in skills if normalize(skill)}
+    job = normalize(job_title)
+    hits = []
+    for hints, skill_names in DOMAIN_HINTS:
+        if not (issue_tokens & hints):
+            continue
+        for skill in skill_names:
+            if skill in haystack or skill == job:
+                hits.append(skill)
+    return list(dict.fromkeys(hits))
+
+
+def calibrate_confidence(raw: float, share: float, scorer_count: int, fallback: bool = False) -> float:
+    """Map raw evidence + relative rank to a probability. Singleton softmax must not become 100%."""
+    evidence = 1.0 - math.exp(-max(raw, 0.0))
+    if scorer_count <= 1:
+        mixed = evidence * 0.90
+    else:
+        mixed = share * (0.45 + 0.50 * evidence)
+    cap = FALLBACK_CAP if fallback else CONFIDENCE_CAP
+    return min(cap, max(0.12, mixed))
 
 
 def combined_text(row: dict) -> str:
@@ -614,52 +707,102 @@ VUE_RECOMMENDATION_FIELDS = (
 
 
 def heuristic_recommendations(payload: dict, top_k: int) -> list[dict]:
-    """Rank TaskPilot candidate_users and emit the Vue modal payload."""
+    """Rank candidates from issue text, skills, and project assignment history.
+
+    Contributors with history or skills are always ranked so the UI is not empty.
+    Confidence stays calibrated: a lone weak match cannot report 100%.
+    """
     system_users = payload.get("candidate_users") or []
-    summary = (payload.get("summary") or payload.get("name") or "").lower()
-    description = (payload.get("description") or "").lower()
-    combined = f"{summary} {description}"
+    text_tokens = content_tokens(
+        payload.get("summary") or payload.get("name"),
+        payload.get("description"),
+        payload.get("labels"),
+    )
+    component_tokens = content_tokens(payload.get("components"))
+    project_tokens = content_tokens(payload.get("projectname"))
+    issue_tokens = text_tokens | component_tokens
+    issue_type = normalize(payload.get("issuetype") or payload.get("issue_type")).lower()
+    history = payload.get("history") or []
 
-    candidates = []
-    for index, user in enumerate(system_users):
-        user_id = user.get("id")
-        name = user.get("full_name") or user.get("name") or f"User #{user_id}"
-        job_title = (user.get("job_title") or "").lower()
-        skills = [s.lower() for s in user.get("skills", [])]
+    scored = []
+    for user in system_users:
+        username = normalize(user.get("username") or user.get("email") or "")
+        skills = [normalize(skill) for skill in (user.get("skills") or []) if normalize(skill)]
+        if not username and not skills:
+            continue
+        matched_skills = [
+            skill
+            for skill in skills
+            if skill_matches(skill, text_tokens, component_tokens, project_tokens)
+        ]
+        hint_skills = domain_hint_skills(issue_tokens, skills, user.get("job_title") or "")
+        job_tokens = content_tokens(user.get("job_title"))
+        job_hits = sorted((job_tokens & issue_tokens) - project_tokens - WEAK_COMPONENT_TOKENS)
 
-        score = 0.55 + (0.05 * (len(system_users) - index) / max(len(system_users), 1))
+        user_history = [
+            row
+            for row in history
+            if normalize(row.get("assignee") or row.get("username")) == username
+        ]
+        history_tokens = set()
+        type_matches = 0
+        for row in user_history:
+            history_tokens.update(content_tokens(row.get("summary"), row.get("components")))
+            if issue_type and normalize(row.get("issuetype")).lower() == issue_type:
+                type_matches += 1
+        overlap = (issue_tokens & history_tokens) - project_tokens - HISTORY_STOP_TOKENS
+        overlap = {token for token in overlap if len(token) >= 5}
+        content_size = max(len(issue_tokens - project_tokens), 1)
+        history_score = (len(overlap) / content_size) if overlap else 0.0
+        experience = min(len(user_history), 8) * 0.08
+
+        content_raw = (
+            (4.0 * history_score)
+            + (1.5 * len(matched_skills))
+            + (1.1 * len(hint_skills))
+            + (0.4 * len(job_hits))
+        )
+        raw = content_raw + (0.25 * min(type_matches, 3)) + experience
+        if raw <= 0:
+            continue
+
         reasons = []
-
-        matched_skills = [s for s in skills if s in combined]
+        if overlap:
+            sample = ", ".join(sorted(overlap)[:4])
+            reasons.append(f"Lịch sử {len(user_history)} việc tương tự trong dự án ({sample})")
         if matched_skills:
-            score += 0.3
-            reasons.append(f"Kỹ năng phù hợp: {', '.join(matched_skills)}")
-
-        if job_title and (
-            job_title in combined
-            or any(word in combined for word in job_title.split() if len(word) > 3)
-        ):
-            score += 0.2
-            reasons.append(f"Chuyên môn {user.get('job_title')} tương thích")
-
-        if user.get("active_tasks_count", 0) <= 3:
-            reasons.append(f"Tải công việc nhẹ ({user.get('active_tasks_count', 0)} task đang làm)")
-
+            reasons.append(f"Kỹ năng khớp nội dung: {', '.join(matched_skills[:3])}")
+        if hint_skills:
+            reasons.append(f"Phù hợp domain công việc: {', '.join(hint_skills[:3])}")
+        if job_hits and user.get("job_title"):
+            reasons.append(f"Chuyên môn {user.get('job_title')} liên quan")
+        if not reasons and user_history:
+            reasons.append(f"Đã xử lý {len(user_history)} việc trong dự án")
         if not reasons:
-            reasons.append("Thành viên hoạt động tích cực trong dự án")
+            reasons.append("Khớp tín hiệu nội dung công việc")
 
-        candidates.append(
+        scored.append((raw, content_raw <= 0, user, reasons))
+
+    if not scored:
+        return []
+
+    peak = max(item[0] for item in scored)
+    weights = [math.exp((item[0] - peak) / 0.45) for item in scored]
+    total = sum(weights) or 1.0
+    scorer_count = len(scored)
+    ranked = []
+    for weight, (raw, fallback, user, reasons) in zip(weights, scored):
+        ranked.append(
             format_recommendation(
                 user=user,
-                user_id=user_id,
-                name=name,
-                score=min(score, 0.96),
+                user_id=user.get("id"),
+                name=user.get("full_name") or user.get("name") or f"User #{user.get('id')}",
+                score=calibrate_confidence(raw, weight / total, scorer_count, fallback),
                 match_reasons=reasons,
             )
         )
-
-    candidates.sort(key=lambda c: c["score"], reverse=True)
-    return candidates[:top_k]
+    ranked.sort(key=lambda item: item["score"], reverse=True)
+    return ranked[:top_k]
 
 
 def predict(args):
@@ -716,59 +859,45 @@ def predict(args):
         probabilities = torch.softmax(model(tokens, category_values, numeric), dim=1)[0]
 
     if system_users:
-        heuristic_rows = heuristic_recommendations(payload, len(system_users))
-        heuristic_by_user = {
-            str(row["user_id"]): row
-            for row in heuristic_rows
-            if row.get("user_id") is not None
-        }
         label_indices = {normalize(label): index for index, label in enumerate(labels)}
-        scored_candidates = []
-
+        matched = []
         for user in system_users:
             user_keys = {
                 normalize(user.get(key))
                 for key in ("id", "username", "email", "name", "full_name")
                 if normalize(user.get(key))
             }
-            model_index = next(
-                (label_indices[key] for key in user_keys if key in label_indices),
-                None,
-            )
-            heuristic_row = heuristic_by_user.get(str(user.get("id")))
-            heuristic_score = float(heuristic_row["score"]) if heuristic_row else 0.0
-            model_score = float(probabilities[model_index]) if model_index is not None else 0.0
-            combined_score = (
-                (0.7 * model_score) + (0.3 * heuristic_score)
-                if model_index is not None
-                else heuristic_score
-            )
+            model_index = next((label_indices[key] for key in user_keys if key in label_indices), None)
+            if model_index is not None:
+                matched.append((user, model_index))
+
+        if not matched:
+            print(json.dumps(heuristic_recommendations(payload, args.top_k), ensure_ascii=False, indent=2))
+            return
+
+        vals = torch.tensor([max(float(probabilities[index]), 0.0) for _user, index in matched])
+        denom = float(vals.sum().clamp(min=1e-12))
+        local = (vals / denom).tolist()
+        scorer_count = max(len(local), 1)
+        scored_candidates = []
+        for (user, _model_index), score in zip(matched, local):
+            score = calibrate_confidence(max(float(score) * 3.0, 0.4), float(score), scorer_count)
             reasons = generate_match_reasons(
                 user.get("id"),
                 user.get("name") or user.get("full_name") or "",
-                model_score,
+                float(score),
                 payload,
                 system_users,
             )
-            if user.get("active_tasks_count", 0) <= 3:
-                reasons.append(f"Tải công việc nhẹ ({user.get('active_tasks_count', 0)} task đang làm)")
             scored_candidates.append(
                 format_recommendation(
                     user=user,
-                    score=combined_score,
+                    score=float(score),
                     match_reasons=reasons,
                 )
             )
-
-        if any(
-            any(normalize(user.get(key)) in label_indices for key in ("id", "username", "email", "name", "full_name"))
-            for user in system_users
-        ):
-            scored_candidates.sort(key=lambda item: item["score"], reverse=True)
-            print(json.dumps(scored_candidates[: args.top_k], ensure_ascii=False, indent=2))
-            return
-
-        print(json.dumps(heuristic_recommendations(payload, args.top_k), ensure_ascii=False, indent=2))
+        scored_candidates.sort(key=lambda item: item["score"], reverse=True)
+        print(json.dumps(scored_candidates[: args.top_k], ensure_ascii=False, indent=2))
         return
 
     profiles = load_profiles(Path(args.dataset_dir), labels, args.chunksize)

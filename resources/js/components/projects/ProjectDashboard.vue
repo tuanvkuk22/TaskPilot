@@ -31,7 +31,8 @@
                     </span>
                 </div>
             </div>
-            <div>
+            <div class="d-flex align-items-center gap-2">
+                <AiBatchSuggest :tasks="unassignedOpenTasks" :project-id="project.id" @applied="applyBatchResults" @reset="applyAiTestReset" />
                 <a :href="`/tasks/create?project_id=${project.id}`" class="tp-btn tp-btn-primary">
                     <i class="fa fa-plus-circle" style="color: #ffffff !important;"></i>
                     <span>Tạo công việc mới</span>
@@ -136,7 +137,7 @@
                 <div class="pd-jira-card">
                     <div class="pd-jira-card-header">
                         <h2 class="pd-jira-card-title">
-                            <i class="fa fa-bolt text-warning me-2"></i>AI Project Insights
+                            <i class="fa fa-magic text-warning me-2"></i>AI gợi ý phân công
                         </h2>
                     </div>
                     <div class="pd-jira-card-body">
@@ -150,6 +151,26 @@
                             </div>
                         </div>
                         <div v-else class="pd-empty-small">Không có rủi ro đáng kể.</div>
+
+                        <div class="pd-insight-item mt-3">
+                            <i class="fa fa-user-times" style="color: #8b5cf6;"></i>
+                            <span>{{ unassignedOpenTasks.length }} công việc chưa phân công</span>
+                        </div>
+                        <div v-if="unassignedOpenTasks.length" class="ai-insight-unassigned">
+                            <div v-for="task in unassignedOpenTasks.slice(0, 5)" :key="task.id" class="ai-insight-row">
+                                <a :href="`/tasks/${task.id}`" class="text-dark text-decoration-none" style="min-width: 0;">
+                                    <div class="ai-home-item-title text-truncate">{{ task.name }}</div>
+                                    <div class="ai-home-item-meta">{{ priorityLabel(task.priority) }}</div>
+                                </a>
+                                <AiAssigneeSuggest
+                                    :task="task"
+                                    compact
+                                    auto-save
+                                    @applied="(payload) => patchTaskAssignee(task, payload.candidate)"
+                                />
+                            </div>
+                        </div>
+                        <div v-else class="pd-empty-small">Mọi công việc đang mở đều đã có người nhận.</div>
                     </div>
                 </div>
 
@@ -266,7 +287,8 @@
                 </div>
 
                 <!-- View Toggle Buttons -->
-                <div class="tp-view-toggle ms-auto">
+                <div class="tp-view-toggle ms-auto" style="display: flex; align-items: center; gap: 8px;">
+                    <AiBatchSuggest :tasks="unassignedOpenTasks" :project-id="project.id" @applied="applyBatchResults" @reset="applyAiTestReset" />
                     <button
                         class="tp-view-btn"
                         :class="{ active: viewMode === 'kanban' }"
@@ -357,7 +379,14 @@
                                     <span v-if="task.story_points" class="points-badge" style="font-size: 11px; padding: 1px 6px;">
                                         {{ task.story_points }}pts
                                     </span>
-                                    <UserAvatarPill :name="task.assignee ? task.assignee.name : ''" />
+                                    <AiAssigneeSuggest
+                                        v-if="!task.assignee_id && !task.assignee"
+                                        :task="task"
+                                        compact
+                                        auto-save
+                                        @applied="(payload) => patchTaskAssignee(task, payload.candidate)"
+                                    />
+                                    <UserAvatarPill :name="task.assignee ? (task.assignee.full_name || task.assignee.name) : ''" />
                                 </div>
                             </div>
                         </div>
@@ -396,7 +425,16 @@
                                 </a>
                             </td>
                             <td>
-                                <UserAvatarPill :name="task.assignee ? task.assignee.name : ''" />
+                                <div class="d-flex align-items-center gap-2">
+                                    <UserAvatarPill :name="task.assignee ? (task.assignee.full_name || task.assignee.name) : ''" />
+                                    <AiAssigneeSuggest
+                                        v-if="!task.assignee_id && !task.assignee"
+                                        :task="task"
+                                        compact
+                                        auto-save
+                                        @applied="(payload) => patchTaskAssignee(task, payload.candidate)"
+                                    />
+                                </div>
                             </td>
                             <td>
                                 <PriorityBadge :priority="task.priority" />
@@ -484,6 +522,9 @@ import StatusBadge from '../common/StatusBadge.vue';
 import PriorityBadge from '../common/PriorityBadge.vue';
 import IssueTypeBadge from '../common/IssueTypeBadge.vue';
 import UserAvatarPill from '../common/UserAvatarPill.vue';
+import AiAssigneeSuggest from '../common/AiAssigneeSuggest.vue';
+import AiBatchSuggest from '../common/AiBatchSuggest.vue';
+import { assigneeFromCandidate } from '../../composables/useAiAssignee';
 
 const props = defineProps({
     project: { type: Object, required: true },
@@ -573,6 +614,15 @@ const todayLabel = computed(() => {
 
 const recentTasks = computed(() => {
     return taskList.value.slice().sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)).slice(0, 5);
+});
+
+const unassignedOpenTasks = computed(() => {
+    return taskList.value.filter(task => {
+        if (['done', 'completed', 'resolved', 'closed'].includes(task.status)) {
+            return false;
+        }
+        return !task.assignee_id && !task.assignee;
+    });
 });
 
 const risks = computed(() => {
@@ -767,6 +817,30 @@ function resetFilters() {
 
 function goToTask(id) {
     window.location.href = `/tasks/${id}`;
+}
+
+function patchTaskAssignee(task, candidate) {
+    task.assignee_id = candidate.user_id;
+    task.assignee = assigneeFromCandidate(candidate);
+}
+
+function applyBatchResults(assignments) {
+    assignments.forEach(({ taskId, candidate }) => {
+        const task = taskList.value.find(item => item.id === taskId);
+        if (task) {
+            patchTaskAssignee(task, candidate);
+        }
+    });
+}
+
+function applyAiTestReset(tasks) {
+    (tasks || []).forEach((fresh) => {
+        const task = taskList.value.find(item => item.id === fresh.id);
+        if (task) {
+            task.assignee_id = null;
+            task.assignee = null;
+        }
+    });
 }
 
 function formatDate(dateStr) {

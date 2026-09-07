@@ -247,19 +247,18 @@
                         </div>
                         <div class="edit-card-body">
                             <div class="edit-field">
-                                <div class="ai-label-wrapper" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <div class="ai-label-wrapper">
                                     <label for="assignee_id" style="margin-bottom: 0;">Người thực hiện</label>
-                                    <button
-                                        type="button"
-                                        class="ai-suggest-btn"
-                                        @click="fetchAiRecommendations"
-                                        :disabled="aiLoading"
-                                        title="Dùng mô hình Học Sâu PyTorch đề xuất người xử lý phù hợp"
-                                    >
-                                        <i v-if="aiLoading" class="fa fa-spinner fa-spin"></i>
-                                        <i v-else class="fa fa-magic" style="color: #8b5cf6;"></i>
-                                        <span>✨ AI Đề xuất</span>
-                                    </button>
+                                    <AiAssigneeSuggest
+                                        :name="form.name"
+                                        :description="form.description"
+                                        :project-id="form.project_id"
+                                        :issue-type="form.issue_type"
+                                        :priority="form.priority"
+                                        :selected-user-id="form.assignee_id"
+                                        :recommend-url="recommendUrl"
+                                        @select="applyAiAssignee"
+                                    />
                                 </div>
                                 <div class="edit-select-wrapper">
                                     <select
@@ -426,79 +425,14 @@
                 </button>
             </div>
         </form>
-
-        <!-- AI Assignee Recommendation Modal -->
-        <div v-if="showAiModal" class="ai-modal-overlay" @click.self="showAiModal = false">
-            <div class="ai-modal-card">
-                <div class="ai-modal-header">
-                    <div class="ai-modal-title">
-                        <i class="fa fa-magic" style="color: #8b5cf6; margin-right: 6px;"></i>
-                        <span>AI Đề Xuất Người Xử Lý Phù Hợp</span>
-                    </div>
-                    <button type="button" class="ai-modal-close" @click="showAiModal = false">&times;</button>
-                </div>
-                <div class="ai-modal-body">
-                    <p class="ai-modal-subtitle">
-                        Mô hình Deep Learning PyTorch phân tích yêu cầu công việc, chuyên môn & tải công việc hiện tại:
-                    </p>
-                    
-                    <div v-if="aiRecommendations.length === 0" class="ai-empty-state">
-                        <i class="fa fa-info-circle"></i> Chưa tìm thấy ứng viên phù hợp.
-                    </div>
-
-                    <div v-else class="ai-candidate-list">
-                        <div
-                            v-for="candidate in aiRecommendations"
-                            :key="candidate.user_id"
-                            class="ai-candidate-card"
-                            :class="{ 'selected': form.assignee_id == candidate.user_id }"
-                        >
-                            <div class="ai-candidate-header">
-                                <div class="ai-candidate-info">
-                                    <div class="ai-candidate-avatar">
-                                        {{ candidateInitial(candidate) }}
-                                    </div>
-                                    <div>
-                                        <div class="ai-candidate-name">{{ candidateDisplayName(candidate) }}</div>
-                                        <div class="ai-candidate-meta">
-                                            <span>{{ candidate.job_title || 'Thành viên dự án' }}</span>
-                                            <span class="ai-dot">•</span>
-                                            <span>{{ candidate.active_tasks_count ?? 0 }} task đang làm</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="ai-candidate-score-badge">
-                                    {{ candidateConfidence(candidate) }}% Phù hợp
-                                </div>
-                            </div>
-
-                            <div v-if="candidate.match_reasons && candidate.match_reasons.length" class="ai-candidate-reasons">
-                                <div v-for="(reason, idx) in candidate.match_reasons" :key="idx" class="ai-reason-item">
-                                    <i class="fa fa-check-circle" style="color: #10b981; margin-right: 4px;"></i> {{ reason }}
-                                </div>
-                            </div>
-
-                            <div class="ai-candidate-action">
-                                <button
-                                    type="button"
-                                    class="ai-select-btn"
-                                    @click="applyAiAssignee(candidate.user_id)"
-                                >
-                                    <i class="fa fa-check" style="margin-right: 4px;"></i> Chọn người này
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue';
+import { ref, reactive, onMounted, nextTick, computed } from 'vue';
 import HeaderBanner from '../common/HeaderBanner.vue';
 import LabelSelect from '../common/LabelSelect.vue';
+import AiAssigneeSuggest from '../common/AiAssigneeSuggest.vue';
 
 const labelSelectRef = ref(null);
 
@@ -556,65 +490,10 @@ const form = reactive({
 });
 
 const tags = ref([]);
-const aiLoading = ref(false);
-const showAiModal = ref(false);
-const aiRecommendations = ref([]);
+const recommendUrl = computed(() => props.recommendUrl || window.taskCreateData?.recommend_url || '/tasks/recommend-assignee');
 
-const fetchAiRecommendations = async () => {
-    aiLoading.value = true;
-    try {
-        const recommendUrl = props.recommendUrl || window.taskCreateData?.recommend_url || '/tasks/recommend-assignee';
-        const csrf = props.csrfToken || window.taskCreateData?.csrf_token || '';
-
-        const response = await fetch(recommendUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrf,
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-                name: form.name,
-                summary: form.name,
-                description: form.description,
-                project_id: form.project_id,
-                issue_type: form.issue_type,
-                priority: form.priority,
-            }),
-        });
-
-        const data = await response.json();
-        if (data.success && Array.isArray(data.recommendations)) {
-            aiRecommendations.value = data.recommendations;
-            showAiModal.value = true;
-        } else {
-            alert('Không thể tải gợi ý AI vào lúc này.');
-        }
-    } catch (err) {
-        console.error('AI Recommend Error:', err);
-        alert('Lỗi kết nối khi gọi dịch vụ AI.');
-    } finally {
-        aiLoading.value = false;
-    }
-};
-
-const candidateDisplayName = (candidate) =>
-    candidate.name || candidate.display_name || candidate.assignee || 'Thành viên';
-
-const candidateInitial = (candidate) =>
-    candidateDisplayName(candidate).charAt(0).toUpperCase();
-
-const candidateConfidence = (candidate) => {
-    if (candidate.confidence_percent != null && candidate.confidence_percent !== '') {
-        return candidate.confidence_percent;
-    }
-    const score = Number(candidate.score);
-    return Number.isFinite(score) ? Math.round(score * 100) : 0;
-};
-
-const applyAiAssignee = (userId) => {
-    form.assignee_id = userId;
-    showAiModal.value = false;
+const applyAiAssignee = (candidate) => {
+    form.assignee_id = candidate.user_id;
 };
 
 onMounted(() => {
@@ -629,164 +508,4 @@ onMounted(() => {
     });
 });
 </script>
-
-<style scoped>
-.ai-suggest-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
-    color: #6b21a8;
-    border: 1px solid #d8b4fe;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-.ai-suggest-btn:hover {
-    background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(168, 85, 247, 0.25);
-}
-.ai-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(15, 23, 42, 0.5);
-    backdrop-filter: blur(4px);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-}
-.ai-modal-card {
-    background: #ffffff;
-    border-radius: 16px;
-    width: 100%;
-    max-width: 560px;
-    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-    overflow: hidden;
-}
-.ai-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    background: #faf5ff;
-    border-bottom: 1px solid #f3e8ff;
-}
-.ai-modal-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-}
-.ai-modal-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: #64748b;
-}
-.ai-modal-body {
-    padding: 20px;
-    max-height: 70vh;
-    overflow-y: auto;
-}
-.ai-modal-subtitle {
-    font-size: 0.85rem;
-    color: #64748b;
-    margin-bottom: 16px;
-}
-.ai-candidate-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-.ai-candidate-card {
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 14px;
-    transition: all 0.2s ease;
-    background: #f8fafc;
-}
-.ai-candidate-card:hover {
-    border-color: #a855f7;
-    background: #ffffff;
-    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.12);
-}
-.ai-candidate-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.ai-candidate-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.ai-candidate-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-}
-.ai-candidate-name {
-    font-weight: 700;
-    color: #0f172a;
-    font-size: 0.95rem;
-}
-.ai-candidate-meta {
-    font-size: 0.8rem;
-    color: #64748b;
-}
-.ai-dot {
-    margin: 0 4px;
-}
-.ai-candidate-score-badge {
-    background: #f3e8ff;
-    color: #7e22ce;
-    font-weight: 700;
-    font-size: 0.8rem;
-    padding: 4px 10px;
-    border-radius: 20px;
-}
-.ai-candidate-reasons {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px dashed #cbd5e1;
-    font-size: 0.82rem;
-    color: #475569;
-}
-.ai-reason-item {
-    margin-bottom: 2px;
-}
-.ai-candidate-action {
-    margin-top: 12px;
-    display: flex;
-    justify-content: flex-end;
-}
-.ai-select-btn {
-    background: #7c3aed;
-    color: #ffffff;
-    border: none;
-    padding: 6px 14px;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-.ai-select-btn:hover {
-    background: #6d28d9;
-}
-</style>
 

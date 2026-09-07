@@ -114,7 +114,8 @@
             </div>
 
             <!-- View Toggle Buttons (Kanban / Table) -->
-            <div class="tp-view-toggle ms-auto">
+            <div class="tp-view-toggle ms-auto" style="display: flex; align-items: center; gap: 8px;">
+                <AiBatchSuggest :tasks="unassignedOpenTasks" :project-id="selectedProjectFilter || null" @applied="applyBatchResults" @reset="applyAiTestReset" />
                 <button
                     class="tp-view-btn"
                     :class="{ active: viewMode === 'kanban' }"
@@ -132,6 +133,18 @@
                     <span>Danh sách</span>
                 </button>
             </div>
+        </div>
+
+        <div v-if="unassignedCount > 0" class="ai-unassigned-banner">
+            <span>
+                <i class="fa fa-magic" style="color: #8b5cf6; margin-right: 6px;"></i>
+                Có <strong>{{ unassignedCount }}</strong> công việc chưa phân công. Bấm
+                <strong>AI gợi ý tất cả</strong> để đề xuất người cho cả danh sách, hoặc nút
+                <strong>AI</strong> trên từng thẻ.
+            </span>
+            <button type="button" class="ai-suggest-btn ai-suggest-btn-compact" @click="selectedAssigneeFilter = 'unassigned'">
+                Lọc chưa phân công
+            </button>
         </div>
 
         <!-- 1. KANBAN BOARD VIEW WITH HTML5 DRAG & DROP -->
@@ -205,7 +218,14 @@
                                 <span v-if="task.story_points" class="points-badge" style="font-size: 11px; padding: 1px 6px;">
                                     {{ task.story_points }}pts
                                 </span>
-                                <UserAvatarPill :name="task.assignee ? task.assignee.name : ''" />
+                                <AiAssigneeSuggest
+                                    v-if="!task.assignee_id && !task.assignee"
+                                    :task="task"
+                                    compact
+                                    auto-save
+                                    @applied="(payload) => patchTaskAssignee(task, payload.candidate)"
+                                />
+                                <UserAvatarPill :name="task.assignee ? (task.assignee.full_name || task.assignee.name) : ''" />
                             </div>
                         </div>
                     </div>
@@ -256,7 +276,16 @@
                                 </span>
                             </td>
                             <td>
-                                <UserAvatarPill :name="task.assignee ? task.assignee.name : ''" />
+                                <div class="d-flex align-items-center gap-2">
+                                    <UserAvatarPill :name="task.assignee ? (task.assignee.full_name || task.assignee.name) : ''" />
+                                    <AiAssigneeSuggest
+                                        v-if="!task.assignee_id && !task.assignee"
+                                        :task="task"
+                                        compact
+                                        auto-save
+                                        @applied="(payload) => patchTaskAssignee(task, payload.candidate)"
+                                    />
+                                </div>
                             </td>
                             <td>
                                 <PriorityBadge :priority="task.priority" />
@@ -314,6 +343,9 @@ import PriorityBadge from '../common/PriorityBadge.vue';
 import IssueTypeBadge from '../common/IssueTypeBadge.vue';
 import UserAvatarPill from '../common/UserAvatarPill.vue';
 import EmptyState from '../common/EmptyState.vue';
+import AiAssigneeSuggest from '../common/AiAssigneeSuggest.vue';
+import AiBatchSuggest from '../common/AiBatchSuggest.vue';
+import { assigneeFromCandidate } from '../../composables/useAiAssignee';
 
 const props = defineProps({
     tasks: { type: Array, default: () => [] },
@@ -397,6 +429,17 @@ const hasActiveFilters = computed(() => {
         selectedStatusFilter.value !== '' ||
         selectedPriorityFilter.value !== '';
 });
+
+const unassignedOpenTasks = computed(() => {
+    return taskList.value.filter(task => {
+        if (['done', 'completed', 'resolved', 'closed'].includes(task.status)) {
+            return false;
+        }
+        return !task.assignee_id && !task.assignee;
+    });
+});
+
+const unassignedCount = computed(() => unassignedOpenTasks.value.length);
 
 const filteredTasks = computed(() => {
     return taskList.value.filter(task => {
@@ -553,6 +596,30 @@ function resetFilters() {
 
 function goToTask(id) {
     window.location.href = `/tasks/${id}`;
+}
+
+function patchTaskAssignee(task, candidate) {
+    task.assignee_id = candidate.user_id;
+    task.assignee = assigneeFromCandidate(candidate);
+}
+
+function applyBatchResults(assignments) {
+    assignments.forEach(({ taskId, candidate }) => {
+        const task = taskList.value.find(item => item.id === taskId);
+        if (task) {
+            patchTaskAssignee(task, candidate);
+        }
+    });
+}
+
+function applyAiTestReset(tasks) {
+    (tasks || []).forEach((fresh) => {
+        const task = taskList.value.find(item => item.id === fresh.id);
+        if (task) {
+            task.assignee_id = null;
+            task.assignee = null;
+        }
+    });
 }
 
 function formatDate(dateStr) {
