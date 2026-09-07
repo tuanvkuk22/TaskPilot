@@ -43,7 +43,9 @@ class ProjectManagementTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Legacy Migration');
-        $response->assertSee('status=archived');
+        $response->assertViewHas('projects', fn ($projects) =>
+            $projects->count() === 1 && $projects->first()->status === 'archived'
+        );
     }
 
     public function test_project_create_form_supports_basic_project_and_category_flow(): void
@@ -55,12 +57,10 @@ class ProjectManagementTest extends TestCase
         $response = $this->actingAs($owner)->get('/projects/create');
 
         $response->assertOk();
-        $response->assertSee('Tên dự án');
-        $response->assertSee('Danh mục');
-        $response->assertSee('Mô tả');
-        $response->assertSee('+ Tạo nhanh danh mục');
-        $response->assertDontSee('Công ty');
-        $response->assertDontSee('Tên nhóm');
+        $response->assertSee('id="project-create-app"', false);
+        $response->assertViewHasAll(['companies', 'categories', 'teams']);
+        $response->assertSee(json_encode(route('projects.store')), false);
+        $response->assertSee(json_encode(route('projects.categories.store')), false);
     }
 
     public function test_project_store_generates_backend_code_and_rejects_duplicate_members(): void
@@ -80,22 +80,33 @@ class ProjectManagementTest extends TestCase
             'category_id' => null,
             'category_name' => 'Marketing',
             'description' => 'Landing page refresh',
-            'members' => ['member@example.com'],
+            'members' => 'member@example.com',
+            'status' => 'active',
+            'priority' => 'medium',
         ]);
 
+        $response->assertSessionHasNoErrors();
         $response->assertRedirect();
         $project = Project::where('name', 'Website Redesign')->firstOrFail();
         $this->assertNotEmpty($project->project_code);
-        $this->assertEquals('Marketing', $project->category->name ?? $project->category()->first()->name ?? 'Marketing');
+        $this->assertSame('Marketing', $project->category->name);
+        $this->assertTrue($project->users()->where('users.id', $member->id)->exists());
+
+        $team = Team::create(['name' => 'Marketing team', 'user_id' => $owner->id]);
+        $team->users()->attach($member->id);
 
         $duplicate = $this->actingAs($owner)->post('/projects', [
             'name' => 'Website Redesign 2',
+            'team_id' => $team->id,
             'category_name' => 'Marketing',
             'description' => 'Second project',
-            'members' => ['member@example.com'],
+            'members' => 'member@example.com',
+            'status' => 'active',
+            'priority' => 'medium',
         ]);
 
-        $duplicate->assertSessionHas('errors');
+        $duplicate->assertSessionHasErrors('project');
+        $this->assertDatabaseMissing('projects', ['name' => 'Website Redesign 2']);
     }
 
     public function test_team_create_form_handles_failed_submission_without_crashing(): void
@@ -130,9 +141,10 @@ class ProjectManagementTest extends TestCase
         $response = $this->actingAs($owner)->get('/tasks');
 
         $response->assertOk();
-        $response->assertSee('Kanban');
-        $response->assertSee('Todo');
-        $response->assertSee('In Progress');
-        $response->assertSee('Done');
+        $response->assertSee('id="task-index-app"', false);
+        $response->assertViewHas('stats', fn ($stats) =>
+            isset($stats['pending'], $stats['in_progress'], $stats['done'], $stats['high_priority'])
+        );
+        $response->assertViewHasAll(['selectedStatus', 'selectedPriority']);
     }
 }

@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => env('FILESYSTEM_DRIVER', 'local'),
+    'default' => env('FILESYSTEM_DISK', env('FILESYSTEM_DRIVER', 'local')),
 
     /*
     |--------------------------------------------------------------------------
@@ -40,6 +40,8 @@ return [
     | Supported Drivers: "local", "ftp", "s3", "rackspace"
     |
     */
+
+    'links' => [public_path('storage') => storage_path('app/public')],
 
     'disks' => [
 

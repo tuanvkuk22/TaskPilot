@@ -6,10 +6,12 @@
             :class="{ 'ai-suggest-btn-compact': compact, 'ai-suggest-btn-icon': iconOnly }"
             :disabled="aiLoading || disabled"
             :title="title"
+            :aria-label="title"
+            :aria-busy="aiLoading"
             @click="fetchRecommendations"
         >
             <i v-if="aiLoading" class="fa fa-spinner fa-spin"></i>
-            <i v-else class="fa fa-magic" style="color: #8b5cf6;"></i>
+            <i v-else class="fa fa-magic ai-magic-icon" aria-hidden="true"></i>
             <span v-if="!iconOnly">{{ compact ? 'AI' : label }}</span>
         </button>
 
@@ -18,10 +20,10 @@
                 <div class="ai-modal-card">
                     <div class="ai-modal-header">
                         <div class="ai-modal-title">
-                            <i class="fa fa-magic" style="color: #8b5cf6; margin-right: 6px;"></i>
+                            <i class="fa fa-magic ai-title-icon" aria-hidden="true"></i>
                             <span>AI Đề Xuất Người Xử Lý Phù Hợp</span>
                         </div>
-                        <button type="button" class="ai-modal-close" @click="showAiModal = false">&times;</button>
+                        <button type="button" aria-label="Đóng gợi ý AI" class="ai-modal-close" @click="showAiModal = false">&times;</button>
                     </div>
                     <div class="ai-modal-body">
                         <p class="ai-modal-subtitle">
@@ -56,6 +58,7 @@
                                     </div>
                                 </div>
 
+                                <p v-if="candidate.persistence_warning" role="status">{{ candidate.persistence_warning }}</p>
                                 <div v-if="candidate.match_reasons && candidate.match_reasons.length" class="ai-candidate-reasons">
                                     <div v-for="(reason, idx) in candidate.match_reasons" :key="idx" class="ai-reason-item">
                                         <i class="fa fa-check-circle" style="color: #10b981; margin-right: 4px;"></i>

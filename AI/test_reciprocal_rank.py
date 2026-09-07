@@ -13,7 +13,42 @@ from assignee_recommender import (
     heuristic_recommendations,
     predict,
     reciprocal_rank_sum,
+    validate_prediction_payload,
 )
+
+
+class PredictionValidationTest(unittest.TestCase):
+    def test_rejects_malformed_structures(self):
+        for payload in ([], {"candidate_users": "users"}, {"history": [None]},
+                        {"candidate_users": [{"skills": "python"}]},
+                        {"candidate_users": [{"active_tasks_count": -1}]},
+                        {"summary": ["text"]}):
+            with self.subTest(payload=payload), self.assertRaises(ValueError):
+                validate_prediction_payload(payload, 5)
+
+    def test_rejects_invalid_top_k(self):
+        for top_k in (0, -1, 101, True):
+            with self.subTest(top_k=top_k), self.assertRaises(ValueError):
+                heuristic_recommendations({}, top_k)
+
+    def test_unreadable_model_falls_back_to_heuristic(self):
+        import argparse
+        import io
+        from contextlib import redirect_stdout
+        from unittest.mock import patch
+
+        payload = {"summary": "Fix mysql query", "candidate_users": [
+            {"id": 1, "name": "Developer", "username": "dev", "skills": ["mysql"]}
+        ]}
+        args = argparse.Namespace(issue_json=json.dumps(payload), top_k=5, checkpoint="model.pt")
+        with patch("assignee_recommender.Path.exists", return_value=True), \
+                patch("assignee_recommender.torch.load", side_effect=OSError("unavailable")), \
+                redirect_stdout(io.StringIO()) as output:
+            predict(args)
+        self.assertEqual(json.loads(output.getvalue()), heuristic_recommendations(payload, 5))
+
+    def test_empty_candidates_are_valid(self):
+        self.assertEqual(heuristic_recommendations({"candidate_users": []}, 5), [])
 
 
 class ReciprocalRankSumTest(unittest.TestCase):

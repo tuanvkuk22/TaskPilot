@@ -8,6 +8,13 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 class User extends Authenticatable
 {
     use Notifiable;
+    use \Illuminate\Database\Eloquent\Factories\HasFactory;
+
+    protected static function newFactory(): \Database\Factories\UserFactory
+    {
+        return \Database\Factories\UserFactory::new();
+    }
+
 
     /**
      * The attributes that are mass assignable.

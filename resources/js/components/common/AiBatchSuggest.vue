@@ -3,12 +3,14 @@
         <button
             type="button"
             class="ai-suggest-btn"
-            :disabled="aiLoading || applying || !taskIds.length"
+            :disabled="aiLoading || applying || resetting || !taskIds.length"
             :title="buttonTitle"
+            :aria-label="buttonTitle"
+            :aria-busy="aiLoading || applying"
             @click="runBatch"
         >
             <i v-if="aiLoading || applying" class="fa fa-spinner fa-spin"></i>
-            <i v-else class="fa fa-magic" style="color: #8b5cf6;"></i>
+            <i v-else class="fa fa-magic ai-magic-icon" aria-hidden="true"></i>
             <span>{{ buttonLabel }}</span>
         </button>
         <button
@@ -16,6 +18,8 @@
             class="ai-suggest-btn ai-reset-btn"
             :disabled="aiLoading || applying || resetting"
             title="Gỡ phân công các việc đã đánh dấu test AI để gợi ý lại"
+            aria-label="Gỡ phân công các việc test AI"
+            :aria-busy="resetting"
             @click="resetPool"
         >
             <i v-if="resetting" class="fa fa-spinner fa-spin"></i>
@@ -28,10 +32,10 @@
                 <div class="ai-modal-card ai-modal-wide">
                     <div class="ai-modal-header">
                         <div class="ai-modal-title">
-                            <i class="fa fa-magic" style="color: #8b5cf6; margin-right: 6px;"></i>
+                            <i class="fa fa-magic ai-title-icon" aria-hidden="true"></i>
                             <span>AI gợi ý tất cả công việc chưa phân công</span>
                         </div>
-                        <button type="button" class="ai-modal-close" @click="showModal = false">&times;</button>
+                        <button type="button" aria-label="Đóng gợi ý AI" class="ai-modal-close" @click="showModal = false">&times;</button>
                     </div>
                     <div class="ai-modal-body">
                         <p class="ai-modal-subtitle">
@@ -45,14 +49,14 @@
                         <div v-else class="ai-batch-list">
                             <div v-for="row in rows" :key="row.task_id" class="ai-batch-row">
                                 <label class="ai-batch-check">
-                                    <input type="checkbox" v-model="row.include" :disabled="!row.suggested">
+                                    <input :aria-label="`Chọn công việc ${row.task_name}`" type="checkbox" v-model="row.include" :disabled="!row.suggested">
                                 </label>
                                 <div class="ai-batch-task">
                                     <div class="ai-home-item-title">{{ row.task_name }}</div>
                                     <div class="ai-home-item-meta">{{ row.issue_type || 'task' }} · {{ row.priority || 'medium' }}</div>
                                 </div>
                                 <div v-if="row.recommendations.length" class="ai-batch-pick">
-                                    <select v-model="row.selectedUserId" class="edit-select">
+                                    <select :aria-label="`Người xử lý cho ${row.task_name}`" v-model="row.selectedUserId" class="edit-select">
                                         <option
                                             v-for="candidate in row.recommendations"
                                             :key="candidate.user_id"

@@ -98,7 +98,7 @@ class AssigneeNetwork(nn.Module):
         super().__init__()
         self.token_embedding = nn.Embedding(vocabulary_size, embedding_dim, padding_idx=0)
         self.text_conv = nn.Conv1d(embedding_dim, embedding_dim, kernel_size=3, padding=1)
-        
+
         self.category_embeddings = nn.ModuleList(
             [nn.Embedding(max(size, 2), cat_embed_dim) for size in category_sizes]
         )
@@ -124,11 +124,11 @@ class AssigneeNetwork(nn.Module):
         # Text embedding branch: Token Embedding + Conv1d + Masked Pooling
         mask = tokens.ne(0).unsqueeze(-1)
         token_vectors = self.token_embedding(tokens) # [B, T, D]
-        
+
         # Apply 1D Convolution over sequence (transpose to [B, D, T])
         conv_out = self.text_conv(token_vectors.transpose(1, 2)).transpose(1, 2)
         token_vectors = token_vectors + conv_out # Residual text feature
-        
+
         token_sum = (token_vectors * mask).sum(dim=1)
         token_count = mask.sum(dim=1).clamp_min(1)
         text_vector = token_sum / token_count
@@ -192,6 +192,7 @@ def skill_matches(
 
 
 def domain_hint_skills(issue_tokens: set[str], skills: list[str], job_title: str) -> list[str]:
+    """Return candidate skills supported by domain keywords in the issue."""
     haystack = {normalize(skill) for skill in skills if normalize(skill)}
     job = normalize(job_title)
     hits = []
@@ -706,12 +707,36 @@ VUE_RECOMMENDATION_FIELDS = (
 )
 
 
+def validate_prediction_payload(payload: dict, top_k: int) -> None:
+    """Validate structured inference input before either scoring path runs."""
+    if not isinstance(payload, dict):
+        raise ValueError("Prediction payload must be an object")
+    if type(top_k) is not int or not 1 <= top_k <= 100:
+        raise ValueError("top_k must be an integer between 1 and 100")
+    for field in ("summary", "name", "description", "labels", "components", "projectname",
+                  "issuetype", "issue_type", "priority", "reporter"):
+        if payload.get(field) is not None and not isinstance(payload[field], str):
+            raise ValueError(f"{field} must be a string")
+    for field in ("candidate_users", "history"):
+        rows = payload.get(field, [])
+        if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+            raise ValueError(f"{field} must be an array of objects")
+    for user in payload.get("candidate_users", []):
+        skills = user.get("skills") or []
+        if not isinstance(skills, list) or any(not isinstance(skill, str) for skill in skills):
+            raise ValueError("Candidate skills must be an array of strings")
+        workload = user.get("active_tasks_count", 0)
+        if type(workload) is not int or workload < 0:
+            raise ValueError("Candidate active_tasks_count must be a non-negative integer")
+
+
 def heuristic_recommendations(payload: dict, top_k: int) -> list[dict]:
     """Rank candidates from issue text, skills, and project assignment history.
 
     Contributors with history or skills are always ranked so the UI is not empty.
     Confidence stays calibrated: a lone weak match cannot report 100%.
     """
+    validate_prediction_payload(payload, top_k)
     system_users = payload.get("candidate_users") or []
     text_tokens = content_tokens(
         payload.get("summary") or payload.get("name"),
@@ -807,6 +832,7 @@ def heuristic_recommendations(payload: dict, top_k: int) -> list[dict]:
 
 def predict(args):
     payload = json.loads(args.issue_json) if args.issue_json else vars(args)
+    validate_prediction_payload(payload, args.top_k)
     system_users = payload.get("candidate_users", [])
 
     checkpoint_path = Path(args.checkpoint)
@@ -815,20 +841,25 @@ def predict(args):
         print(json.dumps(heuristic_recommendations(payload, args.top_k), ensure_ascii=False, indent=2))
         return
 
-    # PyTorch Checkpoint Inference
-    checkpoint = torch.load(checkpoint_path, map_location="cpu")
-    categories = checkpoint["categories"]
-    vocabulary = checkpoint["vocabulary"]
-    labels = checkpoint["labels"]
+    try:
+        # PyTorch Checkpoint Inference
+        checkpoint = torch.load(checkpoint_path, map_location="cpu")
+        categories = checkpoint["categories"]
+        vocabulary = checkpoint["vocabulary"]
+        labels = checkpoint["labels"]
 
-    model = AssigneeNetwork(
-        len(vocabulary),
-        checkpoint["category_sizes"],
-        len(checkpoint["numeric_mean"]),
-        len(labels),
-    )
-    model.load_state_dict(checkpoint["state_dict"])
-    model.eval()
+        model = AssigneeNetwork(
+            len(vocabulary),
+            checkpoint["category_sizes"],
+            len(checkpoint["numeric_mean"]),
+            len(labels),
+        )
+        model.load_state_dict(checkpoint["state_dict"])
+        model.eval()
+    except (OSError, RuntimeError, KeyError, ValueError, EOFError) as exc:
+        print(f"Model unavailable ({type(exc).__name__}); using heuristic scoring", file=sys.stderr)
+        print(json.dumps(heuristic_recommendations(payload, args.top_k), ensure_ascii=False, indent=2))
+        return
 
     row = {
         key: normalize(payload.get(key, ""))

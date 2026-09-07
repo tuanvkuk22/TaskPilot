@@ -354,3 +354,6 @@
 .ai-batch-pick .edit-select {
     width: 100%;
 }
+
+.ai-magic-icon, .ai-title-icon { color: #8b5cf6; }
+.ai-title-icon { margin-right: 6px; }

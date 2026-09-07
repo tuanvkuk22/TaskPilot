@@ -3,25 +3,33 @@
 namespace ProjectsManager\Services;
 
 use Exception;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use ProjectsManager\AiAssigneeRecommendation;
 use ProjectsManager\Project;
 use ProjectsManager\Task;
 use ProjectsManager\User;
+use Symfony\Component\Process\Process;
+use UnexpectedValueException;
 
 class AiRecommendationService
 {
-    protected $projectHistoryCache = [];
+    private const HISTORY_LIMIT = 50;
+
+    protected array $projectHistoryCache = [];
+
     /**
      * Recommend assignees for a given task context.
      *
      * @param array $taskData
      * @param int|null $projectId
      * @param int $topK
+     *
      * @return array
      */
     public function recommend(array $taskData, ?int $projectId = null, int $topK = 5): array
     {
+        $this->projectHistoryCache = [];
         $projectId = $projectId ?? $taskData['project_id'] ?? null;
         $candidateUsers = $this->getCandidateUsers($projectId);
 
@@ -33,10 +41,12 @@ class AiRecommendationService
      *
      * @param iterable $tasks
      * @param int $topK
+     *
      * @return array
      */
     public function recommendMany(iterable $tasks, int $topK = 3): array
     {
+        $this->projectHistoryCache = [];
         $candidateCache = [];
         $items = [];
 
@@ -77,7 +87,7 @@ class AiRecommendationService
      */
     protected function recommendWithCandidates(
         array $taskData,
-        $candidateUsers,
+        Collection $candidateUsers,
         ?int $projectId,
         int $topK,
         bool $persist
@@ -86,11 +96,13 @@ class AiRecommendationService
             return [];
         }
 
-        $formattedCandidates = $candidateUsers->map(function (User $user) {
+        $workloads = Task::query()->whereIn('assignee_id', $candidateUsers->modelKeys())
+            ->whereNotIn('status', ['done', 'closed', 'completed', 'resolved'])
+            ->selectRaw('assignee_id, COUNT(*) as active_count')->groupBy('assignee_id')
+            ->pluck('active_count', 'assignee_id');
+        $formattedCandidates = $candidateUsers->map(function (User $user) use ($workloads) {
             $skills = $user->skills ? $user->skills->pluck('skill_name')->toArray() : [];
-            $activeTasksCount = Task::where('assignee_id', $user->id)
-                ->whereNotIn('status', ['done', 'closed', 'completed'])
-                ->count();
+            $activeTasksCount = (int) ($workloads[$user->id] ?? 0);
 
             return [
                 'id' => $user->id,
@@ -177,7 +189,8 @@ class AiRecommendationService
                     ]);
                     $formatted['recommendation_id'] = $record->id;
                 } catch (Exception $e) {
-                    Log::warning("Failed to store AI recommendation log: " . $e->getMessage());
+                    Log::warning('Failed to store AI recommendation log.', ['task_id' => $taskData['task_id']]);
+                    $formatted['persistence_warning'] = 'Không thể lưu lịch sử gợi ý AI.';
                 }
             }
 
@@ -190,7 +203,7 @@ class AiRecommendationService
     /**
      * Match a Python recommendation row back to a TaskPilot user.
      */
-    protected function matchCandidateUser($candidateUsers, array $item)
+    protected function matchCandidateUser(Collection $candidateUsers, array $item): ?User
     {
         $userId = $item['user_id'] ?? null;
         $keys = array_values(array_filter([
@@ -214,8 +227,11 @@ class AiRecommendationService
     /**
      * Shape a recommendation for TaskCreate.vue (name, user_id, job_title, ...).
      */
-    protected function formatRecommendationForUi(array $item, $matchedUser, int $rank): ?array
+    protected function formatRecommendationForUi(array $item, ?User $matchedUser, int $rank): ?array
     {
+        if (!$matchedUser) {
+            return null;
+        }
         $score = floatval($item['score'] ?? 0);
         $name = $item['name'] ?? $item['display_name'] ?? null;
         $jobTitle = $item['job_title'] ?? '';
@@ -268,26 +284,23 @@ class AiRecommendationService
     /**
      * Fetch candidate users in the project or system.
      */
-    protected function getCandidateUsers(?int $projectId = null)
+    protected function getCandidateUsers(?int $projectId = null): Collection
     {
         $query = User::with('skills')->where('status', 'active');
 
         if ($projectId) {
-            $project = Project::with('users')->find($projectId);
-            if ($project && $project->users->count() > 0) {
+            $project = Project::find($projectId);
+            if ($project) {
                 $members = $project->users()->with('skills')->where('status', 'active')->get();
-                $withUsername = $members->filter(function (User $user) {
-                    return filled($user->username);
-                })->values();
 
-                return $withUsername->isNotEmpty() ? $withUsername : $members;
+                return $members;
             }
         }
 
         return $query->limit(20)->get();
     }
 
-    protected function historyTasksForProject(int $projectId)
+    protected function historyTasksForProject(int $projectId): Collection
     {
         if (!isset($this->projectHistoryCache[$projectId])) {
             $this->projectHistoryCache[$projectId] = Task::query()
@@ -299,7 +312,7 @@ class AiRecommendationService
                         ->orWhere('labels', 'not like', '%ai-test%');
                 })
                 ->latest('id')
-                ->limit(150)
+                ->limit(self::HISTORY_LIMIT)
                 ->get();
         }
 
@@ -318,25 +331,26 @@ class AiRecommendationService
 
         $scriptPath = base_path('AI/assignee_recommender.py');
         if (!file_exists($scriptPath)) {
-            return [];
+            abort(503, 'Dịch vụ gợi ý AI chưa sẵn sàng.');
         }
 
-        $jsonPayload = json_encode($payload, JSON_UNESCAPED_UNICODE);
-        $command = sprintf(
-            '%s %s predict --issue-json %s --top-k %d',
-            escapeshellarg($pythonBinary),
-            escapeshellarg($scriptPath),
-            escapeshellarg($jsonPayload),
-            $topK
-        );
+        $process = new Process([
+            $pythonBinary, $scriptPath, 'predict', '--issue-json',
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            '--top-k', (string) $topK,
+        ], base_path());
+        $process->setTimeout(60);
 
-        $output = shell_exec($command);
-
-        if (!$output) {
-            return [];
+        try {
+            $process->mustRun();
+            $decoded = json_decode($process->getOutput(), true, 512, JSON_THROW_ON_ERROR);
+            if (!is_array($decoded) || !array_is_list($decoded)) {
+                throw new UnexpectedValueException('Invalid inference response.');
+            }
+            return $decoded;
+        } catch (Exception $e) {
+            Log::warning('AI inference failed.', ['exception' => get_class($e)]);
+            abort(503, 'Không thể chạy gợi ý AI lúc này. Vui lòng thử lại.');
         }
-
-        $decoded = json_decode($output, true);
-        return is_array($decoded) ? $decoded : [];
     }
 }

@@ -3,6 +3,8 @@
 namespace ProjectsManager\Console\Commands;
 
 use Illuminate\Console\Command;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\RuntimeException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use ProjectsManager\AiAssigneeRecommendation;
@@ -31,7 +33,12 @@ class ImportDatasetTestCommand extends Command
 
     protected $description = 'Import a sample of the AI holdout test dataset into the database';
 
-    public function handle()
+    /**
+     * Import a bounded holdout dataset.
+     *
+     * @return int
+     */
+    public function handle(): int
     {
         @ini_set('memory_limit', '512M');
         @set_time_limit(0);
@@ -110,7 +117,7 @@ class ImportDatasetTestCommand extends Command
         return 0;
     }
 
-    protected function extractSubset($jsonPath)
+    protected function extractSubset(string $jsonPath): bool
     {
         $dataset = base_path('AI/dataset/issues_clean.csv');
         if (!is_file($dataset)) {
@@ -124,47 +131,29 @@ class ImportDatasetTestCommand extends Command
         }
 
         $script = base_path('AI/export_test_subset.py');
-        $command = sprintf(
-            '%s %s --output %s --limit %d --projects %d --unassigned %d --members %d --history-per-project 24',
-            escapeshellarg($python),
-            escapeshellarg($script),
-            escapeshellarg($jsonPath),
-            (int) $this->option('limit'),
-            (int) $this->option('projects'),
-            (int) $this->option('unassigned'),
-            (int) $this->option('members')
-        );
-
+        $process = new Process([
+            $python, $script, '--output', $jsonPath,
+            '--limit', (string) (int) $this->option('limit'),
+            '--projects', (string) (int) $this->option('projects'),
+            '--unassigned', (string) (int) $this->option('unassigned'),
+            '--members', (string) (int) $this->option('members'),
+            '--history-per-project', '24',
+        ], base_path());
+        $process->setTimeout(300);
         $this->info('Extracting holdout test subset from CSV...');
-        $descriptor = [1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
-        $process = proc_open($command, $descriptor, $pipes, base_path());
-        if (!is_resource($process)) {
-            $this->error('Could not start Python extractor.');
-            return false;
-        }
-
-        $stderr = stream_get_contents($pipes[2]);
-        $stdout = stream_get_contents($pipes[1]);
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-        $code = proc_close($process);
-
-        if (trim($stderr) !== '') {
-            $this->line(trim($stderr));
-        }
-        if (trim($stdout) !== '') {
-            $this->line(trim($stdout));
-        }
-
-        if ($code !== 0) {
-            $this->error('Python extractor failed with code ' . $code);
+        try {
+            $process->mustRun(function ($type, $buffer) {
+                $this->output->write($buffer);
+            });
+        } catch (RuntimeException $e) {
+            $this->error('Python extractor failed: ' . $e->getMessage());
             return false;
         }
 
         return true;
     }
 
-    protected function purgeImported()
+    protected function purgeImported(): void
     {
         $this->warn('Removing previously imported dataset records...');
 
@@ -204,7 +193,7 @@ class ImportDatasetTestCommand extends Command
         }
     }
 
-    protected function resolveAdmin()
+    protected function resolveAdmin(): User
     {
         $admin = User::where('email', 'trannguyentuan1807@gmail.com')->first()
             ?: User::where('role_id', 1)->orderBy('id')->first()
@@ -224,7 +213,7 @@ class ImportDatasetTestCommand extends Command
         return $admin;
     }
 
-    protected function importUsers(array $rows, $memberRoleId, $password)
+    protected function importUsers(array $rows, int $memberRoleId, string $password): array
     {
         $map = [];
         foreach ($rows as $index => $row) {
@@ -272,7 +261,7 @@ class ImportDatasetTestCommand extends Command
         return $map;
     }
 
-    protected function importProjects(array $rows, User $admin, array $userMap)
+    protected function importProjects(array $rows, User $admin, array $userMap): array
     {
         $map = [];
         foreach ($rows as $row) {
@@ -315,7 +304,7 @@ class ImportDatasetTestCommand extends Command
         return $map;
     }
 
-    protected function selectHistorySeeds(array $issues, array $userMap, array $projectMap)
+    protected function selectHistorySeeds(array $issues, array $userMap, array $projectMap): array
     {
         $historyPerMember = max(1, (int) $this->option('history-per-member'));
         $historyCap = max($historyPerMember, (int) $this->option('history-cap'));
@@ -362,7 +351,7 @@ class ImportDatasetTestCommand extends Command
         return $seeds;
     }
 
-    protected function importIssues(array $issues, User $admin, array $userMap, array $projectMap)
+    protected function importIssues(array $issues, User $admin, array $userMap, array $projectMap): void
     {
         $historySeeds = $this->selectHistorySeeds($issues, $userMap, $projectMap);
 
@@ -435,7 +424,7 @@ class ImportDatasetTestCommand extends Command
         }
     }
 
-    protected function attachPayloadMemberships(array $users, array $userMap, array $projectMap)
+    protected function attachPayloadMemberships(array $users, array $userMap, array $projectMap): void
     {
         foreach ($users as $row) {
             $userId = $userMap[strtolower($row['username'] ?? '')] ?? null;
@@ -451,7 +440,7 @@ class ImportDatasetTestCommand extends Command
         }
     }
 
-    protected function attachMember($projectId, $userId, $role = 'member')
+    protected function attachMember(int $projectId, int $userId, string $role = 'member'): void
     {
         if (!$projectId || !$userId) {
             return;
@@ -479,7 +468,7 @@ class ImportDatasetTestCommand extends Command
         DB::table('project_user')->insert($payload);
     }
 
-    protected function mapIssueType($value)
+    protected function mapIssueType($value): string
     {
         $value = strtolower(trim((string) $value));
         if (strpos($value, 'bug') !== false) {
@@ -497,7 +486,7 @@ class ImportDatasetTestCommand extends Command
         return 'task';
     }
 
-    protected function mapPriority($value)
+    protected function mapPriority($value): string
     {
         $value = strtolower(trim((string) $value));
         if (in_array($value, ['blocker', 'critical', 'urgent', 'highest'], true)) {
@@ -512,7 +501,7 @@ class ImportDatasetTestCommand extends Command
         return 'medium';
     }
 
-    protected function mapStatus($value)
+    protected function mapStatus($value): string
     {
         $value = strtolower(trim((string) $value));
         if (in_array($value, ['closed', 'resolved', 'done', 'completed', 'fixed', 'cancelled', 'canceled'], true)) {
@@ -524,7 +513,7 @@ class ImportDatasetTestCommand extends Command
         return 'todo';
     }
 
-    protected function parseDate($value)
+    protected function parseDate($value): ?string
     {
         $value = trim((string) $value);
         if ($value === '' || strtolower($value) === 'nan') {
@@ -537,7 +526,7 @@ class ImportDatasetTestCommand extends Command
         return date('Y-m-d', $timestamp);
     }
 
-    protected function emailFor($username, $index)
+    protected function emailFor(string $username, int $index): string
     {
         $slug = strtolower(preg_replace('/[^a-z0-9]+/i', '.', $username));
         $slug = trim($slug, '.');
@@ -548,7 +537,7 @@ class ImportDatasetTestCommand extends Command
         return $slug . '.' . $index . '@' . self::EMAIL_DOMAIN;
     }
 
-    protected function clip($value, $max)
+    protected function clip($value, int $max): string
     {
         $value = trim((string) $value);
         if ($value === '' || strtolower($value) === 'nan') {

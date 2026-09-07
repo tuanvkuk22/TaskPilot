@@ -1066,6 +1066,8 @@
 
 </style>
 
+@endpush
+
 @section('content')
 
 <div class="team-create-page">

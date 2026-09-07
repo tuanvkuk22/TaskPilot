@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use ProjectsManager\Project;
 use ProjectsManager\Role;
 use ProjectsManager\Task;
@@ -11,7 +11,7 @@ use Tests\TestCase;
 
 class ProjectTimelineTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     protected function setUp(): void
     {

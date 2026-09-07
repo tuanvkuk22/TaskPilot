@@ -37,3 +37,12 @@ __pycache__/
 AI/dataset/*.csv
 
 
+
+.phpunit.cache/
+
+# CI reports and generated configuration
+/phpunit.ci.xml
+/test-results/
+/.coverage
+/tests/browser/test-results/
+/tests/browser/playwright-report/

@@ -19,12 +19,25 @@ return new class extends Migration
         });
 
         // Make legacy columns nullable so we can switch to started_at/ended_at model
-        \Illuminate\Support\Facades\DB::statement('ALTER TABLE worklogs MODIFY logged_at DATE NULL');
+        Schema::table('worklogs', function (Blueprint $table) {
+            $table->date('logged_at')->nullable()->change();
+        });
     }
 
     public function down(): void
     {
-        \Illuminate\Support\Facades\DB::statement('ALTER TABLE worklogs MODIFY logged_at DATE NOT NULL');
+        // MySQL may replace the implicit task_id FK index with the composite
+        // index. Restore a standalone index before removing that composite.
+        if (Schema::getConnection()->getDriverName() === 'mysql'
+            && !Schema::hasIndex('worklogs', ['task_id'])) {
+            Schema::table('worklogs', function (Blueprint $table) {
+                $table->index('task_id', 'worklogs_task_id_rollback_index');
+            });
+        }
+
+        Schema::table('worklogs', function (Blueprint $table) {
+            $table->date('logged_at')->nullable(false)->change();
+        });
 
         Schema::table('worklogs', function (Blueprint $table) {
             $table->dropForeign(['assignee_id']);
