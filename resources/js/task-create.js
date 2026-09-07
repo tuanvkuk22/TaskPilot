@@ -14,6 +14,7 @@ const app = createApp(TaskCreate, {
     availableLabels: d.available_labels || [],
     csrfToken: d.csrf_token || '',
     storeUrl: d.store_url || '/tasks',
+    recommendUrl: d.recommend_url || '/tasks/recommend-assignee',
     tasksIndexUrl: d.tasks_index_url || '/tasks',
     oldLabels: d.old_labels || '',
     old: d.old || {},

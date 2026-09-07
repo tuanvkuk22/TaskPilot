@@ -14,6 +14,7 @@ class Task extends Model
         'days',
         'hours',
         'company_id', 'description', 'status', 'priority', 'issue_type', 'assignee_id', 'reporter_id',
+        'issue_key',
         'due_date', 'start_date', 'end_date', 'story_points', 'labels', 'sprint', 'parent_id', 'sprint_id',
     ];
 

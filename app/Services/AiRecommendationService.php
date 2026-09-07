@@ -11,6 +11,7 @@ use ProjectsManager\User;
 
 class AiRecommendationService
 {
+    protected $projectHistoryCache = [];
     /**
      * Recommend assignees for a given task context.
      *
@@ -24,6 +25,63 @@ class AiRecommendationService
         $projectId = $projectId ?? $taskData['project_id'] ?? null;
         $candidateUsers = $this->getCandidateUsers($projectId);
 
+        return $this->recommendWithCandidates($taskData, $candidateUsers, $projectId, $topK, true);
+    }
+
+    /**
+     * Recommend assignees for many existing tasks, reusing candidates per project.
+     *
+     * @param iterable $tasks
+     * @param int $topK
+     * @return array
+     */
+    public function recommendMany(iterable $tasks, int $topK = 3): array
+    {
+        $candidateCache = [];
+        $items = [];
+
+        foreach ($tasks as $task) {
+            $projectId = $task->project_id ? (int) $task->project_id : null;
+            $cacheKey = $projectId ?? 0;
+            if (!isset($candidateCache[$cacheKey])) {
+                $candidateCache[$cacheKey] = $this->getCandidateUsers($projectId);
+            }
+
+            $recommendations = $this->recommendWithCandidates([
+                'name' => $task->name,
+                'summary' => $task->name,
+                'description' => $task->description,
+                'issue_type' => $task->issue_type ?? 'task',
+                'priority' => $task->priority ?? 'medium',
+                'labels' => $task->labels ?? '',
+                'task_id' => $task->id,
+                'project_id' => $projectId,
+            ], $candidateCache[$cacheKey], $projectId, $topK, false);
+
+            $items[] = [
+                'task_id' => $task->id,
+                'task_name' => $task->name,
+                'issue_type' => $task->issue_type,
+                'priority' => $task->priority,
+                'project_id' => $projectId,
+                'recommendations' => $recommendations,
+                'suggested' => $recommendations[0] ?? null,
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * Run inference against a prepared candidate set.
+     */
+    protected function recommendWithCandidates(
+        array $taskData,
+        $candidateUsers,
+        ?int $projectId,
+        int $topK,
+        bool $persist
+    ): array {
         if ($candidateUsers->isEmpty()) {
             return [];
         }
@@ -48,10 +106,35 @@ class AiRecommendationService
         })->toArray();
 
         $projectName = '';
+        $projectCode = '';
+        $history = [];
+        $components = [];
         if ($projectId) {
             $project = Project::find($projectId);
             if ($project) {
                 $projectName = $project->name;
+                $projectCode = $project->project_code ?: $project->name;
+            }
+
+            $historyTasks = $this->historyTasksForProject($projectId);
+            foreach ($historyTasks as $historyTask) {
+                if (!empty($taskData['task_id']) && (int) $historyTask->id === (int) $taskData['task_id']) {
+                    continue;
+                }
+                $history[] = [
+                    'summary' => $historyTask->name,
+                    'assignee' => $historyTask->assignee->username ?? $historyTask->assignee->email ?? '',
+                    'username' => $historyTask->assignee->username ?? '',
+                    'issuetype' => $historyTask->issue_type ?? 'task',
+                    'components' => $historyTask->skills ? $historyTask->skills->pluck('skill_name')->implode(' ') : '',
+                ];
+            }
+        }
+
+        if (!empty($taskData['task_id'])) {
+            $current = Task::with('skills')->find($taskData['task_id']);
+            if ($current && $current->skills) {
+                $components = $current->skills->pluck('skill_name')->toArray();
             }
         }
 
@@ -60,9 +143,12 @@ class AiRecommendationService
             'description' => $taskData['description'] ?? '',
             'issuetype' => $taskData['issue_type'] ?? 'task',
             'priority' => $taskData['priority'] ?? 'medium',
-            'projectname' => $projectName,
+            'projectname' => $projectCode ?: $projectName,
+            'components' => implode(' ', $components),
+            'labels' => $taskData['labels'] ?? '',
             'reporter' => auth()->user()?->username ?? auth()->user()?->email ?? '',
             'candidate_users' => $formattedCandidates,
+            'history' => $history,
         ];
 
         $recommendations = $this->runPythonInference($payload, $topK);
@@ -79,11 +165,9 @@ class AiRecommendationService
                 continue;
             }
 
-            $results[] = $formatted;
-
-            if (!empty($taskData['task_id'])) {
+            if ($persist && !empty($taskData['task_id'])) {
                 try {
-                    AiAssigneeRecommendation::create([
+                    $record = AiAssigneeRecommendation::create([
                         'task_id' => $taskData['task_id'],
                         'user_id' => $formatted['user_id'],
                         'score' => $formatted['score'],
@@ -91,10 +175,13 @@ class AiRecommendationService
                         'match_reasons' => $formatted['match_reasons'],
                         'status' => 'pending',
                     ]);
+                    $formatted['recommendation_id'] = $record->id;
                 } catch (Exception $e) {
                     Log::warning("Failed to store AI recommendation log: " . $e->getMessage());
                 }
             }
+
+            $results[] = $formatted;
         }
 
         return $results;
@@ -188,11 +275,35 @@ class AiRecommendationService
         if ($projectId) {
             $project = Project::with('users')->find($projectId);
             if ($project && $project->users->count() > 0) {
-                return $project->users()->with('skills')->where('status', 'active')->get();
+                $members = $project->users()->with('skills')->where('status', 'active')->get();
+                $withUsername = $members->filter(function (User $user) {
+                    return filled($user->username);
+                })->values();
+
+                return $withUsername->isNotEmpty() ? $withUsername : $members;
             }
         }
 
         return $query->limit(20)->get();
+    }
+
+    protected function historyTasksForProject(int $projectId)
+    {
+        if (!isset($this->projectHistoryCache[$projectId])) {
+            $this->projectHistoryCache[$projectId] = Task::query()
+                ->with(['assignee', 'skills'])
+                ->where('project_id', $projectId)
+                ->whereNotNull('assignee_id')
+                ->where(function ($query) {
+                    $query->whereNull('labels')
+                        ->orWhere('labels', 'not like', '%ai-test%');
+                })
+                ->latest('id')
+                ->limit(150)
+                ->get();
+        }
+
+        return $this->projectHistoryCache[$projectId];
     }
 
     /**

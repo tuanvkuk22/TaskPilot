@@ -126,7 +126,10 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="mb-3">
-                                            <label for="assignee_id" class="form-label fw-medium small">Người phụ trách</label>
+                                            <div class="ai-inline-actions" style="justify-content: space-between; width: 100%; margin-bottom: 6px;">
+                                                <label for="assignee_id" class="form-label fw-medium small mb-0">Người phụ trách</label>
+                                                @include('partials.ai_assignee_button', ['task' => $task, 'mode' => 'select', 'select' => '#assignee_id'])
+                                            </div>
                                             <select name="assignee_id" id="assignee_id" class="form-select">
                                                 <option value="">Chưa phân công</option>
                                                 @foreach($users as $user)
@@ -203,4 +206,5 @@
         </div>
     </div>
 </div>
+@include('partials.ai_assignee_assets')
 @endsection

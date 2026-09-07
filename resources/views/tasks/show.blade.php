@@ -428,7 +428,12 @@
 
                             <!-- 2. Assignee (Inline User Select) -->
                             <div class="sidebar-meta-item">
-                                <span class="meta-label">Người thực hiện</span>
+                                <span class="meta-label ai-inline-actions" style="justify-content: space-between; width: 100%;">
+                                    <span>Người thực hiện</span>
+                                    @if($canEdit)
+                                        @include('partials.ai_assignee_button', ['task' => $task, 'mode' => 'save', 'compact' => true])
+                                    @endif
+                                </span>
                                 <div class="meta-value">
                                     <div id="assignee-view-wrap" class="jira-editable-field {{ $canEdit ? 'clickable' : '' }}" @if($canEdit) onclick="toggleInlineEdit('assignee')" @endif title="Bấm để đổi người thực hiện">
                                         <div id="assignee-display">
@@ -830,4 +835,5 @@
         });
     }
 </script>
+@include('partials.ai_assignee_assets')
 @endsection
