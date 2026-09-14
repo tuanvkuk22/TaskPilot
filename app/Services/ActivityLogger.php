@@ -27,6 +27,7 @@ class ActivityLogger
         ?Model $subject = null,
         ?array $changes = null,
         ?string $meta = null,
+        ?string $subjectLabel = null,
     ): ProjectActivity {
         return ProjectActivity::create([
             'project_id' => $projectId,
@@ -34,7 +35,7 @@ class ActivityLogger
             'action' => $action,
             'subject_type' => $subject ? get_class($subject) : null,
             'subject_id' => $subject?->getKey(),
-            'subject_label' => $subject ? self::labelFor($subject) : null,
+            'subject_label' => $subjectLabel ?? ($subject ? self::labelFor($subject) : null),
             'changes' => $changes,
             'meta' => $meta,
             'created_at' => now(),

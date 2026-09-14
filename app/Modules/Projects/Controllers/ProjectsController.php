@@ -25,6 +25,7 @@ use ProjectsManager\Modules\Projects\Handlers\UpdateProjectHandler;
 use ProjectsManager\Modules\Projects\Handlers\UpdateProjectRoleHandler;
 use ProjectsManager\Modules\Projects\Repositories\ProjectRepository;
 use ProjectsManager\Modules\Companies\Handlers\StoreCompanyHandler;
+use ProjectsManager\Company;
 use ProjectsManager\Project;
 use ProjectsManager\Services\ActivityLogger;
 use ProjectsManager\ProjectPermission;
@@ -250,6 +251,22 @@ class ProjectsController extends Controller
     {
         $data = $request->all();
 
+        if ($request->has('company_id')) {
+            $validated = $request->validate([
+                'company_id' => ['nullable', 'integer', 'exists:companies,id'],
+            ]);
+
+            $companyId = $validated['company_id'] ?? null;
+            if ($companyId && ! Company::query()->whereKey($companyId)->where('user_id', Auth::id())->exists()) {
+                return back()->withInput()->withErrors([
+                    'company_id' => 'Khách hàng đã chọn không thuộc tài khoản của bạn.',
+                ]);
+            }
+
+            // Keep this key even when blank so users can change or remove a customer.
+            $data['company_id'] = $companyId;
+        }
+
         if ($request->hasFile('image')) {
             $request->validate([
                 'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
@@ -300,7 +317,7 @@ class ProjectsController extends Controller
             }
 
             return redirect()->route('projects.index')
-                ->with('success', 'Project deleted successfully.');
+                ->with('success', 'Đã xóa dự án và các công việc liên quan.');
         }
 
         if (request()->expectsJson()) {
@@ -310,7 +327,7 @@ class ProjectsController extends Controller
             ], 422);
         }
 
-        return back()->withInput()->with('error', 'Project could not be deleted.');
+        return back()->withInput()->with('error', 'Không thể xóa dự án. Vui lòng thử lại.');
     }
 
     public function adduser(Request $request): RedirectResponse

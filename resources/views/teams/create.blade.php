@@ -440,6 +440,29 @@
     color: #974f0c;
 }
 
+.team-type-icon.other {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.custom-team-type-wrap {
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px solid #bfdbfe;
+    border-radius: 7px;
+    background: #f8fbff;
+}
+
+.custom-team-type-wrap label {
+    display: block;
+    margin-bottom: 7px;
+    color: #172b4d;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.custom-team-type-wrap label span { color: #de350b; }
+
 .team-type-content strong {
     display: block;
 
@@ -597,6 +620,10 @@
     box-shadow: 0 1px 2px rgba(9, 30, 66, .04);
 }
 
+.team-tips {
+    padding: 14px;
+}
+
 .team-summary-title,
 .team-tips-title {
     display: flex;
@@ -610,6 +637,10 @@
 
     font-size: 13px;
     font-weight: 650;
+}
+
+.team-tips-title {
+    margin-bottom: 10px;
 }
 
 .team-summary-title i {
@@ -660,26 +691,41 @@
     display: flex;
     align-items: flex-start;
 
-    gap: 8px;
-
-    padding: 9px 0;
-
-    border-top: 1px solid #ebecf0;
-
-    color: #6b778c;
-
+    gap: 9px;
+    padding: 8px 9px;
+    margin-top: 5px;
+    border: 1px solid #eef2f7;
+    color: #64748b;
     font-size: 11px;
-
-    line-height: 1.5;
+    line-height: 1.35;
 }
 
 .team-tip i {
-    margin-top: 3px;
+    margin-top: 1px;
 
     color: #00875a;
 
-    font-size: 10px;
+    font-size: 13px;
 }
+
+.team-tip.tip-action {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background .15s ease;
+}
+
+.team-tip.tip-action:hover,
+.team-tip.tip-action:focus-visible {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+    outline: none;
+}
+
+.team-tip.tip-action .fa-circle-o { color: #94a3b8; }
 
 
 /* =========================================================
@@ -1171,6 +1217,7 @@
                         <input
                             id="team-name"
                             name="name"
+                            maxlength="80"
                             type="text"
                             class="team-input @error('name') is-invalid @enderror"
                             value="{{ old('name') }}"
@@ -1212,8 +1259,6 @@
                                 {{ $message }}
                             </div>
                         @enderror
-
-                    </div>
 
                 </section>
 
@@ -1334,10 +1379,23 @@
 
                         </label>
 
+                        <label class="team-type-option">
+                            <input type="radio" name="team_type" value="other" {{ old('team_type') === 'other' ? 'checked' : '' }}>
+                            <div class="team-type-card">
+                                <div class="team-type-icon other"><i class="fa fa-ellipsis-h"></i></div>
+                                <div class="team-type-content"><strong>Khác</strong><span>Nhập loại đội nhóm phù hợp với cách bạn làm việc.</span></div>
+                                <div class="team-type-check"><i class="fa fa-check"></i></div>
+                            </div>
+                        </label>
+
+                    </div>
+
+                    <div id="custom-team-type-wrap" class="custom-team-type-wrap" style="display: none;">
+                        <label for="team_type_custom">Loại đội nhóm khác <span>*</span></label>
+                        <input id="team_type_custom" name="team_type_custom" class="form-control" maxlength="100" value="{{ old('team_type_custom') }}" placeholder="Ví dụ: Thiết kế sản phẩm, Giáo dục, Cộng đồng...">
                     </div>
 
                 </section>
-
 
                 {{-- Members --}}
                 <section class="team-section">
@@ -1433,7 +1491,7 @@
                     <div class="team-summary-item">
                         <span>Thành viên</span>
                         <strong id="summary-members">
-                            0 người
+                            1 người
                         </strong>
                     </div>
 
@@ -1448,26 +1506,20 @@
                         Gợi ý
                     </div>
 
-                    <div class="team-tip">
-                        <i class="fa fa-check"></i>
-                        <span>
-                            Đặt tên ngắn gọn và dễ nhận biết.
-                        </span>
-                    </div>
+                    <button type="button" class="team-tip tip-action" data-tip-target="team-name">
+                        <i id="tip-name-icon" class="fa fa-circle-o"></i>
+                        <span id="tip-name-text">Đặt tên dễ nhận biết.</span>
+                    </button>
 
-                    <div class="team-tip">
-                        <i class="fa fa-check"></i>
-                        <span>
-                            Mô tả rõ mục tiêu của đội nhóm.
-                        </span>
-                    </div>
+                    <button type="button" class="team-tip tip-action" data-tip-target="team-description">
+                        <i id="tip-description-icon" class="fa fa-circle-o"></i>
+                        <span id="tip-description-text">Thêm mô tả mục tiêu.</span>
+                    </button>
 
-                    <div class="team-tip">
-                        <i class="fa fa-check"></i>
-                        <span>
-                            Chỉ mời những thành viên cần thiết.
-                        </span>
-                    </div>
+                    <button type="button" class="team-tip tip-action" data-tip-target="jira-tag-container">
+                        <i id="tip-members-icon" class="fa fa-circle-o"></i>
+                        <span id="tip-members-text">Mời thành viên (tùy chọn).</span>
+                    </button>
 
                 </div>
 
@@ -1511,12 +1563,68 @@ document.addEventListener('DOMContentLoaded', function () {
     /*
      * Jira tag input
      */
-    if (typeof initJiraTagInput === 'function') {
-        initJiraTagInput(
-            'jira-tag-container',
-            'team-members'
-        );
+    const tagContainer = document.getElementById('jira-tag-container');
+    const membersInput = document.getElementById('team-members');
+    const summaryMembers = document.getElementById('summary-members');
+    let memberIdentifiers = (membersInput.value || '').split(/[\r\n,;]+/).map(value => value.trim()).filter(Boolean);
+    let tipsReady = false;
+
+    function syncMembers() {
+        membersInput.value = memberIdentifiers.join(', ');
+        summaryMembers.textContent = `${memberIdentifiers.length + 1} người`;
+        if (tipsReady) updateTips();
     }
+
+    function addMemberIdentifiers(value) {
+        value.split(/[\r\n,;]+/).map(item => item.trim()).filter(Boolean).forEach(function (identifier) {
+            if (!memberIdentifiers.some(item => item.toLowerCase() === identifier.toLowerCase())) {
+                memberIdentifiers.push(identifier);
+            }
+        });
+        renderMemberTags();
+    }
+
+    function renderMemberTags() {
+        tagContainer.innerHTML = '';
+
+        memberIdentifiers.forEach(function (identifier, index) {
+            const tag = document.createElement('span');
+            tag.className = 'jira-tag';
+            tag.textContent = identifier;
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.setAttribute('aria-label', `Xóa ${identifier}`);
+            remove.innerHTML = '&times;';
+            remove.addEventListener('click', function () {
+                memberIdentifiers.splice(index, 1);
+                renderMemberTags();
+            });
+            tag.appendChild(remove);
+            tagContainer.appendChild(tag);
+        });
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Nhập email hoặc username rồi nhấn Enter';
+        input.autocomplete = 'off';
+        input.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ',' || event.key === ';') {
+                event.preventDefault();
+                addMemberIdentifiers(input.value);
+                input.value = '';
+            }
+        });
+        input.addEventListener('blur', function () {
+            if (input.value.trim()) {
+                addMemberIdentifiers(input.value);
+                input.value = '';
+            }
+        });
+        tagContainer.appendChild(input);
+        syncMembers();
+    }
+
+    renderMemberTags();
 
 
     /*
@@ -1535,6 +1643,40 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
     }
+
+    const teamDescription = document.getElementById('team-description');
+
+    function setTip(id, isComplete, text) {
+        const icon = document.getElementById(`tip-${id}-icon`);
+        const label = document.getElementById(`tip-${id}-text`);
+        icon.className = `fa ${isComplete ? 'fa-check-circle' : 'fa-circle-o'}`;
+        label.textContent = text;
+    }
+
+    function updateTips() {
+        const name = teamName.value.trim();
+        const description = teamDescription.value.trim();
+        const memberCount = memberIdentifiers.length;
+        setTip('name', name.length >= 3, name.length >= 3 ? 'Tên đội nhóm đã sẵn sàng.' : 'Đặt tên dễ nhận biết.');
+        setTip('description', description.length >= 10, description.length >= 10 ? 'Mô tả mục tiêu đã được thêm.' : 'Thêm mô tả mục tiêu.');
+        setTip('members', memberCount > 0, memberCount > 0 ? `Đã mời ${memberCount} thành viên.` : 'Mời thành viên khi cần thiết (không bắt buộc).');
+    }
+
+    teamName.addEventListener('input', updateTips);
+    teamDescription.addEventListener('input', updateTips);
+    document.querySelectorAll('.tip-action').forEach(function (tip) {
+        tip.addEventListener('click', function () {
+            const targetId = tip.dataset.tipTarget;
+            const target = targetId === 'jira-tag-container'
+                ? tagContainer.querySelector('input')
+                : document.getElementById(targetId);
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.focus();
+        });
+    });
+
+    tipsReady = true;
+    updateTips();
 
 
     /*
@@ -1563,6 +1705,34 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
     });
+
+    const customTeamTypeWrap = document.getElementById('custom-team-type-wrap');
+    const customTeamTypeInput = document.getElementById('team_type_custom');
+
+    function syncCustomTeamType() {
+        const selected = document.querySelector('input[name="team_type"]:checked');
+        const isOther = selected && selected.value === 'other';
+
+        customTeamTypeWrap.style.display = isOther ? 'block' : 'none';
+        customTeamTypeInput.required = isOther;
+
+        if (isOther) {
+            summaryType.textContent = customTeamTypeInput.value.trim() || 'Khác';
+        }
+    }
+
+    typeInputs.forEach(function (input) {
+        input.addEventListener('change', syncCustomTeamType);
+    });
+
+    customTeamTypeInput.addEventListener('input', function () {
+        const selected = document.querySelector('input[name="team_type"]:checked');
+        if (selected && selected.value === 'other') {
+            summaryType.textContent = this.value.trim() || 'Khác';
+        }
+    });
+
+    syncCustomTeamType();
 
 });
 </script>

@@ -3,7 +3,9 @@
 namespace ProjectsManager\Modules\Companies\Repositories;
 
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use ProjectsManager\Company;
+use ProjectsManager\Task;
 
 class CompanyRepository
 {
@@ -16,7 +18,10 @@ class CompanyRepository
      */
     public function getCompaniesForUser(int $userId): Collection
     {
-        return Company::where('user_id', $userId)->get();
+        return Company::query()
+            ->withCount('projects')
+            ->where('user_id', $userId)
+            ->get();
     }
 
     /**
@@ -65,6 +70,11 @@ class CompanyRepository
      */
     public function delete(Company $company): ?bool
     {
-        return $company->delete();
+        return DB::transaction(function () use ($company): ?bool {
+            // Keep historical tasks but remove the optional customer link first.
+            Task::query()->where('company_id', $company->id)->update(['company_id' => null]);
+
+            return $company->delete();
+        });
     }
 }

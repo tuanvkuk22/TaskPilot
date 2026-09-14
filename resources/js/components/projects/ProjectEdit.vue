@@ -203,7 +203,7 @@
                         </div>
                         <div class="edit-card-body">
                             <div class="edit-field">
-                                <label>Khách hàng</label>
+                                <label>Khách hàng của dự án</label>
                                 <div class="edit-select-wrapper">
                                     <select
                                         v-model="form.company_id"
@@ -221,6 +221,7 @@
                                         <i class="fa fa-plus"></i>
                                     </button>
                                 </div>
+                                <div class="edit-hint">Có thể thêm hoặc thay đổi khách hàng bất cứ lúc nào sau khi tạo dự án.</div>
                             </div>
 
                             <div class="edit-field">

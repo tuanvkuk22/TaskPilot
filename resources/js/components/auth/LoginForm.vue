@@ -16,17 +16,13 @@
       <div v-if="statusMessage && !statusDismissed" class="tp-login-alert tp-login-alert-success">
         <i class="fa-solid fa-circle-check"></i>
         <span>{{ statusMessage }}</span>
-        <button type="button" class="tp-alert-close" @click="statusDismissed = true">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+        <button type="button" class="tp-alert-close" aria-label="Đóng thông báo" @click="statusDismissed = true">&times;</button>
       </div>
 
       <div v-if="firstError && !errorDismissed" class="tp-login-alert tp-login-alert-error">
         <i class="fa-solid fa-circle-exclamation"></i>
         <span>{{ firstError }}</span>
-        <button type="button" class="tp-alert-close" @click="errorDismissed = true">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+        <button type="button" class="tp-alert-close" aria-label="Đóng thông báo" @click="errorDismissed = true">&times;</button>
       </div>
 
       <form class="tp-login-form" method="POST" :action="loginUrl || '/login'">
@@ -142,7 +138,6 @@ const points = ref([]);
 const mouse = ref({ x: null, y: null });
 const statusDismissed = ref(false);
 const errorDismissed = ref(false);
-
 const firstError = computed(() => props.errors.length > 0 ? props.errors[0] : '');
 
 const errorMap = computed(() => {

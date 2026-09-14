@@ -302,7 +302,7 @@
                 </div>
 
                 <!-- Right Pane: Gantt Chart Grid -->
-                <div class="timeline-right-pane">
+                <div class="timeline-right-pane" :style="{ width: `${ganttCanvasWidth}px`, flex: `0 0 ${ganttCanvasWidth}px` }">
                     <!-- Two-Tier Date Header -->
                     <div class="gantt-header-container" ref="ganttHeaderRef">
                         <div class="gantt-header-top-row">
@@ -428,26 +428,26 @@
         <!-- 5. FLOATING BOTTOM CAPSULE CONTROLS -->
         <div class="timeline-floating-toolbar shadow-lg">
             <button @click="scrollToToday" class="tb-btn" title="Cuộn đến hôm nay">
-                <span>Today</span>
+                <span>Hôm nay</span>
             </button>
             <div class="tb-divider"></div>
             <button
                 @click="viewMode = 'weeks'"
                 :class="['tb-btn', { active: viewMode === 'weeks' }]"
             >
-                Weeks
+                Tuần
             </button>
             <button
                 @click="viewMode = 'months'"
                 :class="['tb-btn', { active: viewMode === 'months' }]"
             >
-                Months
+                Tháng
             </button>
             <button
                 @click="viewMode = 'quarters'"
                 :class="['tb-btn', { active: viewMode === 'quarters' }]"
             >
-                Quarters
+                Quý
             </button>
             <div class="tb-divider"></div>
             <button class="tb-btn text-muted" title="Thông tin"><i class="fa fa-info-circle"></i></button>
@@ -1334,20 +1334,17 @@ const dateColumns = computed(() => {
             curr.setDate(curr.getDate() + 7);
         }
     } else if (viewMode.value === 'quarters') {
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         while (curr <= end) {
             const m = curr.getMonth();
-            const startM = monthNames[m];
-            const endM = monthNames[Math.min(11, m + 2)];
             cols.push({
                 key: curr.getTime(),
                 monthLabel: `${curr.getFullYear()}`,
-                subLabel: `${startM} - ${endM}`
+                subLabel: `Q${Math.floor(m / 3) + 1}`
             });
             curr.setMonth(curr.getMonth() + 3);
         }
     } else {
-        const monthNames = ["June", "July", "August", "September", "October", "November", "December", "January", "February", "March", "April", "May"];
+        const monthNames = ["Thg 1", "Thg 2", "Thg 3", "Thg 4", "Thg 5", "Thg 6", "Thg 7", "Thg 8", "Thg 9", "Thg 10", "Thg 11", "Thg 12"];
         while (curr <= end) {
             const m = curr.getMonth();
             cols.push({
@@ -1360,6 +1357,12 @@ const dateColumns = computed(() => {
     }
 
     return cols;
+});
+
+const ganttCanvasWidth = computed(() => {
+    const columnWidth = viewMode.value === 'weeks' ? 112 : viewMode.value === 'months' ? 124 : 92;
+
+    return Math.max(1100, dateColumns.value.length * columnWidth);
 });
 
 const dateHeaderGroups = computed(() => {
@@ -2009,10 +2012,11 @@ function priorityLabel(p) {
 }
 
 function scrollToToday() {
-    if (!ganttBodyPane.value) return;
-    const pane = ganttBodyPane.value;
+    if (!workspaceOuter.value) return;
+    const pane = workspaceOuter.value;
+    const timelineOffset = 460;
     const maxScroll = pane.scrollWidth - pane.clientWidth;
-    const target = (todayLeftPercent.value / 100) * pane.scrollWidth - pane.clientWidth / 2;
+    const target = timelineOffset + (todayLeftPercent.value / 100) * ganttCanvasWidth.value - pane.clientWidth / 2;
     pane.scrollTo({
         left: Math.max(0, Math.min(maxScroll, target)),
         behavior: 'smooth',

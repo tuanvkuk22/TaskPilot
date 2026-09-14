@@ -18,6 +18,7 @@ class TeamRepository
     public function getTeamsForUser(int $userId): Collection
     {
         return Team::query()
+            ->withCount('users')
             ->where('user_id', $userId)
             ->orWhereHas('users', function ($query) use ($userId) {
                 $query->where('users.id', $userId);

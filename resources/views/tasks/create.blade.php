@@ -17,11 +17,13 @@
         sprints: @json($sprints ?? []),
         available_labels: @json($available_labels ?? []),
         project_id: @json($project_id ?? null),
+        default_status: @json($default_status ?? null),
         old: @json(old()),
         errors: @json($errors ?? []),
         old_labels: @json(old('labels')),
         csrf_token: @json(csrf_token()),
         store_url: @json(route('tasks.store')),
+        form_data_url: @json(route('tasks.form-data')),
         recommend_url: @json(route('tasks.recommend-assignee')),
         tasks_index_url: @json(route('tasks.index')),
     };

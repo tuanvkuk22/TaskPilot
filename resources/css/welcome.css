@@ -18,7 +18,10 @@
     --border-color: #e2e8f0;
 }
 
-html { scroll-behavior: smooth; }
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 88px;
+}
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 

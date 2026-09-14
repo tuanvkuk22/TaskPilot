@@ -10,6 +10,7 @@ class Team extends Model
         'name',
         'description',
         'user_id',
+        'team_type',
     ];
 
     public function owner()

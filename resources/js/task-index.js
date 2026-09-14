@@ -12,6 +12,7 @@ const app = createApp(TaskList, {
     selectedProject: d.selected_project || '',
     selectedStatus: d.selected_status || '',
     selectedPriority: d.selected_priority || '',
+    successMessage: d.success_message || '',
 });
 
 app.mount('#task-index-app');

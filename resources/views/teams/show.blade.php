@@ -2,12 +2,12 @@
 @section('content')
 <div class="team-page" style="max-width:1400px;margin:0 auto;padding:25px 20px 50px;">
 
-    <div style="font-size:13px;color:#6b778c;margin-bottom:18px;">
+    <div style="display:flex;align-items:center;min-width:0;font-size:13px;color:#6b778c;margin-bottom:18px;">
         <a href="{{ route('teams.index') }}" style="color:#0c66e4;text-decoration:none;">
             <i class="fa fa-users"></i> Đội nhóm
         </a>
         <span style="margin:0 7px;color:#a5adba;">/</span>
-        <span>{{ $team->name }}</span>
+        <span title="{{ $team->name }}" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $team->name }}</span>
     </div>
 
     <div style="background:#fff;border:1px solid #dfe1e6;border-radius:10px;padding:24px;margin-bottom:18px;box-shadow:0 2px 8px rgba(9,30,66,.06);">
@@ -16,9 +16,9 @@
                 <div style="width:58px;height:58px;min-width:58px;display:flex;align-items:center;justify-content:center;background:#deebff;color:#0c66e4;border-radius:12px;font-size:22px;">
                     <i class="fa fa-users"></i>
                 </div>
-                <div>
-                    <h1 style="margin:0 0 6px;font-size:26px;font-weight:700;color:#172b4d;">{{ $team->name }}</h1>
-                    <p style="margin:0 0 10px;color:#6b778c;font-size:13px;">{{ $team->description ?: 'Chưa có mô tả cho đội nhóm này.' }}</p>
+                <div style="min-width:0;flex:1;">
+                    <h1 title="{{ $team->name }}" style="margin:0 0 6px;overflow:hidden;font-size:26px;font-weight:700;color:#172b4d;text-overflow:ellipsis;white-space:nowrap;">{{ $team->name }}</h1>
+                    <p style="margin:0 0 10px;color:#6b778c;font-size:13px;overflow-wrap:anywhere;">{{ $team->description ?: 'Chưa có mô tả cho đội nhóm này.' }}</p>
                     <div style="display:flex;align-items:center;gap:18px;color:#6b778c;font-size:12px;">
                         <span><i class="fa fa-calendar" style="color:#0c66e4;"></i> {{ $team->created_at->format('d/m/Y') }}</span>
                         <span><i class="fa fa-users" style="color:#0c66e4;"></i> {{ $team->users->count() }} thành viên</span>

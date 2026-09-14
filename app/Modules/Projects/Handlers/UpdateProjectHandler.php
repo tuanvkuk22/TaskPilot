@@ -36,7 +36,7 @@ class UpdateProjectHandler
             'start_date' => $data['start_date'] ?? $project->start_date,
             'end_date' => $data['end_date'] ?? $project->end_date,
             'budget' => $data['budget'] ?? $project->budget,
-            'company_id' => $data['company_id'] ?? $project->company_id,
+            'company_id' => array_key_exists('company_id', $data) ? ($data['company_id'] ?: null) : $project->company_id,
             'category_id' => $data['category_id'] ?? $project->category_id,
             'team_id' => $data['team_id'] ?? $project->team_id,
             'objective' => $data['objective'] ?? $project->objective,

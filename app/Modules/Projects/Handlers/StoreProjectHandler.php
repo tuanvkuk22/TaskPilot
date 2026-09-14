@@ -18,13 +18,28 @@ class StoreProjectHandler
 
     public function handle(int $userId, array $data): array
     {
+        $memberEmails = $this->normalizeEmails($data['members'] ?? null);
+        $missingMembers = [];
+
+        foreach ($memberEmails as $email) {
+            if (! $this->repository->findUserByEmail($email)) {
+                $missingMembers[] = $email;
+            }
+        }
+
+        if ($missingMembers !== []) {
+            return [
+                'success' => false,
+                'error' => 'Thành viên chưa tồn tại trong hệ thống: ' . implode(', ', $missingMembers) . '.',
+            ];
+        }
+
         $categoryId = $data['category_id'] ?? null;
         if (empty($categoryId) && ! empty($data['category_name'])) {
             $category = $this->repository->firstOrCreateCategory($userId, (string) $data['category_name']);
             $categoryId = $category->id;
         }
 
-        $memberEmails = $this->normalizeEmails($data['members'] ?? null);
         $teamId = $data['team_id'] ?? null;
         $teamMembers = [];
 
@@ -92,10 +107,6 @@ class StoreProjectHandler
 
         foreach ($memberEmails as $email) {
             $user = $this->repository->findUserByEmail($email);
-
-            if (! $user) {
-                return ['success' => true, 'project' => $project, 'warning' => 'Thành viên ' . $email . ' chưa tồn tại trong hệ thống.'];
-            }
 
             if (! $this->repository->hasUser($project, $user->id)) {
                 $this->repository->attachUser($project, $user->id, 'Thành viên', [

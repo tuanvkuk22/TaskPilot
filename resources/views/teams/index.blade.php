@@ -26,7 +26,7 @@
                     <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:#e3fcef;color:#00875a;border-radius:6px;"><i class="fa fa-user"></i></div>
                     <div>
                         <div style="color:#6b778c;font-size:13px;">Tổng thành viên</div>
-                        <strong style="display:block;margin-top:2px;color:#172b4d;font-size:22px;line-height:1.2;">{{ $teams->sum(fn($team) => $team->users->count()) }}</strong>
+                        <strong style="display:block;margin-top:2px;color:#172b4d;font-size:22px;line-height:1.2;">{{ $teams->sum('users_count') }}</strong>
                     </div>
                 </div>
 
@@ -58,14 +58,14 @@
                 </div>
 
                 <div style="min-width:0;">
-                    <h3 style="margin:0 0 7px;color:#172b4d;font-size:17px;font-weight:600;">
+                    <h3 title="{{ $team->name }}" style="max-width:100%;margin:0 0 7px;overflow:hidden;color:#172b4d;font-size:17px;font-weight:600;text-overflow:ellipsis;white-space:nowrap;">
                         {{ $team->name }}
                     </h3>
 
                     <div style="display:flex;align-items:center;gap:18px;color:#6b778c;font-size:13px;">
                         <span>
                             <i class="fa fa-users me-1"></i>
-                            {{ $team->users->count() }} thành viên
+                            {{ $team->users_count }} thành viên
                         </span>
                         <span>
                             <i class="fa fa-calendar me-1"></i>

@@ -3,6 +3,7 @@
 namespace ProjectsManager\Modules\Tasks\Controllers;
 
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -67,8 +68,34 @@ class TasksController extends Controller
     public function create(Request $request): View
     {
         $data = $this->createTaskHandler->handle(Auth::id(), $request->query('project_id'));
+        $status = $request->query('status');
+        $data['default_status'] = in_array($status, ['todo', 'in_progress', 'done'], true)
+            ? $status
+            : null;
 
         return view('tasks.create', $data);
+    }
+
+    /**
+     * Return project-specific options for the task creation form.
+     */
+    public function formData(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'project_id' => ['required', 'integer', 'exists:projects,id'],
+        ]);
+
+        $projectId = (int) $validated['project_id'];
+        $data = $this->createTaskHandler->handle(Auth::id(), $projectId);
+
+        abort_unless($data['projects']->contains('id', $projectId), 404);
+
+        return response()->json([
+            'users' => $data['users']->values(),
+            'reporters' => $data['reporters']->values(),
+            'epics' => $data['epics']->values(),
+            'sprints' => $data['sprints']->values(),
+        ]);
     }
 
     /**
@@ -102,7 +129,7 @@ class TasksController extends Controller
         }
 
         return redirect()->route('tasks.index', ['project_id' => $task->project_id])
-            ->with('success', 'Task created successfully.');
+            ->with('task_success', 'Đã tạo công việc thành công.');
     }
 
     /**
@@ -223,9 +250,13 @@ class TasksController extends Controller
      */
     public function destroy(Task $task): RedirectResponse
     {
-        $this->deleteTaskHandler->handle($task);
+        $deleted = $this->deleteTaskHandler->handle($task);
+
+        if (! $deleted) {
+            return back()->with('error', 'Không thể xóa công việc. Vui lòng thử lại.');
+        }
 
         return redirect()->route('tasks.index')
-            ->with('success', 'Task deleted successfully.');
+            ->with('success', 'Đã xóa công việc.');
     }
 }

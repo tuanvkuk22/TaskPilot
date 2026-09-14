@@ -38,6 +38,7 @@ Route::post('logout', [LoginController::class, 'logout'])->middleware('auth')->n
 
 Route::middleware('auth')->group(function (): void {
     Route::get('home', [HomeController::class, 'index'])->name('home');
+    Route::view('huong-dan', 'guide')->name('guide');
     Route::resource('companies', CompaniesController::class);
 
     Route::get('projects/role-permissions', [ProjectsController::class, 'availablePermissions'])->name('projects.role.permissions');
@@ -71,6 +72,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post('tasks/ai-assign-batch', [\ProjectsManager\Modules\Tasks\Controllers\AiRecommendationController::class, 'assignBatch'])->name('tasks.ai-assign-batch');
     Route::post('tasks/ai-test-reset', [\ProjectsManager\Modules\Tasks\Controllers\AiRecommendationController::class, 'resetTestAssignments'])->name('tasks.ai-test-reset');
     Route::post('tasks/ai-feedback', [\ProjectsManager\Modules\Tasks\Controllers\AiRecommendationController::class, 'feedback'])->name('tasks.ai-feedback');
+    Route::get('tasks/form-data', [TasksController::class, 'formData'])->name('tasks.form-data');
     Route::resource('tasks', TasksController::class);
     Route::match(['post', 'patch', 'put'], 'tasks/{task}/move', [TasksController::class, 'move'])->name('tasks.move');
     Route::post('tasks/{task}/worklog', [TasksController::class, 'worklog'])->name('tasks.worklog');

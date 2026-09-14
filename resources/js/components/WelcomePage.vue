@@ -11,10 +11,10 @@
         </a>
 
         <ul class="tp-welcome-nav-links">
-          <li><a href="#features" class="tp-welcome-nav-link">Tính năng</a></li>
-          <li><a href="#timeline" class="tp-welcome-nav-link">Gantt Timeline</a></li>
-          <li><a href="#solutions" class="tp-welcome-nav-link">Giải pháp</a></li>
-          <li><a href="#stats" class="tp-welcome-nav-link">Hiệu suất</a></li>
+          <li><a href="#features" class="tp-welcome-nav-link" @click.prevent="scrollToSection('features')">Tính năng</a></li>
+          <li><a href="#timeline" class="tp-welcome-nav-link" @click.prevent="scrollToSection('timeline')">Gantt Timeline</a></li>
+          <li><a href="#solutions" class="tp-welcome-nav-link" @click.prevent="scrollToSection('solutions')">Giải pháp</a></li>
+          <li><a href="#stats" class="tp-welcome-nav-link" @click.prevent="scrollToSection('stats')">Hiệu suất</a></li>
         </ul>
 
         <div class="tp-welcome-nav-auth">
@@ -359,7 +359,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 
 const props = defineProps({
   isAuthenticated: { type: Boolean, default: false },
@@ -371,6 +371,16 @@ const props = defineProps({
 });
 
 const currentYear = ref(new Date().getFullYear());
+
+function scrollToSection(sectionId) {
+  const section = document.getElementById(sectionId);
+
+  if (!section) {
+    return;
+  }
+
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 </script>
 
 <style>
