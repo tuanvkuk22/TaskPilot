@@ -63,8 +63,10 @@ class TeamsController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:80'],
             'description' => ['nullable', 'string'],
+            'team_type' => ['nullable', 'string', 'in:technical,marketing,business,other'],
+            'team_type_custom' => ['nullable', 'string', 'max:100', 'required_if:team_type,other'],
             'members' => ['nullable', 'string'],
         ]);
 

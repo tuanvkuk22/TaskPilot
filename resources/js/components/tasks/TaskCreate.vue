@@ -2,10 +2,27 @@
     <div class="task-create-vue">
         <!-- Page Header Banner -->
         <HeaderBanner
+            v-if="isEditing"
+            eyebrow="Công việc"
+            eyebrowIcon="fa fa-pencil-square-o"
+            title="Chỉnh sửa công việc"
+            description="Cập nhật thông tin, tiến độ và người phụ trách công việc."
+        >
+            <template #actions>
+                <a :href="tasksIndexUrl" class="tp-btn tp-btn-secondary">
+                    <i class="fa fa-arrow-left" style="color: #ffffff !important;"></i>
+                    <span>Quay lại danh sách</span>
+                </a>
+            </template>
+        </HeaderBanner>
+
+        <HeaderBanner v-else
             eyebrow="Công việc"
             eyebrowIcon="fa fa-tasks"
             title="Tạo công việc mới"
             description="Điền thông tin chi tiết để thêm công việc mới vào dự án của bạn."
+            :title="isEditing ? 'Chỉnh sửa công việc' : 'Tạo công việc mới'"
+            :description="isEditing ? 'Cập nhật thông tin, tiến độ và người phụ trách công việc.' : 'Điền thông tin chi tiết để thêm công việc mới vào dự án của bạn.'"
         >
             <template #actions>
                 <a :href="tasksIndexUrl" class="tp-btn tp-btn-secondary">
@@ -17,6 +34,7 @@
 
         <form method="POST" :action="storeUrl" class="task-create-form">
             <input type="hidden" name="_token" :value="csrfToken">
+            <input v-if="isEditing" type="hidden" name="_method" value="PUT">
 
             <!-- 2-Column Responsive Layout (70 / 30) -->
             <div class="edit-grid">
@@ -266,6 +284,7 @@
                                         id="assignee_id"
                                         v-model="form.assignee_id"
                                         class="edit-select"
+                                        :disabled="!form.project_id || isLoadingProjectData"
                                     >
                                         <option value="">Chưa phân công</option>
                                         <option
@@ -288,6 +307,7 @@
                                         id="reporter_id"
                                         v-model="form.reporter_id"
                                         class="edit-select"
+                                        :disabled="!form.project_id || isLoadingProjectData"
                                     >
                                         <option value="">Chưa chọn</option>
                                         <option
@@ -420,8 +440,11 @@
                     <span>Hủy bỏ</span>
                 </a>
                 <button type="submit" class="tp-btn tp-btn-primary">
-                    <i class="fa fa-plus-circle" style="color: #ffffff !important;"></i>
+                    <i :class="isEditing ? 'fa fa-save' : 'fa fa-plus-circle'" style="color: #ffffff !important;"></i>
+                    <span v-if="isEditing">Cập nhật công việc</span>
+                    <template v-else>
                     <span>Tạo công việc</span>
+                    </template>
                 </button>
             </div>
         </form>
@@ -429,7 +452,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick, computed } from 'vue';
+import { ref, reactive, onMounted, nextTick, computed, watch } from 'vue';
 import HeaderBanner from '../common/HeaderBanner.vue';
 import LabelSelect from '../common/LabelSelect.vue';
 import AiAssigneeSuggest from '../common/AiAssigneeSuggest.vue';
@@ -445,24 +468,30 @@ const props = defineProps({
     availableLabels: { type: Array, default: () => [] },
     csrfToken: { type: String, default: '' },
     storeUrl: { type: String, default: '/tasks' },
+    formDataUrl: { type: String, default: '/tasks/form-data' },
     recommendUrl: { type: String, default: '/tasks/recommend-assignee' },
     tasksIndexUrl: { type: String, default: '/tasks' },
     oldLabels: { type: String, default: '' },
     old: { type: Object, default: () => ({}) },
     errors: { type: Object, default: () => ({}) },
     projectId: { type: [Number, String], default: null },
+    defaultStatus: { type: String, default: null },
+    task: { type: Object, default: null },
+    isEditing: { type: Boolean, default: false },
 });
+
+const initialTask = props.task || {};
 
 const issueTypes = [
     { value: 'task', label: 'Task', icon: 'fa fa-check-square-o' },
     { value: 'bug', label: 'Bug', icon: 'fa fa-bug' },
     { value: 'story', label: 'Story', icon: 'fa fa-bookmark' },
     { value: 'epic', label: 'Epic', icon: 'fa fa-bolt' },
-    { value: 'subtask', label: 'Sub-task', icon: 'fa fa-code-fork' },
+    { value: 'subtask', label: 'Công việc con', icon: 'fa fa-code-fork' },
 ];
 
 const statuses = [
-    { value: 'todo', label: 'Cần làm', icon: 'fa fa-circle-o' },
+    { value: 'todo', label: 'Sẽ làm', icon: 'fa fa-clock-o' },
     { value: 'in_progress', label: 'Đang làm', icon: 'fa fa-spinner' },
     { value: 'done', label: 'Hoàn thành', icon: 'fa fa-check-circle' },
 ];
@@ -474,31 +503,86 @@ const priorities = [
 ];
 
 const form = reactive({
-    project_id: props.projectId || props.old.project_id || '',
-    name: props.old.name || '',
-    description: props.old.description || '',
-    issue_type: props.old.issue_type || 'task',
-    parent_id: props.old.parent_id || '',
-    status: props.old.status || 'todo',
-    priority: props.old.priority || 'medium',
-    assignee_id: props.old.assignee_id || '',
-    reporter_id: props.old.reporter_id || '',
-    sprint_id: props.old.sprint_id || '',
-    start_date: props.old.start_date || '',
-    end_date: props.old.end_date || '',
-    story_points: props.old.story_points || '',
+    project_id: props.old.project_id || props.projectId || initialTask.project_id || '',
+    name: props.old.name || initialTask.name || '',
+    description: props.old.description || initialTask.description || '',
+    issue_type: props.old.issue_type || initialTask.issue_type || 'task',
+    parent_id: props.old.parent_id || initialTask.parent_id || '',
+    status: props.old.status || initialTask.status || props.defaultStatus || 'todo',
+    priority: props.old.priority || initialTask.priority || 'medium',
+    assignee_id: props.old.assignee_id || initialTask.assignee_id || '',
+    reporter_id: props.old.reporter_id || initialTask.reporter_id || '',
+    sprint_id: props.old.sprint_id || initialTask.sprint_id || '',
+    start_date: props.old.start_date || initialTask.start_date || '',
+    end_date: props.old.end_date || initialTask.end_date || '',
+    story_points: props.old.story_points || initialTask.story_points || '',
 });
 
 const tags = ref([]);
+const users = ref(props.users);
+const reporters = ref(props.reporters);
+const epics = ref(props.epics);
+const sprints = ref(props.sprints);
+const isLoadingProjectData = ref(false);
 const recommendUrl = computed(() => props.recommendUrl || window.taskCreateData?.recommend_url || '/tasks/recommend-assignee');
 
 const applyAiAssignee = (candidate) => {
     form.assignee_id = candidate.user_id;
 };
 
+const containsId = (items, id) => items.some((item) => String(item.id) === String(id));
+
+watch(() => form.project_id, async (projectId) => {
+    if (!projectId) {
+        users.value = [];
+        reporters.value = [];
+        epics.value = [];
+        sprints.value = [];
+        form.assignee_id = '';
+        form.reporter_id = '';
+        form.parent_id = '';
+        form.sprint_id = '';
+        return;
+    }
+
+    isLoadingProjectData.value = true;
+
+    try {
+        const params = new URLSearchParams({ project_id: String(projectId) });
+        const response = await fetch(`${props.formDataUrl}?${params.toString()}`, {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        });
+
+        if (!response.ok) {
+            throw new Error('Unable to load project task options.');
+        }
+
+        const data = await response.json();
+        users.value = data.users || [];
+        reporters.value = data.reporters || [];
+        epics.value = data.epics || [];
+        sprints.value = data.sprints || [];
+
+        if (form.assignee_id && !containsId(users.value, form.assignee_id)) form.assignee_id = '';
+        if (form.reporter_id && !containsId(reporters.value, form.reporter_id)) form.reporter_id = '';
+        if (form.parent_id && !containsId(epics.value, form.parent_id)) form.parent_id = '';
+        if (form.sprint_id && !containsId(sprints.value, form.sprint_id)) form.sprint_id = '';
+    } catch (error) {
+        console.error(error);
+        users.value = [];
+        reporters.value = [];
+        epics.value = [];
+        sprints.value = [];
+    } finally {
+        isLoadingProjectData.value = false;
+    }
+}, { immediate: true });
+
 onMounted(() => {
-    if (props.oldLabels) {
-        tags.value = props.oldLabels.split(',').map(t => t.trim()).filter(t => t);
+    const initialLabels = props.oldLabels || initialTask.labels || '';
+    if (initialLabels) {
+        tags.value = initialLabels.split(',').map(t => t.trim()).filter(t => t);
     }
     nextTick(() => {
         const projectId = props.projectId;
@@ -508,4 +592,3 @@ onMounted(() => {
     });
 });
 </script>
-

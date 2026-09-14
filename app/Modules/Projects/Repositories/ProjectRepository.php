@@ -3,10 +3,12 @@
 namespace ProjectsManager\Modules\Projects\Repositories;
 
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use ProjectsManager\Company;
 use ProjectsManager\Project;
 use ProjectsManager\ProjectCategory;
 use ProjectsManager\Team;
+use ProjectsManager\Task;
 use ProjectsManager\User;
 
 class ProjectRepository
@@ -30,7 +32,11 @@ class ProjectRepository
             })
             ->statusFilter($status)
             ->orderBy('updated_at', 'desc')
-            ->with('tasks')
+            ->with([
+                'company:id,name',
+                'team:id,name',
+            ])
+            ->withCount('tasks')
             ->get();
     }
 
@@ -80,7 +86,22 @@ class ProjectRepository
      */
     public function delete(Project $project): ?bool
     {
-        return $project->delete();
+        return DB::transaction(function () use ($project): ?bool {
+            $taskIds = Task::query()
+                ->where('project_id', $project->id)
+                ->pluck('id');
+
+            if ($taskIds->isNotEmpty()) {
+                // task_user is a legacy pivot with a restrictive FK.
+                DB::table('task_user')->whereIn('task_id', $taskIds)->delete();
+                Task::query()->whereIn('id', $taskIds)->delete();
+            }
+
+            // project_user also uses a restrictive FK rather than cascade.
+            $project->users()->detach();
+
+            return $project->delete();
+        });
     }
 
     /**

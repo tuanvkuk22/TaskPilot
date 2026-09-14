@@ -15,6 +15,7 @@
         selected_project: @json($selectedProject ?? ''),
         selected_status: @json($selectedStatus ?? ''),
         selected_priority: @json($selectedPriority ?? ''),
+        success_message: @json(session('task_success')),
     };
 </script>
 <script type="module" src="{{ asset('build/assets/task-index.js') }}?v={{ file_exists(public_path('build/assets/task-index.js')) ? filemtime(public_path('build/assets/task-index.js')) : time() }}"></script>

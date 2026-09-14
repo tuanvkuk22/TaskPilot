@@ -3,6 +3,7 @@
 namespace ProjectsManager\Modules\Tasks\Repositories;
 
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use ProjectsManager\Project;
 use ProjectsManager\Task;
 use ProjectsManager\User;
@@ -47,14 +48,15 @@ class TaskRepository
 
     public function getAssignableUsers(int $userId, mixed $projectId = null): Collection
     {
-        $query = User::query()->whereKeyNot($userId);
-
-        if ($projectId) {
-            $query->where(function ($builder) use ($projectId) {
-                $builder->whereHas('projects', fn ($projects) => $projects->where('projects.id', $projectId))
-                    ->orWhereHas('teams.projects', fn ($projects) => $projects->where('projects.id', $projectId));
-            });
+        if (! $projectId) {
+            return new Collection();
         }
+
+        $query = User::query()->where(function ($builder) use ($projectId) {
+            $builder->whereHas('projects', fn ($projects) => $projects->where('projects.id', $projectId))
+                ->orWhereHas('ownedProjects', fn ($projects) => $projects->where('projects.id', $projectId))
+                ->orWhereHas('teams.projects', fn ($projects) => $projects->where('projects.id', $projectId));
+        });
 
         return $query->orderBy('name')->get();
     }
@@ -151,6 +153,12 @@ class TaskRepository
      */
     public function delete(Task $task): ?bool
     {
-        return $task->delete();
+        return DB::transaction(function () use ($task): ?bool {
+            // The legacy task_user pivot has a restrictive foreign key.
+            // Remove its assignments before deleting the task itself.
+            $task->users()->detach();
+
+            return $task->delete();
+        });
     }
 }

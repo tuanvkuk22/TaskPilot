@@ -109,6 +109,31 @@ class ProjectManagementTest extends TestCase
         $this->assertDatabaseMissing('projects', ['name' => 'Website Redesign 2']);
     }
 
+    public function test_project_store_rejects_every_missing_member_before_creating_the_project(): void
+    {
+        $owner = User::factory()->create([
+            'role_id' => 1,
+            'email' => 'owner@example.com',
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->from('/projects/create')
+            ->post('/projects', [
+                'name' => 'Project With Missing Members',
+                'members' => 'first.missing@example.com, second.missing@example.com',
+                'status' => 'active',
+                'priority' => 'medium',
+            ]);
+
+        $response->assertRedirect('/projects/create');
+        $response->assertSessionHasErrors('project');
+        $this->assertStringContainsString(
+            'first.missing@example.com, second.missing@example.com',
+            session('errors')->first('project')
+        );
+        $this->assertDatabaseMissing('projects', ['name' => 'Project With Missing Members']);
+    }
+
     public function test_team_create_form_handles_failed_submission_without_crashing(): void
     {
         $owner = User::factory()->create([

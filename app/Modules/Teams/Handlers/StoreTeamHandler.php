@@ -27,10 +27,30 @@ class StoreTeamHandler
      */
     public function handle(int $userId, array $data): array
     {
+        $missingMembers = [];
+        foreach ($this->normalizeEmails($data['members'] ?? null) as $identifier) {
+            if (! $this->repository->findUserByEmail($identifier)) {
+                $missingMembers[] = $identifier;
+            }
+        }
+
+        if ($missingMembers !== []) {
+            return [
+                'success' => false,
+                'error' => 'Thành viên chưa tồn tại trong hệ thống: ' . implode(', ', $missingMembers) . '.',
+            ];
+        }
+
+        $teamType = $data['team_type'] ?? null;
+        if ($teamType === 'other') {
+            $teamType = trim((string) ($data['team_type_custom'] ?? ''));
+        }
+
         $team = $this->repository->create([
             'name' => trim((string) $data['name']),
             'description' => $data['description'] ?? null,
             'user_id' => $userId,
+            'team_type' => $teamType ?: null,
         ]);
 
         $this->repository->attachUser($team, $userId, 'owner', ['manage_team', 'invite_members', 'view_team']);

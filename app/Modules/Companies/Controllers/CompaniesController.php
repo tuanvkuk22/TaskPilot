@@ -144,13 +144,19 @@ class CompaniesController extends Controller
      */
     public function destroy(Company $company): RedirectResponse
     {
+        abort_unless($company->user_id === Auth::id(), 403);
+
+        if ($company->projects()->exists()) {
+            return back()->with('error', 'Không thể xóa khách hàng đang có dự án. Hãy chuyển hoặc xóa các dự án trước.');
+        }
+
         $deleted = $this->deleteCompanyHandler->handle($company);
 
         if ($deleted) {
             return redirect()->route('companies.index')
-                ->with('success', 'Company deleted successfully');
+                ->with('success', 'Đã xóa khách hàng.');
         }
 
-        return back()->withInput()->with('error', 'Company could not be deleted');
+        return back()->withInput()->with('error', 'Không thể xóa khách hàng. Vui lòng thử lại.');
     }
 }

@@ -63,6 +63,10 @@
     box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
 }
 
+.tp-login-logo i {
+    color: #ffffff !important;
+}
+
 .tp-login-brand span {
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 24px;
@@ -103,12 +107,35 @@
 .tp-login-alert .tp-alert-close {
     margin-left: auto;
     cursor: pointer;
-    opacity: 0.6;
-    font-size: 14px;
-    transition: opacity 0.2s;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: currentColor;
+    opacity: 0.65;
+    font-family: Arial, sans-serif;
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 1;
+    transition: background 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
 }
 
-.tp-login-alert .tp-alert-close:hover { opacity: 1; }
+.tp-login-alert .tp-alert-close:hover {
+    background: rgba(15, 23, 42, 0.09);
+    opacity: 1;
+    transform: scale(1.08);
+}
+
+.tp-login-alert .tp-alert-close:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+    opacity: 1;
+}
 
 @keyframes tpFadeIn {
     from { opacity: 0; transform: translateY(-6px); }
@@ -306,29 +333,25 @@
 .tp-btn-primary:active { transform: translateY(0); }
 
 .tp-login-divider {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     margin: 26px 0;
-    position: relative;
-    font-size: 13px;
-    color: #9ca3af;
+    color: #64748b;
+    font-size: 12px;
     font-weight: 500;
 }
 
-.tp-login-divider::before {
+.tp-login-divider::before,
+.tp-login-divider::after {
     content: "";
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
+    flex: 1;
     height: 1px;
-    background: #e5e7eb;
+    background: rgba(100, 116, 139, 0.28);
 }
 
 .tp-login-divider span {
-    background: #ffffff;
-    padding: 0 16px;
-    position: relative;
-    z-index: 1;
+    white-space: nowrap;
 }
 
 .tp-btn-google {
@@ -337,13 +360,16 @@
     border: 1.5px solid #e5e7eb;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     width: 100%;
+    text-decoration: none;
 }
 
-.tp-btn-google:hover {
+.tp-btn-google:hover,
+.tp-btn-google:focus {
     background: #f9fafb;
     border-color: #d1d5db;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    text-decoration: none;
 }
 
 .tp-btn-google svg { display: inline-block; }
@@ -367,6 +393,57 @@
     text-decoration: underline;
 }
 
+/* ===== Registration ===== */
+
+.tp-register-card {
+    max-width: 500px;
+    padding: 44px;
+}
+
+.tp-register-brand {
+    text-decoration: none;
+}
+
+.tp-register-benefits {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0 0 26px;
+}
+
+.tp-register-benefits span {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    color: #475569;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.tp-register-benefits i {
+    color: #10b981;
+    margin-top: 2px;
+}
+
+.tp-register-password-hint {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.tp-register-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 20px;
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+.tp-register-note i {
+    color: #10b981;
+}
+
 .tp-login-canvas {
     position: fixed;
     inset: 0;
@@ -380,4 +457,6 @@
     .tp-login-card { padding: 38px 26px; border-radius: 20px; }
     .tp-login-title { font-size: 26px; }
     .tp-login-container { padding: 20px 14px; }
+    .tp-register-card { padding: 34px 24px; }
+    .tp-register-benefits { grid-template-columns: 1fr; gap: 7px; }
 }

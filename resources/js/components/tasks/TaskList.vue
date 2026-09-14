@@ -1,8 +1,13 @@
 <template>
     <div class="task-index-vue">
+        <div v-if="successMessage" class="tp-task-toast" role="status">
+            <i class="fa fa-check-circle"></i>
+            <span>{{ successMessage }}</span>
+            <button type="button" aria-label="Đóng thông báo" @click="successMessage = ''">&times;</button>
+        </div>
+
         <!-- Page Header Banner (Optional header if not in project context) -->
         <HeaderBanner
-            v-if="!selectedProjectFilter"
             eyebrow="TaskPilot Workspace"
             eyebrowIcon="fa fa-tasks"
             title="Quản lý Công việc"
@@ -355,7 +360,16 @@ const props = defineProps({
     selectedProject: { type: [String, Number], default: '' },
     selectedStatus: { type: String, default: '' },
     selectedPriority: { type: String, default: '' },
+    successMessage: { type: String, default: '' },
 });
+
+const successMessage = ref(props.successMessage);
+
+if (successMessage.value) {
+    window.setTimeout(() => {
+        successMessage.value = '';
+    }, 4000);
+}
 
 // Reactive Task List State
 const taskList = ref([...props.tasks]);

@@ -14,12 +14,16 @@ const app = createApp(TaskCreate, {
     availableLabels: d.available_labels || [],
     csrfToken: d.csrf_token || '',
     storeUrl: d.store_url || '/tasks',
+    formDataUrl: d.form_data_url || '/tasks/form-data',
     recommendUrl: d.recommend_url || '/tasks/recommend-assignee',
     tasksIndexUrl: d.tasks_index_url || '/tasks',
     oldLabels: d.old_labels || '',
     old: d.old || {},
     errors: d.errors || {},
     projectId: d.project_id || null,
+    defaultStatus: d.default_status || null,
+    task: d.task || null,
+    isEditing: Boolean(d.is_edit),
 });
 
 app.mount('#task-create-app');
