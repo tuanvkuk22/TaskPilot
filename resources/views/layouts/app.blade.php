@@ -40,11 +40,26 @@
             <div class="collapse navbar-collapse" id="app-navbar-collapse">
                 @auth
                     <ul class="nav navbar-nav">
-                        <li class="{{ request()->routeIs('home') ? 'active' : '' }}"><a href="{{ route('home') }}">Tổng quan</a></li>
-                        <li class="{{ request()->routeIs('projects.*') ? 'active' : '' }}"><a href="{{ route('projects.index') }}">Dự án</a></li>
-                        <li class="{{ request()->routeIs('tasks.*') ? 'active' : '' }}"><a href="{{ route('tasks.index') }}">Công việc</a></li>
-                        <li class="{{ request()->routeIs('teams.*') ? 'active' : '' }}"><a href="{{ route('teams.index') }}">Đội nhóm</a></li>
-                        <li class="{{ request()->routeIs('companies.*') ? 'active' : '' }}"><a href="{{ route('companies.index') }}">Khách hàng</a></li>
+                        <li class="{{ request()->routeIs('home') ? 'active' : '' }}">
+                            <a href="{{ route('home') }}"><i class="fa fa-th-large nav-icon"></i> Tổng quan</a>
+                        </li>
+                        <li class="{{ request()->routeIs('projects.*') ? 'active' : '' }}">
+                            <a href="{{ route('projects.index') }}"><i class="fa fa-folder nav-icon"></i> Dự án</a>
+                        </li>
+                        <li class="{{ request()->routeIs('tasks.*') ? 'active' : '' }}">
+                            <a href="{{ route('tasks.index') }}"><i class="fa fa-tasks nav-icon"></i> Công việc</a>
+                        </li>
+                        <li class="{{ request()->routeIs('teams.*') ? 'active' : '' }}">
+                            <a href="{{ route('teams.index') }}"><i class="fa fa-users nav-icon"></i> Đội nhóm</a>
+                        </li>
+                        <li class="{{ request()->routeIs('companies.*') ? 'active' : '' }}">
+                            <a href="{{ route('companies.index') }}"><i class="fa fa-building nav-icon"></i> Khách hàng</a>
+                        </li>
+                        <li class="{{ request()->routeIs('skills.*') ? 'active' : '' }}">
+                            <a href="{{ route('skills.index') }}" class="tp-nav-skills-badge">
+                                <i class="fa fa-magic nav-icon-ai"></i> Hồ sơ kỹ năng
+                            </a>
+                        </li>
                     </ul>
                 @endauth
                 <ul class="nav navbar-nav navbar-right">
@@ -55,11 +70,17 @@
                         <li class="{{ request()->routeIs('guide') ? 'active' : '' }}"><a href="{{ route('guide') }}" title="Hướng dẫn sử dụng"><i class="fa fa-question-circle"></i> Hướng dẫn</a></li>
                         @include('partials.notification_bell')
                         <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-                                <i class="fa fa-user-circle-o"></i> {{ auth()->user()->name }} <span class="caret"></span>
+                            <a href="#" class="dropdown-toggle tp-user-dropdown-btn" data-toggle="dropdown" role="button" aria-expanded="false">
+                                <span class="tp-user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
+                                <span class="tp-user-name">{{ auth()->user()->name }}</span>
+                                <span class="caret"></span>
                             </a>
-                            <ul class="dropdown-menu" role="menu">
-                                <li><a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa fa-power-off"></i> Đăng xuất</a></li>
+                            <ul class="dropdown-menu dropdown-menu-right tp-dropdown-menu" role="menu">
+                                <li class="dropdown-header">Hồ sơ & Hệ thống</li>
+                                <li><a href="{{ route('skills.index') }}"><i class="fa fa-sliders"></i> Hồ sơ kỹ năng AI</a></li>
+                                <li><a href="{{ route('guide') }}"><i class="fa fa-book"></i> Hướng dẫn sử dụng</a></li>
+                                <li class="divider"></li>
+                                <li><a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="text-danger"><i class="fa fa-power-off"></i> Đăng xuất</a></li>
                             </ul>
                             <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display:none">@csrf</form>
                         </li>

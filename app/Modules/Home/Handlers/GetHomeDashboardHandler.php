@@ -31,7 +31,7 @@ class GetHomeDashboardHandler
             ->whereNull('assignee_id')
             ->whereNotIn('status', ['done', 'closed', 'completed', 'resolved'])
             ->latest()
-            ->limit(8)
+            ->limit(3)
             ->get();
 
         return [

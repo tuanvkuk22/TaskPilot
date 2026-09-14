@@ -2222,3 +2222,138 @@ body {
 .tp-notification-time {
     font-size: 12px;
 }
+
+/* Luxury Modern Top Navigation Bar Styling */
+.tp-navbar {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
+    padding: 2px 0;
+    transition: all 0.2s ease;
+}
+
+.tp-navbar .navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700 !important;
+    font-size: 18px !important;
+    color: #0f172a !important;
+    letter-spacing: -0.02em;
+}
+
+.tp-navbar .tp-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #ffffff;
+    border-radius: 8px;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+}
+
+.tp-navbar .nav > li > a {
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    color: #475569 !important;
+    font-weight: 500 !important;
+    font-size: 13.5px !important;
+    padding: 12px 14px !important;
+    border-radius: 8px !important;
+    transition: all 0.18s ease-in-out !important;
+    margin: 4px 2px !important;
+}
+
+.tp-navbar .nav > li > a:hover {
+    color: #4f46e5 !important;
+    background-color: #f1f5f9 !important;
+}
+
+.tp-navbar .nav > li.active > a {
+    color: #4f46e5 !important;
+    background-color: #eef2ff !important;
+    font-weight: 600 !important;
+}
+
+.tp-navbar .nav-icon {
+    font-size: 14px;
+    opacity: 0.75;
+}
+
+.tp-navbar .nav-icon-ai {
+    font-size: 14px;
+    color: #8b5cf6;
+}
+
+.tp-nav-skills-badge {
+    background: linear-gradient(135deg, rgba(238, 242, 255, 0.8) 0%, rgba(245, 243, 255, 0.8) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.tp-user-dropdown-btn {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 6px 12px !important;
+}
+
+.tp-user-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 50%;
+}
+
+.tp-user-name {
+    font-weight: 600;
+    color: #1e293b;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tp-dropdown-menu {
+    border-radius: 12px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05) !important;
+    padding: 8px !important;
+    min-width: 210px !important;
+    margin-top: 6px !important;
+}
+
+.tp-dropdown-menu > li > a {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+    font-size: 13.5px !important;
+    color: #334155 !important;
+    transition: all 0.15s ease !important;
+}
+
+.tp-dropdown-menu > li > a:hover {
+    background-color: #f1f5f9 !important;
+    color: #4f46e5 !important;
+}
+
+.tp-dropdown-menu .dropdown-header {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    color: #94a3b8 !important;
+    padding: 6px 12px 2px !important;
+}
+

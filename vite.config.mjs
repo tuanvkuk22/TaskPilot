@@ -31,6 +31,10 @@ export default defineConfig({
                 __dirname + '/resources/css/ai-assignee.css',
                 __dirname + '/resources/js/login.js',
                 __dirname + '/resources/js/welcome.js',
+                __dirname + '/resources/js/home.js',
+                __dirname + '/resources/js/skills-profile.js',
+                __dirname + '/resources/css/home.css',
+                __dirname + '/resources/css/skills-profile.css',
             ],
             output: {
                 entryFileNames: 'assets/[name].js',

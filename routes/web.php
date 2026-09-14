@@ -19,6 +19,7 @@ use ProjectsManager\Modules\Tasks\Controllers\SprintsController;
 use ProjectsManager\Modules\Tasks\Controllers\TasksController;
 use ProjectsManager\Modules\Teams\Controllers\TeamsController;
 use ProjectsManager\Modules\Notifications\Controllers\NotificationController;
+use ProjectsManager\Modules\Profile\Controllers\SkillsController;
 
 Route::view('/', 'welcome')->name('welcome');
 
@@ -39,6 +40,10 @@ Route::post('logout', [LoginController::class, 'logout'])->middleware('auth')->n
 Route::middleware('auth')->group(function (): void {
     Route::get('home', [HomeController::class, 'index'])->name('home');
     Route::view('huong-dan', 'guide')->name('guide');
+    Route::get('skills', [SkillsController::class, 'index'])->name('skills.index');
+    Route::get('api/skills', [SkillsController::class, 'getSkills'])->name('skills.api.get');
+    Route::post('api/skills', [SkillsController::class, 'store'])->name('skills.api.store');
+    Route::delete('api/skills/{id}', [SkillsController::class, 'destroy'])->name('skills.api.destroy');
     Route::resource('companies', CompaniesController::class);
 
     Route::get('projects/role-permissions', [ProjectsController::class, 'availablePermissions'])->name('projects.role.permissions');
