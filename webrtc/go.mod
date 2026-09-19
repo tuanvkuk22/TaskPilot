@@ -22,7 +22,7 @@ require (
 	github.com/livekit/mageutil v0.0.0-20250511045019-0f1ff63f7731
 	github.com/livekit/mediatransportutil v0.0.0-20260608063931-a3417d38cda0
 	github.com/livekit/protocol v1.50.5-0.20260814120900-8b1ab81c7d00
-	github.com/livekit/psrpc v0.7.3
+	github.com/livekit/psrpc v0.7.7
 	github.com/mackerelio/go-osstat v0.2.8
 	github.com/magefile/mage v1.17.2
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.13.0
@@ -56,7 +56,7 @@ require (
 	go.uber.org/zap v1.28.0
 	golang.org/x/mod v0.41.0
 	golang.org/x/sync v0.23.0
-	google.golang.org/protobuf v1.36.11
+	google.golang.org/protobuf v1.36.12
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -119,7 +119,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/josharian/native v1.1.0 // indirect
-	github.com/klauspost/compress v1.19.1 // indirect
+	github.com/klauspost/compress v1.19.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/lithammer/shortuuid/v4 v4.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.24 // indirect
@@ -152,7 +152,7 @@ require (
 	golang.org/x/tools v0.50.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260803160001-6ac0973c030d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260803160001-6ac0973c030d // indirect
-	google.golang.org/grpc v1.83.0 // indirect
+	google.golang.org/grpc v1.83.2 // indirect
 )
 
 replace github.com/pion/webrtc/v4 => github.com/livekit/webrtc-pion/v4 v4.2.18-warp.1
