@@ -36,7 +36,7 @@ require (
 	github.com/pion/interceptor v0.1.47
 	github.com/pion/rtcp v1.2.17
 	github.com/pion/rtp v1.10.5
-	github.com/pion/sctp v1.11.1
+	github.com/pion/sctp v1.11.3
 	github.com/pion/sdp/v3 v3.0.20
 	github.com/pion/transport/v4 v4.1.0
 	github.com/pion/turn/v5 v5.0.12
@@ -82,6 +82,7 @@ require (
 	github.com/olekukonko/errors v1.3.0 // indirect
 	github.com/olekukonko/ll v0.1.8 // indirect
 	github.com/petermattis/goid v0.0.0-20260725062400-500c67a39b75 // indirect
+	github.com/pion/transport/v5 v5.0.1 // indirect
 	github.com/puzpuzpuz/xsync/v4 v4.5.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0 // indirect
