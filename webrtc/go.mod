@@ -51,7 +51,7 @@ require (
 	github.com/twitchtv/twirp v8.1.3+incompatible
 	github.com/ua-parser/uap-go v0.0.0-20260529044130-17c35e68e58c
 	github.com/urfave/negroni/v3 v3.1.1
-	go.uber.org/atomic v1.11.0
+	go.uber.org/atomic v1.12.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.28.0
 	golang.org/x/mod v0.41.0
