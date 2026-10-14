@@ -25,6 +25,10 @@ class Project extends Model
 		return $this->belongsToMany(User::class)->withPivot('role', 'permissions');
     }
 
+    public function members(){
+        return $this->users();
+    }
+
     public function roles(){
         return $this->hasMany(ProjectRole::class);
     }
