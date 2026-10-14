@@ -40,9 +40,10 @@
             <a :href="`/projects/${project.id}/board`" class="pd-nav-item">Bảng (Board)</a>
             <a :href="`/projects/${project.id}/members`" class="pd-nav-item">Thành viên</a>
             <a :href="`/projects/${project.id}/roles`" class="pd-nav-item">Vai trò &amp; Quyền</a>
-            <a :href="`/sprints?project_id=${project.id}`" class="pd-nav-item">Backlog / Sprint</a>
+            <a :href="`/projects/${project.id}/sprints`" class="pd-nav-item">Backlog / Sprint</a>
             <a :href="`/projects/${project.id}/timeline`" class="pd-nav-item active">Timeline</a>
             <a :href="`/projects/${project.id}/roadmap`" class="pd-nav-item">Roadmap</a>
+            <a :href="`/projects/${project.id}/reports`" class="pd-nav-item">Báo cáo</a>
         </div>
 
         <!-- 3. JIRA SEARCH & FILTER TOOLBAR -->
@@ -121,6 +122,7 @@
         </div>
 
         <!-- 4. TIMELINE UNIFIED FULL-WIDTH WORKSPACE WITH GLOBAL HORIZONTAL SCROLL -->
+        <p class="tp-mobile-scroll-hint"><i class="fa fa-arrows-h"></i> Vuốt ngang để xem toàn bộ timeline</p>
         <div class="timeline-workspace-outer" ref="workspaceOuter">
             <div class="timeline-workspace-inner">
                 <!-- Left Pane Table (Columns: Work | Status | Assignee) -->
@@ -2037,6 +2039,65 @@ onMounted(() => {
     gap: 10px;
     position: relative;
     width: 100%;
+    min-width: 0;
+}
+
+@media (max-width: 640px) {
+    .task-timeline-vue .pd-header {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .task-timeline-vue .pd-title-row {
+        flex-wrap: wrap;
+    }
+
+    .task-timeline-vue .pd-title {
+        font-size: 22px;
+    }
+
+    .task-timeline-vue .pd-header > .d-flex {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .task-timeline-vue .timeline-create-btn,
+    .task-timeline-vue .pd-header > .d-flex > * {
+        flex: 1 1 auto;
+    }
+
+    .task-timeline-vue .tp-filter-bar,
+    .task-timeline-vue .tp-filter-inputs {
+        align-items: stretch !important;
+    }
+
+    .task-timeline-vue .tp-search-box,
+    .task-timeline-vue .edit-select-wrapper {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .task-timeline-vue .timeline-team-stack {
+        margin-left: 0 !important;
+    }
+
+    .task-timeline-vue .tp-mobile-scroll-hint {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0;
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .task-timeline-vue .timeline-floating-toolbar {
+        width: 100%;
+        margin: 0;
+        justify-content: center;
+        flex-wrap: wrap;
+        border-radius: 12px;
+    }
 }
 
 /* Team Stack */

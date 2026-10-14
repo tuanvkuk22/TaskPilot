@@ -109,7 +109,7 @@ class ProjectRoleConstants
         [
             'key' => 'document',
             'label' => 'Tài liệu',
-            'icon' => 'fa fa-file-alt',
+            'icon' => 'fa fa-file-text-o',
             'permissions' => [
                 'document.view',
                 'document.create',
@@ -122,7 +122,7 @@ class ProjectRoleConstants
         [
             'key' => 'meeting',
             'label' => 'Cuộc họp',
-            'icon' => 'fa fa-video',
+            'icon' => 'fa fa-video-camera',
             'permissions' => [
                 'meeting.view',
                 'meeting.create',
@@ -158,7 +158,7 @@ class ProjectRoleConstants
         [
             'key' => 'report',
             'label' => 'Báo cáo',
-            'icon' => 'fa fa-chart-bar',
+            'icon' => 'fa fa-bar-chart',
             'permissions' => [
                 'report.view',
                 'report.export',

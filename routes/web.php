@@ -15,6 +15,7 @@ use ProjectsManager\Modules\Projects\Controllers\ProjectToolsController;
 use ProjectsManager\Modules\Projects\Controllers\ProjectDocumentsController;
 use ProjectsManager\Modules\Projects\Controllers\ProjectFormsController;
 use ProjectsManager\Modules\Projects\Controllers\ProjectDevelopmentController;
+use ProjectsManager\Modules\Projects\Controllers\ProjectReportsController;
 use ProjectsManager\Modules\Tasks\Controllers\SprintsController;
 use ProjectsManager\Modules\Tasks\Controllers\TasksController;
 use ProjectsManager\Modules\Teams\Controllers\TeamsController;
@@ -57,6 +58,9 @@ Route::middleware('auth')->group(function (): void {
     Route::get('projects/{project}/board', [ProjectsController::class, 'board'])->name('projects.board');
     Route::get('projects/{project}/timeline', [ProjectsController::class, 'timeline'])->name('projects.timeline');
     Route::get('projects/{project}/roadmap', [ProjectsController::class, 'roadmap'])->name('projects.roadmap');
+    Route::get('projects/{project}/reports', [ProjectReportsController::class, 'show'])->name('projects.reports.show')->middleware('can.project:report.view');
+    Route::get('projects/{project}/reports/export/excel', [ProjectReportsController::class, 'excel'])->name('projects.reports.excel')->middleware('can.project:report.export');
+    Route::get('projects/{project}/reports/export/pdf', [ProjectReportsController::class, 'pdf'])->name('projects.reports.pdf')->middleware('can.project:report.export');
     Route::get('projects/{project}/permissions', [ProjectsController::class, 'editPermissions'])->name('projects.permissions.index')->middleware('can.project:manage_project');
     Route::post('projects/{project}/permissions', [ProjectsController::class, 'storePermission'])->name('projects.permissions.store')->middleware('can.project:manage_project');
     Route::put('projects/{project}/permissions/{permission}', [ProjectsController::class, 'updatePermission'])->name('projects.permissions.update')->middleware('can.project:manage_project');
@@ -82,11 +86,11 @@ Route::middleware('auth')->group(function (): void {
     Route::match(['post', 'patch', 'put'], 'tasks/{task}/move', [TasksController::class, 'move'])->name('tasks.move');
     Route::post('tasks/{task}/worklog', [TasksController::class, 'worklog'])->name('tasks.worklog');
 
-    Route::get('projects/{project}/sprints', [SprintsController::class, 'index'])->name('sprints.index');
-    Route::post('projects/{project}/sprints', [SprintsController::class, 'store'])->name('sprints.store');
-
-    Route::post('sprints/{sprint}/start', [SprintsController::class, 'start'])->name('sprints.start');
-    Route::post('sprints/{sprint}/close', [SprintsController::class, 'close'])->name('sprints.close');
+    Route::get('projects/{project}/sprints', [SprintsController::class, 'index'])->name('sprints.index')->middleware('can.project:task.view');
+    Route::post('projects/{project}/sprints', [SprintsController::class, 'store'])->name('sprints.store')->middleware('can.project:task.manage');
+    Route::post('projects/{project}/sprints/{sprint}/start', [SprintsController::class, 'start'])->name('sprints.start')->middleware('can.project:task.manage');
+    Route::post('projects/{project}/sprints/{sprint}/close', [SprintsController::class, 'close'])->name('sprints.close')->middleware('can.project:task.manage');
+    Route::put('projects/{project}/sprints/tasks/{task}', [SprintsController::class, 'moveTask'])->name('sprints.tasks.move')->middleware('can.project:task.edit,task.manage');
 
     Route::resource('teams', TeamsController::class);
     Route::post('teams/{team}/invite', [TeamsController::class, 'invite'])->name('teams.invite');

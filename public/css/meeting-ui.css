@@ -1,0 +1,40 @@
+/* Meeting screens share the same tokens; this layer deliberately replaces legacy colors. */
+/* Design tokens are rem-based while the application root is 10px/rem.
+   Scope an accessible 12–30px scale to all Meeting and Archive pages. */
+.tp-meeting-shell { width:min(100%,1400px); margin:0 auto; padding:var(--tp-space-6) 0; --tp-text-xs:1.2rem; --tp-text-sm:1.4rem; --tp-text-base:1.5rem; --tp-text-lg:1.8rem; --tp-text-xl:2.4rem; --tp-text-2xl:3rem; }
+.tp-meeting-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:var(--tp-space-5); margin-bottom:var(--tp-space-6); }
+.tp-meeting-heading h1 { margin:0; color:var(--tp-text); font-size:var(--tp-text-2xl); font-weight:700; }
+.tp-meeting-heading p,.tp-meeting-row small,.tp-action-item small,.tp-archive-message span { color:var(--tp-text-muted); font-size:var(--tp-text-sm); }
+.tp-meeting-row strong,.tp-archive-section h2,.tp-archive-section h3 { font-size:var(--tp-text-lg); }
+.tp-meeting-form label,.tp-meeting-form .form-control,.tp-archive-message p { font-size:var(--tp-text-base); }
+.tp-meeting-list,.tp-archive-section { background:var(--tp-surface); border-color:var(--tp-border); border-radius:var(--tp-radius-md); box-shadow:var(--tp-shadow-sm); }
+.tp-meeting-row { border-color:var(--tp-border-subtle); color:var(--tp-text); }
+.tp-meeting-row:hover { background:var(--tp-surface-muted); }
+.tp-meeting-row .tp-status { color:var(--tp-success); }
+.tp-meeting-icon { background:var(--tp-primary-soft); color:var(--tp-primary); border-radius:var(--tp-radius-sm); }
+.tp-empty-state { color:var(--tp-text-muted); }
+.tp-empty-state i,.tp-file-row { color:var(--tp-primary); }
+.tp-meeting-form { padding:var(--tp-space-6); }
+.tp-meeting-form label { color:var(--tp-text); }
+.tp-archive-section { padding:var(--tp-space-5); }
+.tp-archive-section h2,.tp-action-item,.tp-file-row,.tp-archive-message { border-color:var(--tp-border-subtle); color:var(--tp-text); }
+
+.tp-meeting-page { background:var(--tp-meeting-bg); color:var(--tp-meeting-text); }
+.tp-meet-app { background:var(--tp-meeting-bg); }
+.tp-meet-topbar { border-color:color-mix(in srgb,var(--tp-meeting-text) 12%,transparent); background:var(--tp-meeting-surface); }
+.tp-meet-brand em { color:var(--tp-primary); }
+.tp-meet-logo,.tp-round-control:hover,.tp-round-control.is-active,.tp-send-button { background:var(--tp-primary); color:var(--tp-on-primary); }
+.tp-meet-title,.tp-meet-status,.tp-meet-top-actions a { color:var(--tp-meeting-muted); }
+.tp-live-dot { background:var(--tp-success); box-shadow:0 0 12px var(--tp-success); }
+.tp-leave-button { background:var(--tp-danger); border-radius:var(--tp-radius-sm); }
+.tp-stage .tp-video-grid,.tp-video-panel { background:var(--tp-meeting-bg); }
+.tp-video-grid video { background:var(--tp-meeting-control); }
+.tp-round-control { border-color:color-mix(in srgb,var(--tp-meeting-text) 12%,transparent); background:var(--tp-meeting-control); color:var(--tp-meeting-text); border-radius:var(--tp-radius-sm); }
+.tp-round-control.is-off { background:var(--tp-meeting-control); color:var(--tp-meeting-text); }
+.tp-room-sidebar { background:var(--tp-surface); color:var(--tp-text); }
+.tp-chat-form { background:var(--tp-surface-muted); border-color:var(--tp-border); }
+.tp-chat-icon { background:var(--tp-surface); color:var(--tp-text-muted); }
+.tp-emoji-picker,.tp-reaction-picker { background:var(--tp-surface); border-color:var(--tp-border); box-shadow:var(--tp-shadow-md); }
+.tp-emoji-picker button:hover { background:var(--tp-surface-muted); }
+.tp-file-preview span,.tp-message-file,.tp-person-avatar { background:var(--tp-primary-soft); color:var(--tp-primary); }
+@media (max-width:767px) { .tp-meeting-shell { padding:var(--tp-space-5) var(--tp-space-4); } .tp-meeting-heading { display:block; } .tp-meeting-heading .btn { margin-top:var(--tp-space-4); } }

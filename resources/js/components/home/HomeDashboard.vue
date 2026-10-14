@@ -55,7 +55,7 @@
 
       <div class="stat-card">
         <div class="stat-icon icon-user-tasks">
-          <i class="fa fa-user-check"></i>
+          <i class="fa fa-check-square-o" aria-hidden="true"></i>
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ userTasksCount }}</span>

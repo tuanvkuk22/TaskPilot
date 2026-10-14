@@ -2,7 +2,10 @@
 
 @section('content')
 <link href="{{ asset('build/assets/project-members.css') }}" rel="stylesheet">
-<div id="project-members-app"></div>
+<link href="{{ asset('build/assets/task-shared.css') }}?v={{ file_exists(public_path('build/assets/task-shared.css')) ? filemtime(public_path('build/assets/task-shared.css')) : time() }}" rel="stylesheet">
+<div class="project-dashboard-vue container-fluid py-3" style="max-width: 1400px;">
+    <div id="project-members-app"></div>
+</div>
 @endsection
 
 @section('jqueryScript')

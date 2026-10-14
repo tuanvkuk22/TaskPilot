@@ -1,0 +1,59 @@
+/* TaskPilot design foundation. All new UI must consume these variables. */
+:root {
+  --tp-font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --tp-text-xs: .75rem;
+  --tp-text-sm: .875rem;
+  --tp-text-base: 1rem;
+  --tp-text-lg: 1.125rem;
+  --tp-text-xl: 1.5rem;
+  --tp-text-2xl: 1.875rem;
+
+  --tp-bg: #f7f8fa;
+  --tp-surface: #fff;
+  --tp-surface-muted: #f4f5f7;
+  --tp-surface-info: #e9f2ff;
+  --tp-text: #172b4d;
+  --tp-text-muted: #6b778c;
+  --tp-text-subtle: #97a0af;
+  --tp-border: #dfe1e6;
+  --tp-border-subtle: #ebecf0;
+  --tp-primary: #0052cc;
+  --tp-primary-hover: #0747a6;
+  --tp-primary-soft: #deebff;
+  --tp-on-primary: #fff;
+  --tp-success: #00875a;
+  --tp-success-soft: #e3fcef;
+  --tp-warning: #974f00;
+  --tp-warning-soft: #fffae6;
+  --tp-danger: #de350b;
+  --tp-danger-soft: #ffebe6;
+  --tp-purple: #6554c0;
+  --tp-purple-soft: #eae6ff;
+  --tp-owner: #7f5f01;
+  --tp-owner-soft: #fff0b3;
+  --tp-owner-border: #ffe380;
+  --tp-admin: #403294;
+  --tp-admin-border: #d9d2ff;
+
+  --tp-radius-sm: 6px;
+  --tp-radius-md: 10px;
+  --tp-radius-lg: 14px;
+  --tp-shadow-sm: 0 1px 2px rgb(9 30 66 / 8%);
+  --tp-shadow-md: 0 4px 14px rgb(9 30 66 / 12%);
+  --tp-shadow-lg: 0 12px 30px rgb(9 30 66 / 16%);
+
+  --tp-space-1: 4px;
+  --tp-space-2: 8px;
+  --tp-space-3: 12px;
+  --tp-space-4: 16px;
+  --tp-space-5: 20px;
+  --tp-space-6: 24px;
+  --tp-space-7: 32px;
+  --tp-control-height: 40px;
+  --tp-transition: 160ms ease;
+  --tp-meeting-bg: #0b1220;
+  --tp-meeting-surface: #17243a;
+  --tp-meeting-text: #e8eef8;
+  --tp-meeting-muted: #9aaac0;
+  --tp-meeting-control: #1d2a40;
+}

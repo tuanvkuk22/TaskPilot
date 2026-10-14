@@ -110,15 +110,7 @@
 
                 var linkUrl = nurl ? nurl : 'javascript:void(0)';
 
-                html += '<a href="' + linkUrl + '" class="dropdown-item d-flex align-items-start py-2 px-3 ' + (isUnread ? 'tp-unread' : '') + '" data-id="' + notification.id + '" style="white-space: normal; text-decoration: none;">';
-                html += '<span class="badge rounded-circle bg-primary bg-opacity-10 text-primary p-1 flex-shrink-0 mt-1 me-2"><i class="fa fa-' + icon + '"></i></span>';
-                html += '<div class="flex-grow-1">';
-                html += '<div class="fw-semibold small text-dark">' + title + '</div>';
-                html += '<div class="text-small text-muted">' + message + '</div>';
-                html += '<div class="text-small text-secondary"><i class="fa fa-user-o me-1"></i> ' + actorName + ' - ' + time + '</div>';
-                html += '</div>';
                 if (isUnread) {
-                    html += '<button type="button" class="btn btn-sm btn-link tp-mark-read ms-1 p-0" title="Đánh dấu đã đọc"><i class="fa fa-check"></i></button>';
                 }
                 html += '</a>';
             });
@@ -128,7 +120,6 @@
             var markAllContainer = document.getElementById('notification-mark-all-container');
             if (markAllContainer) markAllContainer.classList.toggle('d-none', unreadCount === 0);
 
-            container.querySelectorAll('.dropdown-item[data-id]').forEach(function(item) {
                 item.addEventListener('click', function(e) {
                     var id = this.dataset.id;
                     var itemUrl = this.getAttribute('href');

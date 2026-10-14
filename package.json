@@ -24,6 +24,8 @@
     "dependencies": {
         "@vitejs/plugin-vue": "^6.0.9",
         "ckeditor4": "4.22.1",
+        "laravel-echo": "^2.5.0",
+        "pusher-js": "^8.6.0",
         "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
     }
 }

@@ -42,7 +42,10 @@
                             AI đã chọn người phù hợp nhất cho từng việc. Bỏ chọn dòng không muốn gán, rồi bấm Áp dụng tất cả.
                         </p>
 
-                        <div v-if="!rows.length" class="ai-empty-state">
+                        <div v-if="aiLoading" class="ai-loading-list" aria-live="polite" aria-label="Đang tạo gợi ý AI">
+                            <div v-for="item in 4" :key="item" class="ai-skeleton-row"><span></span><div><b></b><i></i></div><em></em></div>
+                        </div>
+                        <div v-else-if="!rows.length" class="ai-empty-state">
                             <i class="fa fa-info-circle"></i> Không có gợi ý nào để áp dụng.
                         </div>
 
@@ -54,6 +57,7 @@
                                 <div class="ai-batch-task">
                                     <div class="ai-home-item-title">{{ row.task_name }}</div>
                                     <div class="ai-home-item-meta">{{ row.issue_type || 'task' }} · {{ row.priority || 'medium' }}</div>
+                                    <div v-if="selectedCandidate(row)" class="ai-confidence"><span :class="confidenceClass(selectedCandidate(row))" :style="{ width: `${candidateConfidence(selectedCandidate(row))}%` }"></span></div>
                                 </div>
                                 <div v-if="row.recommendations.length" class="ai-batch-pick">
                                     <select :aria-label="`Người xử lý cho ${row.task_name}`" v-model="row.selectedUserId" class="edit-select">
@@ -65,6 +69,7 @@
                                             {{ candidateDisplayName(candidate) }} · {{ candidateConfidence(candidate) }}%
                                         </option>
                                     </select>
+                                    <small>{{ candidateConfidence(selectedCandidate(row)) }}% phù hợp</small>
                                 </div>
                                 <div v-else class="ai-home-item-meta">Chưa có ứng viên</div>
                             </div>
@@ -151,6 +156,8 @@ const runBatch = async () => {
     }
 
     aiLoading.value = true;
+    rows.value = [];
+    showModal.value = true;
     try {
         const items = await fetchAiBatchRecommendations(taskIds.value);
         rows.value = items.map((item) => ({
@@ -165,6 +172,15 @@ const runBatch = async () => {
     } finally {
         aiLoading.value = false;
     }
+};
+
+const selectedCandidate = (row) => (row.recommendations || []).find(
+    (candidate) => String(candidate.user_id) === String(row.selectedUserId)
+) || row.suggested;
+
+const confidenceClass = (candidate) => {
+    const confidence = candidateConfidence(candidate);
+    return confidence > 80 ? 'is-high' : (confidence >= 50 ? 'is-medium' : 'is-low');
 };
 
 const applyAll = async () => {
