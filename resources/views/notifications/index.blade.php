@@ -1,6 +1,12 @@
 @extends('layouts.app')
 
+@push('styles')
+<link href="{{ asset('css/notification-review.css') }}?v={{ filemtime(public_path('css/notification-review.css')) }}" rel="stylesheet">
+<link href="{{ asset('css/notification-polish.css') }}?v={{ filemtime(public_path('css/notification-polish.css')) }}" rel="stylesheet">
+@endpush
+
 @section('content')
+<section class="tp-page notification-page"><div class="tp-page-shell">
 <section class="tp-page-head">
     <div>
         <span class="tp-eyebrow">THÔNG BÁO</span>
@@ -52,23 +58,23 @@
                         $actorName = $data['actor_name'] ?? 'Hệ thống';
                         $isUnread = is_null($notification->read_at);
                     @endphp
-                    <div class="tp-notification-item d-flex align-items-start gap-3 p-3 border-bottom {{ $isUnread ? 'tp-unread' : '' }}" data-id="{{ $notification->id }}">
-                        <span class="badge rounded-circle bg-primary bg-opacity-10 text-primary p-2 tp-notification-icon flex-shrink-0">
+                    <article class="tp-notification-item {{ $isUnread ? 'tp-unread' : '' }}" data-id="{{ $notification->id }}">
+                        <span class="tp-notification-icon">
                             <i class="fa fa-bell"></i>
                         </span>
-                        <div class="tp-notification-content flex-grow-1">
-                            <div class="d-flex justify-content-between">
-                                <div class="fw-semibold text-dark">{{ $title }}</div>
-                                <small class="text-muted tp-notification-time">{{ $notification->created_at->diffForHumans() }}</small>
+                        <div class="tp-notification-content">
+                            <div class="tp-notification-title-row">
+                                <h2>{{ $title }}</h2>
+                                <time class="tp-notification-time">{{ $notification->created_at->diffForHumans() }}</time>
                             </div>
-                            <div class="text-small text-muted mt-1">{{ $message }}</div>
+                            <p>{{ $message }}</p>
                             @if($actorName && $actorName !== 'Hệ thống')
-                                <div class="text-small text-secondary mt-1">
-                                    <i class="fa fa-user-o me-1"></i> Bởi {{ $actorName }}
+                                <div class="tp-notification-actor">
+                                    <i class="fa fa-user-o"></i> Bởi {{ $actorName }}
                                 </div>
                             @endif
                         </div>
-                        <div class="tp-notification-actions ms-2 text-end flex-shrink-0">
+                        <div class="tp-notification-actions">
                             @if($isUnread)
                                 <button type="button" class="btn btn-sm btn-link tp-mark-read" title="Đánh dấu đã đọc">
                                     <i class="fa fa-check"></i>
@@ -78,7 +84,7 @@
                                 <i class="fa fa-trash-o"></i>
                             </button>
                         </div>
-                    </div>
+                    </article>
                 @endforeach
             </div>
 
@@ -88,6 +94,8 @@
         @endif
     </div>
 </section>
+
+</div></section>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

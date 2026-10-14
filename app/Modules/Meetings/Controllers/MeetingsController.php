@@ -29,7 +29,14 @@ use ProjectsManager\Http\Controllers\Controller;
 
 class MeetingsController extends Controller
 {
-    public function __construct(private readonly MeetingRepository $repository, private readonly MeetingAccessService $access) {}
+    public function __construct(private readonly MeetingRepository $repository, private readonly MeetingAccessService $access)
+    {
+        $this->middleware(function ($request, $next) {
+            abort_unless(config('features.meetings_visible'), 404);
+
+            return $next($request);
+        });
+    }
 
     public function index(Project $project): View
     {

@@ -1,40 +1,32 @@
 <template>
     <div class="project-roles-vue">
 
-        <!-- =========================================
-             PAGE HEADER
-        ========================================== -->
-
-        <div class="roles-page-header">
-            <div class="roles-page-heading">
-                <h1>Vai trò & quyền truy cập</h1>
-
-                <p>
-                    Quản lý quyền của thành viên trong
-                    <strong>{{ project.name }}</strong>
-                </p>
+        <!-- Shared project shell: identical hierarchy to Board and Timeline. -->
+        <div class="pd-header mb-3">
+            <div class="pd-header-left">
+                <div class="pd-breadcrumb mb-1">
+                    <a href="/projects">Dự án</a><span>/</span><span>{{ project.name }}</span><span>/</span><span class="text-dark font-weight-bold">Vai trò &amp; Quyền</span>
+                </div>
+                <div class="pd-title-row">
+                    <h1 class="pd-title">{{ project.name }}</h1>
+                    <span class="pd-project-key">{{ project.project_code || 'PROJ' }}</span>
+                    <span class="pd-project-status">{{ project.status || 'active' }}</span>
+                </div>
             </div>
-
-            <div class="roles-header-actions">
-                <a
-                    :href="`/projects/${project.id}`"
-                    class="btn btn-default"
-                >
-                    <i class="fa fa-arrow-left"></i>
-
-                    <span>Quay lại</span>
-                </a>
-
-                <button
-                    type="button"
-                    class="btn btn-primary"
-                    @click="openCreateDrawer"
-                >
-                    <i class="fa fa-plus"></i>
-
-                    <span>Tạo vai trò</span>
-                </button>
+            <div>
+                <button type="button" class="tp-btn tp-btn-primary" @click="openCreateDrawer"><i class="fa fa-plus"></i><span>Tạo vai trò</span></button>
             </div>
+        </div>
+
+        <div class="pd-project-nav mb-4">
+            <a :href="`/projects/${project.id}`" class="pd-nav-item">Tổng quan</a>
+            <a :href="`/projects/${project.id}/board`" class="pd-nav-item">Bảng</a>
+            <a :href="`/projects/${project.id}/members`" class="pd-nav-item">Thành viên</a>
+            <a :href="`/projects/${project.id}/roles`" class="pd-nav-item active">Vai trò &amp; Quyền</a>
+            <a :href="`/projects/${project.id}/sprints`" class="pd-nav-item">Backlog / Sprint</a>
+            <a :href="`/projects/${project.id}/timeline`" class="pd-nav-item">Timeline</a>
+            <a :href="`/projects/${project.id}/roadmap`" class="pd-nav-item">Roadmap</a>
+            <a :href="`/projects/${project.id}/reports`" class="pd-nav-item">Báo cáo</a>
         </div>
 
 
@@ -790,7 +782,7 @@ const FALLBACK_GROUPS = [
     {
         key: 'document',
         label: 'Tài liệu',
-        icon: 'fa fa-file-alt',
+        icon: 'fa fa-file-text-o',
         permissions: [
             'document.view',
             'document.create',
@@ -803,7 +795,7 @@ const FALLBACK_GROUPS = [
     {
         key: 'meeting',
         label: 'Cuộc họp',
-        icon: 'fa fa-video',
+        icon: 'fa fa-video-camera',
         permissions: [
             'meeting.view',
             'meeting.create',
@@ -839,7 +831,7 @@ const FALLBACK_GROUPS = [
     {
         key: 'report',
         label: 'Báo cáo',
-        icon: 'fa fa-chart-bar',
+        icon: 'fa fa-bar-chart',
         permissions: [
             'report.view',
             'report.export',

@@ -47,9 +47,11 @@
             <a :href="`/projects/${project.id}/board`" class="pd-nav-item" :class="{ active: currentTab === 'board' }" @click.prevent="currentTab = 'board'">Bảng (Board)</a>
             <a :href="`/projects/${project.id}/members`" class="pd-nav-item">Thành viên</a>
             <a :href="`/projects/${project.id}/roles`" class="pd-nav-item">Vai trò &amp; Quyền</a>
+            <a :href="`/projects/${project.id}/sprints`" class="pd-nav-item">Backlog / Sprint</a>
             <a :href="`/sprints?project_id=${project.id}`" class="pd-nav-item">Backlog / Sprint</a>
             <a :href="`/projects/${project.id}/timeline`" class="pd-nav-item">Timeline</a>
             <a :href="`/projects/${project.id}/roadmap`" class="pd-nav-item">Roadmap</a>
+            <a :href="`/projects/${project.id}/reports`" class="pd-nav-item">Báo cáo</a>
             <a :href="`#activity`" class="pd-nav-item" :class="{ active: currentTab === 'activity' }" @click.prevent="currentTab = 'activity'">Nhật ký hoạt động</a>
         </div>
 
@@ -309,6 +311,7 @@
             </div>
 
             <!-- KANBAN BOARD WITH HTML5 DRAG & DROP -->
+            <p v-if="viewMode === 'kanban'" class="tp-mobile-scroll-hint"><i class="fa fa-arrows-h"></i> Vuốt ngang để xem các cột</p>
             <div v-if="viewMode === 'kanban'" class="tp-kanban-board">
                 <!-- Columns Definition -->
                 <div
@@ -517,7 +520,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, watch } from 'vue';
 import StatusBadge from '../common/StatusBadge.vue';
 import PriorityBadge from '../common/PriorityBadge.vue';
 import IssueTypeBadge from '../common/IssueTypeBadge.vue';
@@ -525,6 +528,7 @@ import UserAvatarPill from '../common/UserAvatarPill.vue';
 import AiAssigneeSuggest from '../common/AiAssigneeSuggest.vue';
 import AiBatchSuggest from '../common/AiBatchSuggest.vue';
 import { assigneeFromCandidate } from '../../composables/useAiAssignee';
+import { subscribeToProject } from '../../realtime';
 
 const props = defineProps({
     project: { type: Object, required: true },
@@ -576,6 +580,9 @@ const hasActiveFilters = computed(() => {
 
 // Reactive Tasks List
 const taskList = ref([...props.tasks]);
+let leaveRealtime = () => {};
+onMounted(() => { leaveRealtime = subscribeToProject(props.project?.id, ({ task }) => { const existing = taskList.value.findIndex((item) => item.id === task.id); if (existing >= 0) taskList.value[existing] = { ...taskList.value[existing], ...task }; }); });
+onUnmounted(() => leaveRealtime());
 
 watch(() => props.tasks, (newVal) => {
     taskList.value = [...newVal];

@@ -2,8 +2,10 @@
 
 namespace ProjectsManager\Modules\Tasks\Handlers;
 
+use Illuminate\Support\Facades\Log;
 use ProjectsManager\Modules\Tasks\Repositories\TaskRepository;
 use ProjectsManager\Task;
+use ProjectsManager\Events\ProjectTaskUpdated;
 
 class UpdateTaskHandler
 {

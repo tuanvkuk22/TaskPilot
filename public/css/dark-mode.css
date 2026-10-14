@@ -1,0 +1,1144 @@
+/* Shared dark theme overrides. Keep these selectors scoped so light mode remains unchanged. */
+html.tp-theme-dark {
+  color-scheme: dark;
+  --tp-bg: #0b1220;
+  --tp-surface: #121c2e;
+  --tp-surface-raised: #17243a;
+  --tp-surface-muted: #0f1929;
+  --tp-text: #e8eef8;
+  --tp-muted: #9aaac0;
+  --tp-border: #2a3a53;
+  --tp-primary: #6ea8ff;
+  --tp-text-muted: #9aaac0;
+  --tp-ai-surface: #1f1d38;
+  --tp-ai-surface-raised: #292447;
+  --tp-ai-border: #5b4b85;
+  --tp-ai-text: #e9e2ff;
+  --tp-ai-accent: #c4a5ff;
+}
+
+.tp-theme-dark body,
+.tp-theme-dark .tp-main {
+  background: var(--tp-bg) !important;
+  color: var(--tp-text) !important;
+}
+
+/* Application navigation */
+.tp-theme-dark .tp-navbar,
+.tp-theme-dark .navbar-default {
+  background: #111b2d !important;
+  border-color: var(--tp-border) !important;
+  box-shadow: 0 2px 18px rgba(0, 0, 0, 0.24);
+}
+
+.tp-theme-dark .tp-navbar .navbar-brand,
+.tp-theme-dark .tp-navbar .navbar-nav > li > a,
+.tp-theme-dark .tp-user-name,
+.tp-theme-dark .tp-navbar .nav > li > a {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .tp-navbar .navbar-nav > .active > a,
+.tp-theme-dark .tp-navbar .navbar-nav > .active > a:hover,
+.tp-theme-dark .tp-navbar .navbar-nav > .active > a:focus {
+  color: #dce9ff !important;
+  background: #243a5d !important;
+  border-radius: 8px;
+}
+
+.tp-theme-dark .tp-navbar .navbar-nav > li > a:hover,
+.tp-theme-dark .tp-navbar .navbar-nav > li > a:focus,
+.tp-theme-dark .tp-navbar .nav > li > a:hover {
+  color: #9cc3ff !important;
+  background: #1a2a43 !important;
+}
+
+.tp-theme-dark .tp-nav-skills-badge {
+  color: #e4d7ff !important;
+  background: #2b2547 !important;
+  border-color: #5a4a89 !important;
+}
+
+.tp-theme-dark .dropdown-menu,
+.tp-theme-dark .tp-notification-dropdown {
+  background: var(--tp-surface-raised) !important;
+  border-color: var(--tp-border) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.32);
+}
+
+.tp-theme-dark .dropdown-menu > li > a,
+.tp-theme-dark .tp-dropdown-header,
+.tp-theme-dark .tp-dropdown-footer,
+.tp-theme-dark .tp-dropdown-header > span {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface-raised) !important;
+  border-color: var(--tp-border) !important;
+}
+
+/* Common controls and surfaces */
+.tp-theme-dark .tp-surface,
+.tp-theme-dark .panel,
+.tp-theme-dark .well,
+.tp-theme-dark .modal-content,
+.tp-theme-dark .card,
+.tp-theme-dark .tp-filter-bar,
+.tp-theme-dark .tp-table-card,
+.tp-theme-dark .pd-jira-card,
+.tp-theme-dark .tp-roadmap-surface {
+  background: var(--tp-surface) !important;
+  border-color: var(--tp-border) !important;
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark input,
+.tp-theme-dark select,
+.tp-theme-dark textarea,
+.tp-theme-dark .form-control,
+.tp-theme-dark .edit-input,
+.tp-theme-dark .edit-select,
+.tp-theme-dark .edit-textarea {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark input::placeholder,
+.tp-theme-dark textarea::placeholder {
+  color: #8191a8 !important;
+}
+
+.tp-theme-dark .btn-default,
+.tp-theme-dark .tp-btn-light,
+.tp-theme-dark .kanban-add-btn,
+.tp-theme-dark .btn-quick-add-icon {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface-raised) !important;
+  border-color: #3b4d68 !important;
+}
+
+/* Task workspace: cards, filters, Kanban and table */
+.tp-theme-dark .task-index-vue,
+.tp-theme-dark .task-create-vue,
+.tp-theme-dark .task-create-form {
+  color: var(--tp-text) !important;
+}
+
+/* The task bundle uses `border` shorthand with !important; override it with
+   the same shorthand so bright outlines cannot leak into dark mode. */
+.tp-theme-dark .task-index-vue .edit-input,
+.tp-theme-dark .task-index-vue .edit-select,
+.tp-theme-dark .task-index-vue .edit-textarea,
+.tp-theme-dark .task-create-vue .edit-input,
+.tp-theme-dark .task-create-vue .edit-select,
+.tp-theme-dark .task-create-vue .edit-textarea {
+  background: var(--tp-surface-muted) !important;
+  border: 1px solid var(--tp-border) !important;
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .tp-stat-card,
+.tp-theme-dark .task-create-vue .edit-card,
+.tp-theme-dark .task-create-form .edit-card,
+.tp-theme-dark .tp-kanban-card,
+.tp-theme-dark .ai-modal-card,
+.tp-theme-dark .ai-candidate-card,
+.tp-theme-dark .ai-batch-row {
+  background: var(--tp-surface) !important;
+  border-color: var(--tp-border) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18) !important;
+}
+
+.tp-theme-dark .task-index-vue .tp-stat-card,
+.tp-theme-dark .task-index-vue .tp-filter-bar,
+.tp-theme-dark .task-index-vue .tp-table-card,
+.tp-theme-dark .task-index-vue .tp-kanban-card,
+.tp-theme-dark .task-index-vue .tp-kanban-column,
+.tp-theme-dark .task-index-vue .tp-view-toggle,
+.tp-theme-dark .task-index-vue .tp-view-btn,
+.tp-theme-dark .task-index-vue .kanban-add-btn {
+  border: 1px solid var(--tp-border) !important;
+}
+
+.tp-theme-dark .tp-stat-label,
+.tp-theme-dark .project-name-text,
+.tp-theme-dark .task-key-tag,
+.tp-theme-dark .edit-hint,
+.tp-theme-dark .ai-candidate-meta,
+.tp-theme-dark .ai-modal-subtitle {
+  color: var(--tp-muted) !important;
+}
+
+.tp-theme-dark .tp-stat-value,
+.tp-theme-dark .tp-kanban-title,
+.tp-theme-dark .tp-kanban-card-title,
+.tp-theme-dark .edit-card-title,
+.tp-theme-dark .edit-field label,
+.tp-theme-dark .ai-modal-title,
+.tp-theme-dark .ai-candidate-name {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .tp-kanban-column,
+.tp-theme-dark .tp-table thead,
+.tp-theme-dark .task-create-vue .edit-card-header,
+.tp-theme-dark .task-create-form .edit-card-header,
+.tp-theme-dark .ai-modal-header,
+.tp-theme-dark .ai-modal-footer {
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .tp-kanban-header,
+.tp-theme-dark .tp-kanban-card-footer,
+.tp-theme-dark .tp-table th,
+.tp-theme-dark .tp-table td,
+.tp-theme-dark .tp-table tr,
+.tp-theme-dark .ai-candidate-reasons {
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .tp-kanban-empty,
+.tp-theme-dark .tp-empty-state {
+  color: var(--tp-muted) !important;
+  background: #101b2c !important;
+  border-color: #354965 !important;
+}
+
+.tp-theme-dark .tp-view-toggle {
+  background: #1b2a40 !important;
+}
+
+.tp-theme-dark .tp-view-btn {
+  color: var(--tp-muted) !important;
+  background: transparent !important;
+}
+
+.tp-theme-dark .tp-view-btn.active {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface-raised) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* AI batch controls are rendered by the task bundle after the global styles.
+   Scope these overrides to the workspace and use the dark token palette so the
+   unassigned-task callout never falls back to a bright light-mode surface. */
+.tp-theme-dark .task-index-vue .ai-unassigned-banner {
+  color: var(--tp-ai-text) !important;
+  background: linear-gradient(135deg, var(--tp-ai-surface) 0%, var(--tp-surface-raised) 100%) !important;
+  border-color: var(--tp-ai-border) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.tp-theme-dark .task-index-vue .ai-unassigned-banner strong {
+  color: inherit !important;
+}
+
+.tp-theme-dark .task-index-vue .ai-unassigned-banner-icon {
+  color: var(--tp-ai-accent) !important;
+}
+
+.tp-theme-dark .task-index-vue .ai-unassigned-banner .ai-suggest-btn {
+  color: var(--tp-ai-text) !important;
+  background: var(--tp-ai-surface-raised) !important;
+  border-color: var(--tp-ai-border) !important;
+  box-shadow: none !important;
+}
+
+.tp-theme-dark .task-index-vue .ai-unassigned-banner .ai-suggest-btn:hover:not(:disabled),
+.tp-theme-dark .task-index-vue .ai-unassigned-banner .ai-suggest-btn:focus-visible {
+  color: #fff !important;
+  background: var(--tp-primary) !important;
+  border-color: var(--tp-primary) !important;
+  box-shadow: 0 0 0 3px rgba(110, 168, 255, 0.18) !important;
+}
+
+.tp-theme-dark .task-index-vue .ai-suggest-btn.ai-reset-btn {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface-raised) !important;
+  border-color: var(--tp-border) !important;
+}
+
+/* Timeline / Gantt: this component uses scoped Vue rules with light colors,
+   so set each surface and text role explicitly instead of inheriting. */
+.tp-theme-dark .timeline-workspace-outer,
+.tp-theme-dark .timeline-left-pane,
+.tp-theme-dark .timeline-right-pane {
+  background: var(--tp-surface) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .timeline-left-pane,
+.tp-theme-dark .timeline-right-pane,
+.tp-theme-dark .pane-body,
+.tp-theme-dark .gantt-body-scroll-pane {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .pane-header,
+.tp-theme-dark .gantt-header-container,
+.tp-theme-dark .gantt-virtual-group-row {
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+  color: var(--tp-muted) !important;
+}
+
+.tp-theme-dark .gantt-header-top-row,
+.tp-theme-dark .gantt-header-top-cell,
+.tp-theme-dark .gantt-header-sub-cell,
+.tp-theme-dark .timeline-task-row,
+.tp-theme-dark .gantt-row,
+.tp-theme-dark .gantt-grid-col {
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .gantt-header-top-cell,
+.tp-theme-dark .task-name-text {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .gantt-header-sub-cell,
+.tp-theme-dark .timeline-empty-left,
+.tp-theme-dark .gantt-empty-state,
+.tp-theme-dark .collapse-btn {
+  color: var(--tp-muted) !important;
+}
+
+.tp-theme-dark .timeline-task-row:hover,
+.tp-theme-dark .gantt-row.is-hovered,
+.tp-theme-dark .timeline-task-row.is-virtual {
+  background: #1a2b45 !important;
+}
+
+.tp-theme-dark .timeline-task-row.is-selected {
+  background: #1b365d !important;
+  border-left-color: #6ea8ff !important;
+}
+
+.tp-theme-dark .timeline-task-row.is-epic {
+  background: #292241 !important;
+  border-bottom-color: #524477 !important;
+}
+
+.tp-theme-dark .tp-table,
+.tp-theme-dark .tp-table td,
+.tp-theme-dark .tp-table th {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .tp-table tbody tr:hover {
+  background: #1a2b45 !important;
+}
+
+/* Project, backlog and report pages */
+.tp-theme-dark .pd-project-nav,
+.tp-theme-dark .tp-roadmap-heading,
+.tp-theme-dark .tp-roadmap-table-header,
+.tp-theme-dark .sprint-summary-card,
+.tp-theme-dark .sprint-board-card,
+.tp-theme-dark .sprint-task-row,
+.tp-theme-dark .jira-sprint-main,
+.tp-theme-dark .jira-sprint-side {
+  background: var(--tp-surface) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .pd-nav-item,
+.tp-theme-dark .pd-title,
+.tp-theme-dark .tp-roadmap-heading h2,
+.tp-theme-dark .tp-roadmap-item a,
+.tp-theme-dark .sprint-summary-card strong,
+.tp-theme-dark .sprint-board-card header strong,
+.tp-theme-dark .sprint-task-row__main,
+.tp-theme-dark .jira-panel-heading h2 {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .pd-nav-item:hover,
+.tp-theme-dark .pd-settings-btn:hover {
+  color: #b7d2ff !important;
+  background: #223652 !important;
+}
+
+.tp-theme-dark .pd-project-key,
+.tp-theme-dark .task-key-tag,
+.tp-theme-dark .points-badge {
+  color: #c7d7ef !important;
+  background: #22324a !important;
+  border-color: #3b4d68 !important;
+}
+
+/* Project overview, members and roles ship component-local light styles.
+   Explicitly map every surface and text tier to the shared dark tokens. */
+.tp-theme-dark .project-dashboard-vue,
+.tp-theme-dark .project-members-vue,
+.tp-theme-dark .project-roles-vue {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .pd-stat-card,
+.tp-theme-dark .pd-task-row,
+.tp-theme-dark .pd-activity-change,
+.tp-theme-dark .project-members-vue .pm-stat-card,
+.tp-theme-dark .project-members-vue .pm-card,
+.tp-theme-dark .project-members-vue .pm-empty,
+.tp-theme-dark .project-members-vue .pm-drawer,
+.tp-theme-dark .project-members-vue .pm-import-preview,
+.tp-theme-dark .project-roles-vue .roles-workspace,
+.tp-theme-dark .project-roles-vue .roles-sidebar,
+.tp-theme-dark .project-roles-vue .roles-content,
+.tp-theme-dark .project-roles-vue .role-drawer {
+  background: var(--tp-surface) !important;
+  border-color: var(--tp-border) !important;
+  color: var(--tp-text) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18) !important;
+}
+
+.tp-theme-dark .pd-jira-card-header,
+.tp-theme-dark .project-members-vue .pm-drawer-header,
+.tp-theme-dark .project-members-vue .pm-drawer-footer,
+.tp-theme-dark .project-members-vue .pm-import-table th,
+.tp-theme-dark .project-roles-vue .roles-sidebar-header,
+.tp-theme-dark .project-roles-vue .role-detail-header,
+.tp-theme-dark .project-roles-vue .permission-section-header,
+.tp-theme-dark .project-roles-vue .permission-toolbar {
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .pd-stat-card,
+.tp-theme-dark .pd-task-row,
+.tp-theme-dark .pd-jira-card-header,
+.tp-theme-dark .pd-activity-change,
+.tp-theme-dark .project-members-vue .pm-card,
+.tp-theme-dark .project-members-vue .pm-import-table th,
+.tp-theme-dark .project-members-vue .pm-import-table td,
+.tp-theme-dark .project-members-vue .pm-drawer-header,
+.tp-theme-dark .project-members-vue .pm-drawer-footer,
+.tp-theme-dark .project-roles-vue .roles-sidebar,
+.tp-theme-dark .project-roles-vue .roles-content,
+.tp-theme-dark .project-roles-vue .roles-sidebar-header,
+.tp-theme-dark .project-roles-vue .role-item,
+.tp-theme-dark .project-roles-vue .role-detail-header,
+.tp-theme-dark .project-roles-vue .permission-section,
+.tp-theme-dark .project-roles-vue .permission-section-header,
+.tp-theme-dark .project-roles-vue .permission-row {
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .pd-stat-value,
+.tp-theme-dark .pd-jira-card-title,
+.tp-theme-dark .pd-task-name,
+.tp-theme-dark .pd-task-name a,
+.tp-theme-dark .pd-activity-text,
+.tp-theme-dark .project-members-vue .pm-stat-value,
+.tp-theme-dark .project-members-vue .pm-member-name,
+.tp-theme-dark .project-members-vue .pm-empty h3,
+.tp-theme-dark .project-members-vue .pm-drawer-header h2,
+.tp-theme-dark .project-members-vue .pm-drawer-field label,
+.tp-theme-dark .project-roles-vue .roles-sidebar-title,
+.tp-theme-dark .project-roles-vue .role-item-content strong,
+.tp-theme-dark .project-roles-vue .role-detail-title,
+.tp-theme-dark .project-roles-vue .permission-heading,
+.tp-theme-dark .project-roles-vue .permission-name,
+.tp-theme-dark .project-roles-vue .permission-checkbox-label {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .pd-stat-label,
+.tp-theme-dark .pd-stat-percent,
+.tp-theme-dark .pd-progress-labels,
+.tp-theme-dark .pd-task-key,
+.tp-theme-dark .pd-task-assignee,
+.tp-theme-dark .pd-task-date,
+.tp-theme-dark .pd-activity-meta,
+.tp-theme-dark .project-members-vue .pm-stat-label,
+.tp-theme-dark .project-members-vue .pm-member-email,
+.tp-theme-dark .project-members-vue .pm-member-job,
+.tp-theme-dark .project-members-vue .pm-member-active,
+.tp-theme-dark .project-members-vue .pm-empty p,
+.tp-theme-dark .project-members-vue .pm-field-hint,
+.tp-theme-dark .project-roles-vue .role-item-content small,
+.tp-theme-dark .project-roles-vue .role-detail-eyebrow,
+.tp-theme-dark .project-roles-vue .permission-section-info,
+.tp-theme-dark .project-roles-vue .permission-state {
+  color: var(--tp-muted) !important;
+}
+
+.tp-theme-dark .pd-progress-bar,
+.tp-theme-dark .pd-dist-bar,
+.tp-theme-dark .project-members-vue .pm-empty-icon,
+.tp-theme-dark .project-roles-vue .roles-empty-icon,
+.tp-theme-dark .project-roles-vue .roles-content-empty-icon {
+  background: #263750 !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .project-members-vue .pm-search input,
+.tp-theme-dark .project-members-vue .pm-role-select,
+.tp-theme-dark .project-members-vue .pm-form-control,
+.tp-theme-dark .project-roles-vue input,
+.tp-theme-dark .project-roles-vue select,
+.tp-theme-dark .project-roles-vue textarea {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .project-members-vue .pm-chip,
+.tp-theme-dark .project-roles-vue .role-item,
+.tp-theme-dark .project-roles-vue .permission-row {
+  color: var(--tp-muted) !important;
+  background: var(--tp-surface-muted) !important;
+}
+
+.tp-theme-dark .project-members-vue .pm-chip:hover,
+.tp-theme-dark .project-members-vue .pm-chip.active,
+.tp-theme-dark .project-members-vue .pm-card:hover,
+.tp-theme-dark .project-roles-vue .role-item:hover,
+.tp-theme-dark .project-roles-vue .role-item.active,
+.tp-theme-dark .project-roles-vue .permission-row:hover {
+  background: #1b2d49 !important;
+  border-color: #42658f !important;
+}
+
+.tp-theme-dark .project-members-vue .pm-drawer-close,
+.tp-theme-dark .project-roles-vue .roles-add-small,
+.tp-theme-dark .project-roles-vue .permission-select-all {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface-raised) !important;
+  border-color: var(--tp-border) !important;
+}
+
+/* Project roles: the Vue permission matrix declares white group and checkbox
+   surfaces locally, so map every layer back to the dark design tokens. */
+.tp-theme-dark .project-roles-vue .permission-matrix,
+.tp-theme-dark .project-roles-vue .permission-section,
+.tp-theme-dark .project-roles-vue .roles-content-empty {
+  background: var(--tp-surface) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .project-roles-vue .permission-section-header {
+  background: var(--tp-surface-muted) !important;
+}
+
+.tp-theme-dark .project-roles-vue .permission-row {
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .project-roles-vue .permission-row-checkbox,
+.tp-theme-dark .project-roles-vue .permission-checkbox {
+  background: transparent !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .project-roles-vue .permission-box {
+  background: var(--tp-surface-raised) !important;
+  border-color: #617996 !important;
+}
+
+.tp-theme-dark .project-roles-vue .permission-native-input:checked + .permission-box {
+  background: #2563eb !important;
+  border-color: #6ea8ff !important;
+}
+
+/* Bootstrap 3 alerts keep their light-theme foreground colours.  Use
+   high-contrast semantic surfaces wherever a server-side flash alert appears. */
+.tp-theme-dark .alert {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+  text-shadow: none;
+}
+
+.tp-theme-dark .alert-success {
+  color: #c7f5d5 !important;
+  background: #123b27 !important;
+  border-color: #2e8b57 !important;
+}
+
+.tp-theme-dark .alert-info {
+  color: #c7e6ff !important;
+  background: #123553 !important;
+  border-color: #3177a9 !important;
+}
+
+.tp-theme-dark .alert-warning {
+  color: #ffe3a3 !important;
+  background: #4a350d !important;
+  border-color: #a9791d !important;
+}
+
+.tp-theme-dark .alert-danger {
+  color: #ffd0d6 !important;
+  background: #4b1d28 !important;
+  border-color: #aa4054 !important;
+}
+
+.tp-theme-dark .alert .close {
+  color: currentColor !important;
+  opacity: .8;
+  text-shadow: none;
+}
+
+.tp-theme-dark .alert .close:hover,
+.tp-theme-dark .alert .close:focus {
+  color: currentColor !important;
+  opacity: 1;
+}
+
+.tp-theme-dark .project-report-hero{background:linear-gradient(115deg,#142844,#111d31 60%,#1c2148)!important;border-color:#345170!important}.tp-theme-dark .project-report-hero h2,.tp-theme-dark .project-report-stat strong,.tp-theme-dark .project-report-panel-head h2,.tp-theme-dark .project-report-table td>strong{color:var(--tp-text)!important}.tp-theme-dark .project-report-hero p,.tp-theme-dark .project-report-subtitle,.tp-theme-dark .project-report-progress>span,.tp-theme-dark .project-report-stat small,.tp-theme-dark .project-report-stat span,.tp-theme-dark .project-report-panel-head p,.tp-theme-dark .project-report-table td{color:var(--tp-muted)!important}.tp-theme-dark .project-report-stat,.tp-theme-dark .project-report-panel{background:var(--tp-surface)!important;border-color:var(--tp-border)!important;box-shadow:0 4px 14px rgba(0,0,0,.18)!important}.tp-theme-dark .project-report-panel-head,.tp-theme-dark .project-report-filter,.tp-theme-dark .project-report-table th{background:var(--tp-surface-muted)!important;border-color:var(--tp-border)!important}.tp-theme-dark .project-report-table td{border-color:var(--tp-border)!important}.tp-theme-dark .project-report-filter label{color:var(--tp-text)!important}.tp-theme-dark .project-report-filter select{color:var(--tp-text)!important;background:var(--tp-surface-raised)!important;border-color:var(--tp-border)!important}.tp-theme-dark .project-report-progress-track,.tp-theme-dark .project-report-table-progress{background:#263a56!important}.tp-theme-dark .project-report-status{color:#b9d7ff!important;background:#1d3c68!important}
+
+/* Task detail / inline editing page (Blade). This screen uses the shared
+   edit-card vocabulary outside the Vue create form, so it needs its own
+   scope rather than inheriting the create-page selectors above. */
+.tp-theme-dark .task-show-wrapper {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .task-show-wrapper .edit-card,
+.tp-theme-dark .task-show-wrapper .tp-status-banner,
+.tp-theme-dark .task-show-wrapper .tp-description-text,
+.tp-theme-dark .task-show-wrapper .comment-body,
+.tp-theme-dark .task-show-wrapper .drawer-display-field,
+.tp-theme-dark .task-show-wrapper .drawer-display-block {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface) !important;
+  border-color: var(--tp-border) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18) !important;
+}
+
+.tp-theme-dark .task-show-wrapper .edit-card-header,
+.tp-theme-dark .task-show-wrapper .tp-status-banner,
+.tp-theme-dark .task-show-wrapper .sidebar-meta-group,
+.tp-theme-dark .task-show-wrapper .drawer-display-field,
+.tp-theme-dark .task-show-wrapper .drawer-display-block {
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .task-show-wrapper .edit-card-body,
+.tp-theme-dark .task-show-wrapper .comment-content-wrap,
+.tp-theme-dark .task-show-wrapper .sidebar-meta-item,
+.tp-theme-dark .task-show-wrapper .ck-content-body {
+  color: var(--tp-text) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .task-show-wrapper .edit-card-title,
+.tp-theme-dark .task-show-wrapper .edit-card-title i,
+.tp-theme-dark .task-show-wrapper .tp-sub-title,
+.tp-theme-dark .task-show-wrapper .comment-header .user-name,
+.tp-theme-dark .task-show-wrapper .sidebar-meta-item .meta-value,
+.tp-theme-dark .task-show-wrapper .jira-drawer-title-display,
+.tp-theme-dark .task-show-wrapper .drawer-display-field,
+.tp-theme-dark .task-show-wrapper .drawer-display-block {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .task-show-wrapper .sidebar-meta-item .meta-label,
+.tp-theme-dark .task-show-wrapper .comment-header .comment-time,
+.tp-theme-dark .task-show-wrapper .comment-body,
+.tp-theme-dark .task-show-wrapper .tp-empty-activity,
+.tp-theme-dark .task-show-wrapper .tp-empty-desc {
+  color: var(--tp-muted) !important;
+}
+
+.tp-theme-dark .task-show-wrapper .tp-comment-item,
+.tp-theme-dark .task-show-wrapper .tp-description-box,
+.tp-theme-dark .task-show-wrapper .edit-card,
+.tp-theme-dark .task-show-wrapper .sidebar-meta-item {
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .task-show-wrapper .tp-empty-desc,
+.tp-theme-dark .task-show-wrapper .jira-editable-field.clickable:hover,
+.tp-theme-dark .task-show-wrapper .jira-drawer-title-display:hover {
+  color: var(--tp-muted) !important;
+  background: var(--tp-surface-muted) !important;
+  border-color: #42658f !important;
+}
+
+.tp-theme-dark .task-show-wrapper .edit-input,
+.tp-theme-dark .task-show-wrapper .edit-select,
+.tp-theme-dark .task-show-wrapper .edit-textarea,
+.tp-theme-dark .task-show-wrapper .drawer-display-field input,
+.tp-theme-dark .task-show-wrapper .drawer-display-block textarea {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .task-show-wrapper .cke_chrome,
+.tp-theme-dark .task-show-wrapper .cke_top,
+.tp-theme-dark .task-show-wrapper .cke_bottom {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+/* Skills profile */
+.tp-theme-dark .skills-profile-container,
+.tp-theme-dark .profile-layout {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .skills-profile-container .card-surface,
+.tp-theme-dark .skills-profile-container .header-card,
+.tp-theme-dark .skills-profile-container .ai-preview-card {
+  background: var(--tp-surface) !important;
+  border-color: var(--tp-border) !important;
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.18) !important;
+}
+
+.tp-theme-dark .skills-profile-container .surface-header,
+.tp-theme-dark .skills-profile-container .surface-footer,
+.tp-theme-dark .skills-profile-container .preset-section,
+.tp-theme-dark .skills-profile-container .preview-tasks-list,
+.tp-theme-dark .skills-profile-container .skills-table thead {
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .skills-profile-container .surface-body,
+.tp-theme-dark .skills-profile-container .skills-table,
+.tp-theme-dark .skills-profile-container .skills-table td,
+.tp-theme-dark .skills-profile-container .skills-table th,
+.tp-theme-dark .skills-profile-container .section-label,
+.tp-theme-dark .skills-profile-container .skill-name-text,
+.tp-theme-dark .skills-profile-container .form-label {
+  color: var(--tp-text) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .skills-profile-container .form-control {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .skills-profile-container .preset-tag,
+.tp-theme-dark .skills-profile-container .ai-status-tag {
+  color: #c9dcff !important;
+  background: #203556 !important;
+  border-color: #3e5c8c !important;
+}
+
+.tp-theme-dark .skills-profile-container .preview-task-item {
+  border-color: var(--tp-border) !important;
+}
+
+/* The skills table sets a light background directly on TH, and the AI note
+   has a light-mode purple text color. Override both elements, not only their
+   parent containers, to preserve contrast in dark mode. */
+.tp-theme-dark .skills-profile-container .skills-table thead,
+.tp-theme-dark .skills-profile-container .skills-table thead tr,
+.tp-theme-dark .skills-profile-container .skills-table thead th {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .skills-profile-container .ai-preview-card .surface-footer {
+  background: var(--tp-ai-surface) !important;
+  border-color: var(--tp-ai-border) !important;
+}
+
+.tp-theme-dark .skills-profile-container .ai-footer-tip,
+.tp-theme-dark .skills-profile-container .ai-footer-tip em {
+  color: var(--tp-ai-text) !important;
+}
+
+.tp-theme-dark .skills-profile-container .ai-footer-tip em {
+  font-style: italic;
+}
+
+/* Customer feedback previously inherited Bootstrap's light success alert. */
+.tp-theme-dark .company-page .alert-success {
+  color: #d7f9e4 !important;
+  background: #123d2a !important;
+  border-color: #27744e !important;
+}
+
+.tp-theme-dark .company-page .alert-success .close {
+  color: #d7f9e4 !important;
+  opacity: .85;
+}
+
+/* Project create/edit are Vue forms with a locally-scoped light edit system. */
+.tp-theme-dark .project-create-vue,
+.tp-theme-dark .project-edit-vue {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .project-create-vue .edit-card,
+.tp-theme-dark .project-edit-vue .edit-card,
+.tp-theme-dark .project-create-vue .edit-modal,
+.tp-theme-dark .project-edit-vue .edit-modal {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface) !important;
+  border-color: var(--tp-border) !important;
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+.tp-theme-dark .project-create-vue .edit-card-header,
+.tp-theme-dark .project-edit-vue .edit-card-header,
+.tp-theme-dark .project-create-vue .edit-modal-header,
+.tp-theme-dark .project-edit-vue .edit-modal-header,
+.tp-theme-dark .project-create-vue .edit-modal-footer,
+.tp-theme-dark .project-edit-vue .edit-modal-footer {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .project-create-vue .edit-card-title,
+.tp-theme-dark .project-edit-vue .edit-card-title,
+.tp-theme-dark .project-create-vue .edit-card-title i,
+.tp-theme-dark .project-edit-vue .edit-card-title i,
+.tp-theme-dark .project-create-vue .edit-field label,
+.tp-theme-dark .project-edit-vue .edit-field label,
+.tp-theme-dark .project-create-vue .edit-modal-title,
+.tp-theme-dark .project-edit-vue .edit-modal-title {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .project-create-vue .edit-card-desc,
+.tp-theme-dark .project-edit-vue .edit-card-desc,
+.tp-theme-dark .project-create-vue .edit-hint,
+.tp-theme-dark .project-edit-vue .edit-hint {
+  color: var(--tp-muted) !important;
+}
+
+.tp-theme-dark .project-create-vue .edit-input,
+.tp-theme-dark .project-create-vue .edit-select,
+.tp-theme-dark .project-create-vue .edit-textarea,
+.tp-theme-dark .project-edit-vue .edit-input,
+.tp-theme-dark .project-edit-vue .edit-select,
+.tp-theme-dark .project-edit-vue .edit-textarea,
+.tp-theme-dark .project-create-vue .edit-member-input,
+.tp-theme-dark .project-edit-vue .edit-member-input {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .project-create-vue .edit-image-placeholder,
+.tp-theme-dark .project-edit-vue .edit-image-placeholder,
+.tp-theme-dark .project-create-vue .edit-image-btn,
+.tp-theme-dark .project-edit-vue .edit-image-btn,
+.tp-theme-dark .project-create-vue .edit-member-tag,
+.tp-theme-dark .project-edit-vue .edit-member-tag,
+.tp-theme-dark .project-create-vue .edit-btn-secondary,
+.tp-theme-dark .project-edit-vue .edit-btn-secondary {
+  color: var(--tp-muted) !important;
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .project-create-vue .cke_chrome,
+.tp-theme-dark .project-create-vue .cke_top,
+.tp-theme-dark .project-create-vue .cke_bottom,
+.tp-theme-dark .project-edit-vue .cke_chrome,
+.tp-theme-dark .project-edit-vue .cke_top,
+.tp-theme-dark .project-edit-vue .cke_bottom {
+  color: var(--tp-text) !important;
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+/* Teams index: this legacy page uses inline colors, so scope the overrides to
+   its wrapper and deliberately win over inline light-theme declarations. */
+.tp-theme-dark .team-page,
+.tp-theme-dark .team-page > div[style*="background:#f7f8fa"] {
+  background: var(--tp-bg) !important;
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .team-page div[style*="background:#fff"] {
+  background: var(--tp-surface) !important;
+  border-color: var(--tp-border) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16) !important;
+}
+
+.tp-theme-dark .team-page [style*="color:#172b4d"],
+.tp-theme-dark .team-page [style*="color:#42526e"] {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .team-page [style*="color:#6b778c"] {
+  color: var(--tp-muted) !important;
+}
+
+.tp-theme-dark .team-page [style*="border:1px solid #ebecf0"],
+.tp-theme-dark .team-page [style*="border:1px solid #dfe1e6"],
+.tp-theme-dark .team-page [style*="border-bottom:1px solid #ebecf0"] {
+  border-color: var(--tp-border) !important;
+}
+
+/* Dashboard and project list (these Vue bundles ship their own light colors). */
+.tp-theme-dark .home-dashboard-container,
+.tp-theme-dark .project-list-vue {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .stat-card,
+.tp-theme-dark .content-card,
+.tp-theme-dark .dashboard-sidebar,
+.tp-theme-dark .pl-stat-card,
+.tp-theme-dark .pl-table-wrap,
+.tp-theme-dark .pl-modal {
+  background: var(--tp-surface) !important;
+  border-color: var(--tp-border) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18) !important;
+}
+
+.tp-theme-dark .card-header,
+.tp-theme-dark .shortcut-item,
+.tp-theme-dark .pl-table thead,
+.tp-theme-dark .pl-table tbody tr:hover,
+.tp-theme-dark .pl-modal-footer {
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .stat-value,
+.tp-theme-dark .card-header h3,
+.tp-theme-dark .shortcut-text strong,
+.tp-theme-dark .empty-ai-state h4,
+.tp-theme-dark .pl-title,
+.tp-theme-dark .pl-stat-number,
+.tp-theme-dark .pl-table td,
+.tp-theme-dark .pl-modal-header h3,
+.tp-theme-dark .pl-empty h3 {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .stat-label,
+.tp-theme-dark .stat-link,
+.tp-theme-dark .badge-tag,
+.tp-theme-dark .shortcut-text p,
+.tp-theme-dark .ai-intro-text,
+.tp-theme-dark .pl-subtitle,
+.tp-theme-dark .pl-stat-label,
+.tp-theme-dark .pl-table th,
+.tp-theme-dark .pl-project-meta,
+.tp-theme-dark .pl-task-count,
+.tp-theme-dark .pl-empty p,
+.tp-theme-dark .pl-modal-body p {
+  color: var(--tp-muted) !important;
+}
+
+.tp-theme-dark .ai-task-item,
+.tp-theme-dark .card-footer.bg-purple-subtle-light,
+.tp-theme-dark .pl-search-input,
+.tp-theme-dark .pl-pill,
+.tp-theme-dark .pl-btn-ghost,
+.tp-theme-dark .pl-empty-icon {
+  background: var(--tp-surface-muted) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.tp-theme-dark .ai-task-title,
+.tp-theme-dark .pl-search-input,
+.tp-theme-dark .pl-pill,
+.tp-theme-dark .pl-btn-ghost,
+.tp-theme-dark .pl-modal-close {
+  color: var(--tp-text) !important;
+}
+
+/* Home AI footer: the light-mode purple copy was too low-contrast against
+   the dark surface. Keep its hierarchy while using the accessible dark AI
+   palette. */
+.tp-theme-dark .home-dashboard-container .card-footer.bg-purple-subtle-light {
+  background: var(--tp-ai-surface) !important;
+  border-color: var(--tp-ai-border) !important;
+}
+
+.tp-theme-dark .home-dashboard-container .skills-prompt {
+  color: var(--tp-ai-text) !important;
+}
+
+.tp-theme-dark .home-dashboard-container .skills-prompt strong,
+.tp-theme-dark .home-dashboard-container .skills-prompt .fa {
+  color: var(--tp-ai-accent) !important;
+}
+
+.tp-theme-dark .pl-table tbody tr {
+  border-color: var(--tp-border) !important;
+}
+
+/* The reusable right rail has Bootstrap light utility classes with !important. */
+.tp-theme-dark .tp-right-sidebar .tp-sidebar-card,
+.tp-theme-dark .tp-right-sidebar .tp-sidebar-card .card-header,
+.tp-theme-dark .tp-right-sidebar .tp-sidebar-card .card-body {
+  background: var(--tp-surface) !important;
+  border-color: var(--tp-border) !important;
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .tp-right-sidebar .text-dark,
+.tp-theme-dark .tp-right-sidebar .fw-bold,
+.tp-theme-dark .tp-right-sidebar .fw-semibold {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .tp-right-sidebar .text-muted,
+.tp-theme-dark .tp-right-sidebar .text-secondary {
+  color: var(--tp-muted) !important;
+}
+
+.tp-theme-dark .tp-right-sidebar .tp-activity-item,
+.tp-theme-dark .tp-right-sidebar .border-bottom {
+  border-color: var(--tp-border) !important;
+}
+
+/* Guide is a Blade page with page-local light styles. */
+.tp-theme-dark .guide-page {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .guide-section-head h2,
+.tp-theme-dark .guide-step h3,
+.tp-theme-dark .guide-card h3,
+.tp-theme-dark .guide-faq strong,
+.tp-theme-dark .guide-note strong {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .guide-section-head p,
+.tp-theme-dark .guide-step p,
+.tp-theme-dark .guide-step small,
+.tp-theme-dark .guide-check,
+.tp-theme-dark .guide-faq span {
+  color: var(--tp-muted) !important;
+}
+
+.tp-theme-dark .guide-step,
+.tp-theme-dark .guide-card {
+  background: var(--tp-surface) !important;
+  border-color: var(--tp-border) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18) !important;
+}
+
+.tp-theme-dark .guide-note {
+  color: #c9dcff !important;
+  background: #142744 !important;
+  border-color: #31557f !important;
+}
+
+.tp-theme-dark .guide-faq {
+  border-color: var(--tp-border) !important;
+}
+
+/* Notification center and bell dropdown. */
+.tp-theme-dark .tp-notification-dropdown,
+.tp-theme-dark .tp-notification-dropdown .tp-dropdown-header,
+.tp-theme-dark .tp-dropdown-body,
+.tp-theme-dark .tp-notification-dropdown .tp-dropdown-footer,
+.tp-theme-dark .tp-dropdown-item { background: var(--tp-surface) !important; border-color: var(--tp-border) !important; }
+.tp-theme-dark .tp-dropdown-item.tp-unread,
+.tp-theme-dark .tp-notification-list .tp-notification-item.tp-unread { background: #142745 !important; }
+.tp-theme-dark .tp-dropdown-item:hover { background: #1b2d49 !important; }
+.tp-theme-dark .tp-dropdown-icon { color: #9bc2ff !important; background: #203b63 !important; }
+.tp-theme-dark .tp-dropdown-title,
+.tp-theme-dark .tp-notification-title-row h2 { color: var(--tp-text) !important; }
+.tp-theme-dark .tp-dropdown-message,
+.tp-theme-dark .tp-dropdown-meta,
+.tp-theme-dark .tp-notification-content p,
+.tp-theme-dark .tp-notification-time,
+.tp-theme-dark .tp-notification-actor { color: var(--tp-muted) !important; }
+.tp-theme-dark .tp-notification-list .tp-notification-item { border-color: var(--tp-border) !important; }
+.tp-theme-dark .tp-notification-list { background: var(--tp-surface-muted) !important; }
+.tp-theme-dark .tp-notification-list .tp-notification-item,
+.tp-theme-dark .tp-notification-list .tp-notification-item:hover { background: var(--tp-surface) !important; border-color: var(--tp-border) !important; }
+.tp-theme-dark .tp-notification-list .tp-notification-item.tp-unread { background: #142745 !important; border-color: #315987 !important; }
+.tp-theme-dark .tp-notification-list .tp-notification-icon { background: #203b63 !important; color: #9bc2ff !important; }
+.tp-theme-dark .tp-surface-header,
+.tp-theme-dark #notification-filter .nav-link.active { background: var(--tp-surface) !important; }
+.tp-theme-dark #notification-filter { background: var(--tp-surface-muted) !important; }
+.tp-theme-dark #notification-filter .nav-link { color: var(--tp-muted) !important; }
+.tp-theme-dark .tp-surface-header > span { color: var(--tp-text) !important; }
+.tp-theme-dark .tp-surface-body > .p-3.border-top { background: var(--tp-surface) !important; border-color: var(--tp-border) !important; }
+.tp-theme-dark .tp-surface-body .pagination > li > a,
+.tp-theme-dark .tp-surface-body .pagination > li > span { color: var(--tp-muted); background: var(--tp-surface-muted); border-color: var(--tp-border); }
+.tp-theme-dark .tp-surface-body .pagination > .active > span,
+.tp-theme-dark .tp-surface-body .pagination > .active > a { color:#fff; background:#2563eb; border-color:#2563eb; }
+
+/* Project activity: status-diff chips need independent contrast in dark mode. */
+.tp-theme-dark .project-dashboard-vue .pd-activity-change {
+  color: #c7d7ef !important;
+  background: #172842 !important;
+  border-color: #345170 !important;
+}
+
+.tp-theme-dark .project-dashboard-vue .pd-activity-field {
+  color: #b9cde8 !important;
+}
+
+.tp-theme-dark .project-dashboard-vue .pd-activity-old {
+  color: #ff9baa !important;
+  text-decoration-color: #d95b6b !important;
+}
+
+.tp-theme-dark .project-dashboard-vue .pd-activity-new {
+  color: #6ee7a5 !important;
+  font-weight: 700;
+}
+
+/* Project overview: AI insight and distribution copy uses component-local
+   light colours, which are too dark against the dark surface. */
+.tp-theme-dark .project-dashboard-vue .pd-insight-item,
+.tp-theme-dark .project-dashboard-vue .pd-dist-label,
+.tp-theme-dark .project-dashboard-vue .pd-dist-value,
+.tp-theme-dark .project-dashboard-vue .ai-home-item-title {
+  color: var(--tp-text) !important;
+}
+
+.tp-theme-dark .project-dashboard-vue .pd-empty-small,
+.tp-theme-dark .project-dashboard-vue .ai-home-item-meta {
+  color: var(--tp-muted) !important;
+}
+
+.tp-theme-dark .project-dashboard-vue .pd-risk-item {
+  color: #ffd09a !important;
+}
+
+.tp-theme-dark .project-dashboard-vue .ai-insight-row {
+  border-color: var(--tp-border) !important;
+}
+
+/* The shared AI stylesheet uses rem units while this legacy app root is 10px.
+   Keep the compact list compact, but make its task and priority readable. */
+.project-dashboard-vue .ai-insight-row .ai-home-item-title {
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+  font-weight: 700 !important;
+}
+
+.project-dashboard-vue .ai-insight-row .ai-home-item-meta {
+  margin-top: 3px;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  font-weight: 600;
+}
+
+/* Backlog / Sprint workspace. */
+.tp-theme-dark .sprint-workspace .jira-panel-heading,
+.tp-theme-dark .sprint-workspace .sprint-board-section > .jira-panel-heading,
+.tp-theme-dark .jira-backlog-list,
+.tp-theme-dark .sprint-board-card__goal,
+.tp-theme-dark .sprint-empty,
+.tp-theme-dark .jira-empty-column { background: var(--tp-surface-muted) !important; border-color: var(--tp-border) !important; }
+.tp-theme-dark .sprint-summary-card { border-color: var(--tp-border) !important; box-shadow: 0 8px 22px rgba(0,0,0,.2) !important; }.tp-theme-dark .sprint-summary-card span,.tp-theme-dark .sprint-summary-card small,.tp-theme-dark .sprint-task-row small,.tp-theme-dark .sprint-board-card header small,.tp-theme-dark .sprint-board-card__goal,.tp-theme-dark .sprint-progress-label { color: var(--tp-muted) !important; }.tp-theme-dark .jira-backlog-item.sprint-task-row:hover,.tp-theme-dark .sprint-board-card:hover { border-color: #4774a6 !important; box-shadow: 0 7px 16px rgba(0,0,0,.22) !important; }.tp-theme-dark .sprint-task-row__move select,.tp-theme-dark .jira-sprint-form .form-control { color: var(--tp-text) !important; background: var(--tp-surface-raised) !important; border-color: var(--tp-border) !important; }.tp-theme-dark .sprint-board-card__tasks .sprint-task-row { border-color: var(--tp-border) !important; }.tp-theme-dark .jira-status-planned { color:#b9d7ff!important;background:#1d3c68!important; }.tp-theme-dark .jira-status-active { color:#9af2bd!important;background:#12462d!important; }.tp-theme-dark .jira-status-closed { color:#c7d1df!important;background:#2a394c!important; }
+.tp-theme-dark .sprint-jira-inspired .jira-panel-heading,.tp-theme-dark .sprint-jira-inspired .jira-backlog-list { background: var(--tp-surface) !important; }.tp-theme-dark .sprint-jira-inspired .sprint-board-card header { background: var(--tp-surface-muted) !important; border-color: var(--tp-border) !important; }.tp-theme-dark .sprint-jira-inspired .jira-backlog-item.sprint-task-row:hover,.tp-theme-dark .sprint-jira-inspired .sprint-board-card__tasks .sprint-task-row:hover { background: #192d49 !important; border-color: var(--tp-border) !important; box-shadow: inset 3px 0 0 #5d95e8 !important; }.tp-theme-dark .sprint-jira-inspired .sprint-board-card__tasks { border-color: var(--tp-border) !important; }
+.tp-theme-dark .sprint-jira-toolbar{background:var(--tp-surface)!important;border-color:var(--tp-border)!important;box-shadow:0 3px 10px rgba(0,0,0,.16)!important}.tp-theme-dark .sprint-jira-toolbar h2,.tp-theme-dark .sprint-jira-toolbar-stats strong{color:var(--tp-text)!important}.tp-theme-dark .sprint-jira-toolbar p,.tp-theme-dark .sprint-jira-toolbar-stats span{color:var(--tp-muted)!important;border-color:var(--tp-border)!important}.tp-theme-dark .sprint-jira-toolbar-icon{color:#a9ccff!important;background:#1e416e!important}.tp-theme-dark .sprint-list-columns{color:#a7b8cf!important;background:var(--tp-surface-muted)!important;border-color:var(--tp-border)!important}.tp-theme-dark .sprint-task-row__meta i{color:#94a9c3!important}
+
+
+@media (max-width: 767px) {
+  .tp-theme-dark .tp-navbar .navbar-collapse {
+    border-color: var(--tp-border) !important;
+  }
+}

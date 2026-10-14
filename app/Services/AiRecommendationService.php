@@ -18,6 +18,9 @@ class AiRecommendationService
 
     protected array $projectHistoryCache = [];
 
+    /** @var array<string, array<int, int>> */
+    protected array $workloadCache = [];
+
     /**
      * Recommend assignees for a given task context.
      *
@@ -30,6 +33,7 @@ class AiRecommendationService
     public function recommend(array $taskData, ?int $projectId = null, int $topK = 5): array
     {
         $this->projectHistoryCache = [];
+        $this->workloadCache = [];
         $projectId = $projectId ?? $taskData['project_id'] ?? null;
         $candidateUsers = $this->getCandidateUsers($projectId);
 
@@ -47,6 +51,7 @@ class AiRecommendationService
     public function recommendMany(iterable $tasks, int $topK = 3): array
     {
         $this->projectHistoryCache = [];
+        $this->workloadCache = [];
         $candidateCache = [];
         $items = [];
 
@@ -96,10 +101,7 @@ class AiRecommendationService
             return [];
         }
 
-        $workloads = Task::query()->whereIn('assignee_id', $candidateUsers->modelKeys())
-            ->whereNotIn('status', ['done', 'closed', 'completed', 'resolved'])
-            ->selectRaw('assignee_id, COUNT(*) as active_count')->groupBy('assignee_id')
-            ->pluck('active_count', 'assignee_id');
+        $workloads = $this->workloadsForCandidates($candidateUsers);
         $formattedCandidates = $candidateUsers->map(function (User $user) use ($workloads) {
             $skills = $user->skills ? $user->skills->pluck('skill_name')->toArray() : [];
             $activeTasksCount = (int) ($workloads[$user->id] ?? 0);
@@ -172,7 +174,12 @@ class AiRecommendationService
             }
 
             $matchedUser = $this->matchCandidateUser($candidateUsers, $item);
-            $formatted = $this->formatRecommendationForUi($item, $matchedUser, $index + 1);
+            $formatted = $this->formatRecommendationForUi(
+                $item,
+                $matchedUser,
+                $index + 1,
+                (int) ($workloads[$matchedUser?->id] ?? 0)
+            );
             if ($formatted === null) {
                 continue;
             }
@@ -227,7 +234,7 @@ class AiRecommendationService
     /**
      * Shape a recommendation for TaskCreate.vue (name, user_id, job_title, ...).
      */
-    protected function formatRecommendationForUi(array $item, ?User $matchedUser, int $rank): ?array
+    protected function formatRecommendationForUi(array $item, ?User $matchedUser, int $rank, int $workload): ?array
     {
         if (!$matchedUser) {
             return null;
@@ -255,11 +262,7 @@ class AiRecommendationService
             $username = $matchedUser->username ?? $matchedUser->email ?? $username;
             $email = $matchedUser->email ?? $email;
             $avatar = $matchedUser->avatar;
-            if ($activeTasks === null) {
-                $activeTasks = Task::where('assignee_id', $matchedUser->id)
-                    ->whereNotIn('status', ['done', 'closed', 'completed'])
-                    ->count();
-            }
+            $activeTasks ??= $workload;
         }
 
         if ($userId === null || $userId === '' || ($name === null || $name === '')) {
@@ -322,12 +325,32 @@ class AiRecommendationService
     /**
      * Run Python script inference.
      */
+    /** Resolve Python across Linux/macOS and Laragon on Windows. */
+    protected function resolvePythonBinary(): string
+    {
+        $configured = config('ai.python_binary');
+        if (is_string($configured) && $configured !== '') {
+            return $configured;
+        }
+
+        $candidates = [
+            base_path('.venv/Scripts/python.exe'),
+            base_path('.venv/bin/python3'),
+            'C:/laragon/bin/python/python-3.10/python.exe',
+            'C:/data/dev/laragon/bin/python/python-3.10/python.exe',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return PHP_OS_FAMILY === 'Windows' ? 'python' : 'python3';
+    }
+
     protected function runPythonInference(array $payload, int $topK): array
     {
-        $pythonBinary = base_path('.venv/bin/python3');
-        if (!file_exists($pythonBinary)) {
-            $pythonBinary = 'python3';
-        }
 
         $scriptPath = base_path('AI/assignee_recommender.py');
         if (!file_exists($scriptPath)) {
@@ -339,6 +362,13 @@ class AiRecommendationService
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
             '--top-k', (string) $topK,
         ], base_path());
+        // Symfony replaces the process environment when setEnv() is called.
+        // Preserve Windows/Laragon variables (notably SystemRoot) so Python
+        // can initialise its secure random provider.
+        $environment = array_filter(getenv(), static fn ($value) => is_string($value));
+        $environment['PYTHONUTF8'] = '1';
+        $environment['PYTHONIOENCODING'] = 'utf-8';
+        $process->setEnv($environment);
         $process->setTimeout(60);
 
         try {
@@ -349,7 +379,10 @@ class AiRecommendationService
             }
             return $decoded;
         } catch (Exception $e) {
-            Log::warning('AI inference failed.', ['exception' => get_class($e)]);
+            Log::warning('AI inference failed.', [
+                'exception' => get_class($e),
+                'stderr' => trim($process->getErrorOutput()),
+            ]);
             abort(503, 'Không thể chạy gợi ý AI lúc này. Vui lòng thử lại.');
         }
     }

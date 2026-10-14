@@ -58,6 +58,7 @@
                                     </div>
                                 </div>
 
+                                <div class="ai-confidence ai-candidate-confidence"><span :class="confidenceClass(candidate)" :style="{ width: `${candidateConfidence(candidate)}%` }"></span></div>
                                 <p v-if="candidate.persistence_warning" role="status">{{ candidate.persistence_warning }}</p>
                                 <div v-if="candidate.match_reasons && candidate.match_reasons.length" class="ai-candidate-reasons">
                                     <div v-for="(reason, idx) in candidate.match_reasons" :key="idx" class="ai-reason-item">
@@ -125,6 +126,11 @@ const context = computed(() => ({
     priority: props.task?.priority ?? props.priority,
     task_id: props.task?.id ?? props.taskId,
 }));
+
+const confidenceClass = (candidate) => {
+    const confidence = candidateConfidence(candidate);
+    return confidence > 80 ? 'is-high' : (confidence >= 50 ? 'is-medium' : 'is-low');
+};
 
 const fetchRecommendations = async () => {
     if (!context.value.name && !context.value.description) {

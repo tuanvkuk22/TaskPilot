@@ -16,9 +16,28 @@ from typing import Iterable
 
 import numpy as np
 import pandas as pd
-import torch
-from torch import nn
-from torch.utils.data import DataLoader, Dataset
+
+try:
+    import torch
+    from torch import nn
+    from torch.utils.data import DataLoader, Dataset
+
+    TORCH_AVAILABLE = True
+except ModuleNotFoundError:
+    # Serving has a deterministic heuristic fallback and must remain available
+    # on installations that do not need the optional training runtime.
+    torch = None
+
+    class Dataset:  # pragma: no cover - only used when attempting training without torch
+        pass
+
+    class _TorchModules:
+        class Module:
+            pass
+
+    nn = _TorchModules()
+    DataLoader = object
+    TORCH_AVAILABLE = False
 
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 GENERIC_TOKENS = {
@@ -841,6 +860,11 @@ def predict(args):
         print(json.dumps(heuristic_recommendations(payload, args.top_k), ensure_ascii=False, indent=2))
         return
 
+    if not TORCH_AVAILABLE:
+        print("PyTorch unavailable; using heuristic scoring", file=sys.stderr)
+        print(json.dumps(heuristic_recommendations(payload, args.top_k), ensure_ascii=False, indent=2))
+        return
+
     try:
         # PyTorch Checkpoint Inference
         checkpoint = torch.load(checkpoint_path, map_location="cpu")
@@ -1010,6 +1034,8 @@ def parser() -> argparse.ArgumentParser:
 if __name__ == "__main__":
     arguments = parser().parse_args()
     if arguments.command == "train":
+        if not TORCH_AVAILABLE:
+            parser().error("PyTorch is required for training. Install AI/requirements-ci.txt first.")
         train(arguments)
     else:
         predict(arguments)
