@@ -33,7 +33,7 @@ require (
 	github.com/pion/datachannel v1.6.2
 	github.com/pion/dtls/v3 v3.1.9
 	github.com/pion/ice/v4 v4.4.0
-	github.com/pion/interceptor v0.1.47
+	github.com/pion/interceptor v0.1.49
 	github.com/pion/rtcp v1.2.17
 	github.com/pion/rtp v1.10.5
 	github.com/pion/sctp v1.11.1
