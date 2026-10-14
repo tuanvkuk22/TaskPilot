@@ -464,6 +464,12 @@ class ImportDatasetTestCommand extends Command
         if (Schema::hasColumn('project_user', 'role')) {
             $payload['role'] = $role;
         }
+        if (Schema::hasColumn('project_user', 'permissions')) {
+            $permissions = in_array($role, ['owner', 'manager', 'admin'], true)
+                ? ['task.manage', 'task.assign', 'task.edit', 'task.view']
+                : ['task.edit', 'task.view', 'task.create', 'task.assign'];
+            $payload['permissions'] = json_encode($permissions);
+        }
 
         DB::table('project_user')->insert($payload);
     }

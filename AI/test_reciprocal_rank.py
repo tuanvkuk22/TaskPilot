@@ -11,8 +11,10 @@ from assignee_recommender import (
     VUE_RECOMMENDATION_FIELDS,
     format_recommendation,
     heuristic_recommendations,
+    metric_improved,
     predict,
     reciprocal_rank_sum,
+    update_early_stop,
     validate_prediction_payload,
 )
 
@@ -35,14 +37,32 @@ class PredictionValidationTest(unittest.TestCase):
         import argparse
         import io
         from contextlib import redirect_stdout
+
+        payload = {"summary": "Fix mysql query", "candidate_users": [
+            {"id": 1, "name": "Developer", "username": "dev", "skills": ["mysql"]}
+        ]}
+        args = argparse.Namespace(
+            issue_json=json.dumps(payload), top_k=5, checkpoint="model.pt", use_model=False,
+        )
+        with redirect_stdout(io.StringIO()) as output:
+            predict(args)
+        self.assertEqual(json.loads(output.getvalue()), heuristic_recommendations(payload, 5))
+
+    def test_use_model_unreadable_checkpoint_falls_back(self):
+        import argparse
+        import io
+        from contextlib import redirect_stdout
         from unittest.mock import patch
 
         payload = {"summary": "Fix mysql query", "candidate_users": [
             {"id": 1, "name": "Developer", "username": "dev", "skills": ["mysql"]}
         ]}
-        args = argparse.Namespace(issue_json=json.dumps(payload), top_k=5, checkpoint="model.pt")
+        args = argparse.Namespace(
+            issue_json=json.dumps(payload), top_k=5, checkpoint="model.pt", use_model=True,
+        )
         with patch("assignee_recommender.Path.exists", return_value=True), \
-                patch("assignee_recommender.torch.load", side_effect=OSError("unavailable")), \
+                patch("assignee_recommender._ensure_ml"), \
+                patch("assignee_recommender.pytorch_recommendations", side_effect=OSError("unavailable")), \
                 redirect_stdout(io.StringIO()) as output:
             predict(args)
         self.assertEqual(json.loads(output.getvalue()), heuristic_recommendations(payload, 5))
@@ -100,6 +120,43 @@ class ReciprocalRankSumTest(unittest.TestCase):
         ranks = ranking.eq(targets.unsqueeze(1)).to(dtype=torch.float32).argmax(dim=1)
         expected = float((1.0 / (ranks + 1).to(dtype=torch.float32)).sum().item())
         self.assertAlmostEqual(reciprocal_rank_sum(ranking, targets), expected)
+
+
+class EarlyStopTest(unittest.TestCase):
+    def test_first_finite_value_counts_as_improvement(self):
+        best, remaining, improved, should_stop = update_early_stop(
+            2.83, float("inf"), 3, 3, min_delta=0.005, mode="min"
+        )
+        self.assertTrue(improved)
+        self.assertFalse(should_stop)
+        self.assertEqual(best, 2.83)
+        self.assertEqual(remaining, 3)
+
+    def test_min_delta_ignores_tiny_drops(self):
+        self.assertFalse(metric_improved(2.730, 2.7336, min_delta=0.005, mode="min"))
+        self.assertTrue(metric_improved(2.720, 2.7336, min_delta=0.005, mode="min"))
+
+    def test_logged_run_would_stop_at_epoch_7(self):
+        val_losses = [
+            2.8384, 2.7714, 2.7796, 2.7336, 2.8188, 2.8033, 2.9012,
+            2.9707, 3.0303, 3.1481, 3.2579, 3.2816, 3.3677, 3.3884, 3.4008,
+        ]
+        best = float("inf")
+        remaining = 3
+        stop_epoch = None
+        for epoch, loss in enumerate(val_losses, start=1):
+            best, remaining, _improved, should_stop = update_early_stop(
+                loss, best, remaining, 3, min_delta=0.005, mode="min"
+            )
+            if should_stop:
+                stop_epoch = epoch
+                break
+        self.assertEqual(stop_epoch, 7)
+        self.assertAlmostEqual(best, 2.7336)
+
+    def test_patience_must_be_positive(self):
+        with self.assertRaises(ValueError):
+            update_early_stop(1.0, 2.0, 0, 0)
 
 
 class RecommendationPayloadTest(unittest.TestCase):
@@ -165,6 +222,37 @@ class RecommendationPayloadTest(unittest.TestCase):
         self.assertEqual(row["job_title"], "Backend Engineer")
         self.assertEqual(row["active_tasks_count"], 2)
         self.assertIsInstance(row["confidence_percent"], int)
+
+    def test_batch_items_keep_order(self):
+        from contextlib import redirect_stdout
+        from io import StringIO
+        from types import SimpleNamespace
+
+        payload = {
+            "top_k": 3,
+            "items": [
+                {
+                    "summary": "Fix mysql leak",
+                    "candidate_users": [
+                        {"id": 1, "name": "A", "username": "a", "skills": ["mysql"], "active_tasks_count": 0},
+                    ],
+                },
+                {
+                    "summary": "Unrelated title",
+                    "candidate_users": [
+                        {"id": 2, "name": "B", "username": "b", "skills": ["design"], "active_tasks_count": 0},
+                    ],
+                },
+            ],
+        }
+        args = SimpleNamespace(issue_json=json.dumps(payload), top_k=5, checkpoint="missing.pt", use_model=False)
+        buf = StringIO()
+        with redirect_stdout(buf):
+            predict(args)
+        rows = json.loads(buf.getvalue())
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0][0]["user_id"], 1)
+        self.assertEqual(rows[1], [])
 
     def test_heuristic_ignores_list_order_and_generic_admin(self):
         rows = heuristic_recommendations(
@@ -384,6 +472,7 @@ class RecommendationPayloadTest(unittest.TestCase):
             top_k=5,
             dataset_dir="AI/dataset",
             chunksize=1000,
+            use_model=False,
         )
         buf = StringIO()
         with redirect_stdout(buf):

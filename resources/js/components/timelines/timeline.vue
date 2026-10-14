@@ -40,10 +40,9 @@
             <a :href="`/projects/${project.id}/board`" class="pd-nav-item">Bảng (Board)</a>
             <a :href="`/projects/${project.id}/members`" class="pd-nav-item">Thành viên</a>
             <a :href="`/projects/${project.id}/roles`" class="pd-nav-item">Vai trò &amp; Quyền</a>
-            <a :href="`/projects/${project.id}/sprints`" class="pd-nav-item">Backlog / Sprint</a>
+            <a :href="`/sprints?project_id=${project.id}`" class="pd-nav-item">Backlog / Sprint</a>
             <a :href="`/projects/${project.id}/timeline`" class="pd-nav-item active">Timeline</a>
             <a :href="`/projects/${project.id}/roadmap`" class="pd-nav-item">Roadmap</a>
-            <a :href="`/projects/${project.id}/reports`" class="pd-nav-item">Báo cáo</a>
         </div>
 
         <!-- 3. JIRA SEARCH & FILTER TOOLBAR -->
@@ -63,7 +62,7 @@
 
                 <!-- Epic Select Filter -->
                 <div class="edit-select-wrapper" style="min-width: 150px; height: 34px;">
-                    <select v-model="filterEpic" class="edit-select" style="height: 34px; font-size: 13px;">
+                    <select v-model="filterEpic" class="form-select form-control edit-select" style="height: 34px; font-size: 13px;">
                         <option value="">⚡ Tất cả Epic</option>
                         <option v-for="epic in epicOptions" :key="epic.id" :value="epic.id">
                             ⚡ {{ epic.name }}
@@ -74,7 +73,7 @@
 
                 <!-- Issue Type Select Filter -->
                 <div class="edit-select-wrapper" style="min-width: 130px; height: 34px;">
-                    <select v-model="filterType" class="edit-select" style="height: 34px; font-size: 13px;">
+                    <select v-model="filterType" class="form-select form-control edit-select" style="height: 34px; font-size: 13px;">
                         <option value="">Loại Issue: Tất cả</option>
                         <option value="epic">Epic</option>
                         <option value="task">Task</option>
@@ -87,11 +86,11 @@
 
                 <!-- Status Select Filter -->
                 <div class="edit-select-wrapper" style="min-width: 130px; height: 34px;">
-                    <select v-model="filterStatus" class="edit-select" style="height: 34px; font-size: 13px;">
+                    <select v-model="filterStatus" class="form-select form-control edit-select" style="height: 34px; font-size: 13px;">
                         <option value="">Trạng thái: Tất cả</option>
-                        <option value="todo">Cần làm</option>
-                        <option value="in_progress">Đang làm</option>
-                        <option value="done">Hoàn thành</option>
+                        <option value="todo" class="tp-opt-todo">🟡 Cần làm</option>
+                        <option value="in_progress" class="tp-opt-in_progress">🔵 Đang làm</option>
+                        <option value="done" class="tp-opt-done">🟢 Hoàn thành</option>
                     </select>
                     <i class="fa fa-chevron-down edit-select-icon"></i>
                 </div>
@@ -122,7 +121,6 @@
         </div>
 
         <!-- 4. TIMELINE UNIFIED FULL-WIDTH WORKSPACE WITH GLOBAL HORIZONTAL SCROLL -->
-        <p class="tp-mobile-scroll-hint"><i class="fa fa-arrows-h"></i> Vuốt ngang để xem toàn bộ timeline</p>
         <div class="timeline-workspace-outer" ref="workspaceOuter">
             <div class="timeline-workspace-inner">
                 <!-- Left Pane Table (Columns: Work | Status | Assignee) -->
@@ -244,9 +242,9 @@
                                                 @change="handleStatusChange(task, $event.target.value)"
                                                 title="Bấm để thay đổi trạng thái"
                                             >
-                                                <option value="todo">CẦN LÀM</option>
-                                                <option value="in_progress">ĐANG LÀM</option>
-                                                <option value="done">HOÀN THÀNH</option>
+                                                <option value="todo" class="tp-opt-todo">CẦN LÀM</option>
+                                                <option value="in_progress" class="tp-opt-in_progress">ĐANG LÀM</option>
+                                                <option value="done" class="tp-opt-done">HOÀN THÀNH</option>
                                             </select>
                                         </div>
                                     </div>
@@ -458,41 +456,44 @@
         <!-- 6. JIRA SLIDE-OVER DETAIL DRAWER -->
         <div v-if="showDetailDrawer && selectedTaskForDetail" class="jira-drawer-overlay" @click.self="closeDetailDrawer">
             <div class="jira-drawer-content">
-                <!-- Header -->
+                <!-- Header Bar -->
                 <div class="jira-drawer-header">
                     <div class="d-flex align-items-center gap-2">
                         <IssueTypeBadge :type="selectedTaskForDetail.issue_type" />
-                        <a :href="`/tasks/${selectedTaskForDetail.id}`" class="font-weight-bold text-dark font-size-14 text-decoration-none">
-                            {{ getTaskKey(selectedTaskForDetail) }}
-                        </a>
-                        <a :href="`/tasks/${selectedTaskForDetail.id}`" target="_blank" class="text-muted small ms-1" title="Mở trang chi tiết đầy đủ">
+                        <span class="drawer-project-crumb">{{ project.name }}</span>
+                        <span class="text-muted font-size-12">/</span>
+                        <span class="drawer-task-key-badge">{{ getTaskKey(selectedTaskForDetail) }}</span>
+                        <a :href="`/tasks/${selectedTaskForDetail.id}`" target="_blank" class="drawer-external-link-btn" title="Mở trang chi tiết đầy đủ trong tab mới">
                             <i class="fa fa-external-link"></i>
                         </a>
                     </div>
-                    <button type="button" class="jira-drawer-close" @click="closeDetailDrawer">
-                        <i class="fa fa-times"></i>
-                    </button>
+                    <div class="d-flex align-items-center gap-2">
+                        <a :href="`/tasks/${selectedTaskForDetail.id}`" class="btn btn-sm btn-outline-primary d-none d-sm-inline-flex align-items-center gap-1 font-size-12 rounded-pill px-3">
+                            <i class="fa fa-eye"></i> Full View
+                        </a>
+                        <button type="button" class="jira-drawer-close" @click="closeDetailDrawer" title="Đóng modal (Esc)">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Body -->
-                <div class="jira-drawer-body">
-                    <!-- Parent Task Breadcrumb for Subtasks -->
-                    <div v-if="selectedTaskForDetail.issue_type === 'subtask'" class="mb-3 p-2 bg-light rounded border border-info">
-                        <span class="text-muted small">Thuộc Task cha: </span>
-                        <a
-                            v-if="getParentTask(selectedTaskForDetail.parent_id)"
-                            href="javascript:void(0)"
-                            class="font-weight-bold text-primary text-decoration-none small ms-1"
-                            @click="openDetailDrawer(getParentTask(selectedTaskForDetail.parent_id))"
-                        >
-                            <i class="fa fa-level-up me-1"></i>
-                            {{ getTaskKey(getParentTask(selectedTaskForDetail.parent_id)) }} - {{ getParentTask(selectedTaskForDetail.parent_id).name }}
-                        </a>
-                        <span v-else class="text-muted small font-weight-bold">#{{ selectedTaskForDetail.parent_id }}</span>
-                    </div>
+                <!-- Subtask Breadcrumb -->
+                <div v-if="selectedTaskForDetail.issue_type === 'subtask'" class="subtask-breadcrumb-bar">
+                    <span class="text-muted small"><i class="fa fa-level-up text-indigo me-1"></i> Thuộc Task cha: </span>
+                    <a
+                        v-if="getParentTask(selectedTaskForDetail.parent_id)"
+                        href="javascript:void(0)"
+                        class="font-weight-bold text-primary text-decoration-none small ms-1"
+                        @click="openDetailDrawer(getParentTask(selectedTaskForDetail.parent_id))"
+                    >
+                        {{ getTaskKey(getParentTask(selectedTaskForDetail.parent_id)) }} - {{ getParentTask(selectedTaskForDetail.parent_id).name }}
+                    </a>
+                    <span v-else class="text-muted small font-weight-bold">#{{ selectedTaskForDetail.parent_id }}</span>
+                </div>
 
-                    <!-- Editable Title -->
-                    <div class="jira-drawer-title-wrapper mb-3 d-flex align-items-center gap-2">
+                <!-- Title Section -->
+                <div class="drawer-title-container">
+                    <div class="jira-drawer-title-wrapper d-flex align-items-center gap-2">
                         <template v-if="isEditing('name')">
                             <input
                                 type="text"
@@ -500,8 +501,8 @@
                                 @keyup.enter="$event.target.blur()"
                                 @keyup.esc="cancelEdit"
                                 @blur="manualSaveField('name')"
-                                class="form-control font-weight-bold text-dark border-0 bg-white px-2 py-1 font-size-18 text-edit-hover flex-grow-1"
-                                style="min-width: 0; box-shadow: inset 0 0 0 2px #2563eb !important; border-radius: 6px;"
+                                class="form-control font-weight-bold text-dark border-0 bg-white px-3 py-2 font-size-20 text-edit-hover flex-grow-1"
+                                style="min-width: 0; box-shadow: inset 0 0 0 2px #2563eb !important; border-radius: 8px;"
                                 placeholder="Nhập tên công việc..."
                                 title="Bấm Enter để lưu, Esc để hủy"
                                 ref="nameInputRef"
@@ -520,304 +521,343 @@
                             <i :class="getSaveIcon('name')"></i>
                         </span>
                     </div>
+                </div>
 
-                    <!-- Quick Edit Properties Bar -->
-                    <div class="row g-2 mb-4 pb-3 border-bottom align-items-center">
-                        <div class="col-12 col-md-6 col-lg-3">
-                            <span class="text-muted small d-block mb-1 font-weight-bold">Loại Issue</span>
-                            <div class="d-flex align-items-center gap-1">
-                                <select v-if="isEditing('issue_type')" class="form-select form-select-sm font-size-12 flex-grow-1" v-model="drawerEditForm.issue_type" @change="saveDrawerField('issue_type')" @blur="cancelEdit">
-                                    <option value="task">Task</option>
-                                    <option value="bug">Bug</option>
-                                    <option value="story">Story</option>
-                                    <option value="epic">Epic</option>
-                                    <option value="subtask">Sub-task</option>
-                                </select>
-                                <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('issue_type')" title="Bấm để chỉnh sửa">
-                                    {{ displayIssueType(drawerEditForm.issue_type) }}
-                                </span>
-                                <span class="drawer-save-indicator" :class="getSaveStateClass('issue_type')" :title="getSaveStateTitle('issue_type')">
-                                    <i :class="getSaveIcon('issue_type')"></i>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6 col-lg-3">
-                            <span class="text-muted small d-block mb-1 font-weight-bold">Trạng thái</span>
-                            <div class="d-flex align-items-center gap-1">
-                                <select v-if="isEditing('status')" class="form-select form-select-sm font-size-12 flex-grow-1" v-model="drawerEditForm.status" @change="saveDrawerField('status')" @blur="cancelEdit">
-                                    <option value="todo">Chưa làm (To-Do)</option>
-                                    <option value="in_progress">Đang làm (In Progress)</option>
-                                    <option value="done">Hoàn thành (Done)</option>
-                                </select>
-                                <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('status')" title="Bấm để chỉnh sửa">
-                                    {{ displayStatusLabel(drawerEditForm.status) }}
-                                </span>
-                                <span class="drawer-save-indicator" :class="getSaveStateClass('status')" :title="getSaveStateTitle('status')">
-                                    <i :class="getSaveIcon('status')"></i>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6 col-lg-3">
-                            <span class="text-muted small d-block mb-1 font-weight-bold">Độ ưu tiên</span>
-                            <div class="d-flex align-items-center gap-1">
-                                <select v-if="isEditing('priority')" class="form-select form-select-sm font-size-12 flex-grow-1" v-model="drawerEditForm.priority" @change="saveDrawerField('priority')" @blur="cancelEdit">
-                                    <option value="low">Thấp</option>
-                                    <option value="medium">Trung bình</option>
-                                    <option value="high">Cao / Gấp</option>
-                                </select>
-                                <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('priority')" title="Bấm để chỉnh sửa">
-                                    {{ displayPriority(drawerEditForm.priority) }}
-                                </span>
-                                <span class="drawer-save-indicator" :class="getSaveStateClass('priority')" :title="getSaveStateTitle('priority')">
-                                    <i :class="getSaveIcon('priority')"></i>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6 col-lg-3">
-                            <span class="text-muted small d-block mb-1 font-weight-bold">Story Points</span>
-                            <div class="d-flex align-items-center gap-1">
-                                <input v-if="isEditing('story_points')" type="number" step="0.5" min="0" class="form-control form-control-sm font-size-12 flex-grow-1" v-model.number="drawerEditForm.story_points" @keyup.enter="$event.target.blur()" @keyup.esc="cancelEdit" @blur="manualSaveField('story_points')" placeholder="Points" />
-                                <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('story_points')" title="Bấm để chỉnh sửa">
-                                    {{ displayLabel(drawerEditForm.story_points, '—') }}
-                                </span>
-                                <button type="button" class="drawer-save-indicator drawer-save-btn" :class="getSaveStateClass('story_points')" :title="getSaveStateTitle('story_points')" @click="manualSaveField('story_points')">
-                                    <i :class="getSaveIcon('story_points')"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Description Section -->
-                    <div class="jira-drawer-section mb-4">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <label class="font-size-13 font-weight-bold text-dark m-0">
-                                <i class="fa fa-align-left text-muted me-1"></i> Mô tả công việc
-                            </label>
-                            <span class="drawer-save-indicator" :class="getSaveStateClass('description')" :title="getSaveStateTitle('description')">
-                                <i :class="getSaveIcon('description')"></i>
-                            </span>
-                        </div>
-                        <template v-if="isEditing('description')">
-                            <textarea
-                                v-model="drawerEditForm.description"
-                                @keyup.esc="cancelEdit"
-                                class="form-control font-size-13"
-                                rows="4"
-                                placeholder="Thêm mô tả chi tiết công việc..."
-                                ref="descriptionInputRef"
-                            ></textarea>
-                            <div class="d-flex align-items-center gap-2 mt-2">
-                                <button type="button" class="tp-btn tp-btn-primary btn-sm" :disabled="fieldSaveState.description === 'saving'" @click="manualSaveField('description')">
-                                    <i v-if="fieldSaveState.description === 'saving'" class="fa fa-spinner fa-spin me-1"></i>
-                                    <i v-else class="fa fa-save me-1"></i> Lưu
-                                </button>
-                                <button type="button" class="tp-btn tp-btn-light btn-sm" @click="cancelEdit">
-                                    <i class="fa fa-times me-1"></i> Hủy
-                                </button>
-                                <span class="text-muted font-size-11 ms-auto"><i class="fa fa-keyboard-o me-1"></i>Esc để hủy, Enter+Shift để xuống dòng</span>
-                            </div>
-                        </template>
-                        <div v-else class="drawer-display-block" @click="startEdit('description')" title="Bấm để chỉnh sửa mô tả">
-                            <span v-if="drawerEditForm.description" v-html="drawerEditForm.description"></span>
-                            <span v-else class="text-muted font-italic">Bấm để thêm mô tả chi tiết công việc...</span>
-                        </div>
-                    </div>
-
-                    <!-- Epic Section -->
-                    <div v-if="selectedTaskForDetail.issue_type === 'epic'" class="jira-drawer-section mb-4">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <h3 class="font-size-14 font-weight-bold m-0 text-dark">
-                                <i class="fa fa-tasks text-primary me-1"></i> Các Tasks thuộc Epic này ({{ getEpicChildTasks(selectedTaskForDetail.id).length }})
-                            </h3>
-                            <span class="badge bg-primary text-white font-size-11">
-                                Tiến độ: {{ getEpicProgress(selectedTaskForDetail) }}%
-                            </span>
-                        </div>
-
-                        <div class="pd-progress-bar mb-3">
-                            <div class="pd-progress-fill" :style="{ width: getEpicProgress(selectedTaskForDetail) + '%' }"></div>
-                        </div>
-
-                        <div class="epic-child-list mb-3">
-                            <div
-                                v-for="child in getEpicChildTasks(selectedTaskForDetail.id)"
-                                :key="child.id"
-                                class="epic-child-row clickable-child-row"
-                                @click="openDetailDrawer(child)"
-                                title="Bấm để xem/sửa thông tin Task này"
-                            >
-                                <IssueTypeBadge :type="child.issue_type" />
-                                <span class="task-key font-size-11 me-1">{{ getTaskKey(child) }}</span>
-                                <span class="text-dark flex-grow-1 text-truncate font-size-13">{{ child.name }}</span>
-                                <StatusBadge :status="child.status" />
-                            </div>
-                            <div v-if="!getEpicChildTasks(selectedTaskForDetail.id).length" class="text-muted small p-2 text-center border rounded background-light">
-                                Chưa có task nào thuộc Epic này.
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Task Section (Subtasks) -->
-                    <div v-else-if="selectedTaskForDetail.issue_type !== 'subtask'" class="jira-drawer-section mb-4">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <h3 class="font-size-14 font-weight-bold m-0 text-dark">
-                                <i class="fa fa-sitemap text-info me-1"></i> Sub-tasks / Công việc con ({{ getSubtasks(selectedTaskForDetail.id).length }})
-                            </h3>
-                        </div>
-
-                        <div class="epic-child-list mb-3">
-                            <div
-                                v-for="sub in getSubtasks(selectedTaskForDetail.id)"
-                                :key="sub.id"
-                                class="epic-child-row clickable-child-row d-flex align-items-center justify-content-between"
-                            >
-                                <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden" @click="openDetailDrawer(sub)">
-                                    <input
-                                        type="checkbox"
-                                        :checked="['done', 'completed'].includes(sub.status)"
-                                        @click.stop
-                                        @change="toggleSubtaskStatus(sub)"
-                                        class="form-check-input"
-                                    >
-                                    <IssueTypeBadge :type="sub.issue_type || 'subtask'" />
-                                    <span class="task-key font-size-11 text-muted">{{ getTaskKey(sub) }}</span>
-                                    <span class="text-dark text-truncate font-size-13" :style="['done', 'completed'].includes(sub.status) ? 'text-decoration: line-through; color: #94a3b8;' : ''">
-                                        {{ sub.name }}
+                <!-- Main Body - 2 Column Split -->
+                <div class="jira-drawer-body">
+                    <div class="drawer-grid-layout">
+                        
+                        <!-- LEFT MAIN COLUMN -->
+                        <div class="drawer-main-col">
+                            <!-- Description Card -->
+                            <div class="drawer-card-box mb-4">
+                                <div class="drawer-card-header">
+                                    <h4 class="drawer-card-title">
+                                        <i class="fa fa-align-left text-primary me-2"></i> Mô tả công việc
+                                    </h4>
+                                    <span class="drawer-save-indicator" :class="getSaveStateClass('description')" :title="getSaveStateTitle('description')">
+                                        <i :class="getSaveIcon('description')"></i>
                                     </span>
                                 </div>
-                                <StatusBadge :status="sub.status" />
-                            </div>
-                            <div v-if="!getSubtasks(selectedTaskForDetail.id).length" class="text-muted small p-2 text-center border rounded background-light">
-                                Chưa có sub-task nào.
-                            </div>
-                        </div>
-
-                        <!-- Quick Add Subtask -->
-                        <div class="d-flex gap-2 mt-2">
-                            <input
-                                type="text"
-                                v-model="newSubtaskTitleInDrawer"
-                                @keyup.enter="handleCreateSubtaskInDrawer"
-                                class="form-control form-control-sm font-size-13"
-                                placeholder="Tên sub-task mới..."
-                            />
-                            <button type="button" class="tp-btn tp-btn-primary btn-sm" @click="handleCreateSubtaskInDrawer" style="white-space: nowrap;">
-                                <i class="fa fa-plus me-1"></i> Thêm Sub-task
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Meta Details -->
-                    <div class="jira-drawer-details border-top pt-3 mt-3">
-                        <div class="row g-2 mb-2 align-items-center">
-                            <div class="col-4 text-muted font-size-13">Người thực hiện:</div>
-                            <div class="col-8">
-                                <div class="d-flex align-items-center gap-2">
-                                    <select v-if="isEditing('assignee_id')" class="form-select form-select-sm font-size-13 flex-grow-1" v-model="drawerEditForm.assignee_id" @change="saveDrawerField('assignee_id')" @blur="cancelEdit">
-                                        <option :value="null">Chưa gán</option>
-                                        <option v-for="u in assignableUsers" :key="u.id" :value="u.id">{{ u.name }}</option>
-                                    </select>
-                                    <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('assignee_id')" title="Bấm để chỉnh sửa">
-                                        {{ displayUserName(drawerEditForm.assignee_id) }}
-                                    </span>
-                                    <span class="drawer-save-indicator" :class="getSaveStateClass('assignee_id')" :title="getSaveStateTitle('assignee_id')">
-                                        <i :class="getSaveIcon('assignee_id')"></i>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row g-2 mb-2 align-items-center">
-                            <div class="col-4 text-muted font-size-13">Người báo cáo:</div>
-                            <div class="col-8">
-                                <div class="d-flex align-items-center gap-2">
-                                    <select v-if="isEditing('reporter_id')" class="form-select form-select-sm font-size-13 flex-grow-1" v-model="drawerEditForm.reporter_id" @change="saveDrawerField('reporter_id')" @blur="cancelEdit">
-                                        <option :value="null">Chưa rõ</option>
-                                        <option v-for="u in assignableUsers" :key="u.id" :value="u.id">{{ u.name }}</option>
-                                    </select>
-                                    <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('reporter_id')" title="Bấm để chỉnh sửa">
-                                        {{ displayUserName(drawerEditForm.reporter_id) }}
-                                    </span>
-                                    <span class="drawer-save-indicator" :class="getSaveStateClass('reporter_id')" :title="getSaveStateTitle('reporter_id')">
-                                        <i :class="getSaveIcon('reporter_id')"></i>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row g-2 mb-2 align-items-center">
-                            <div class="col-4 text-muted font-size-13">Ngày bắt đầu:</div>
-                            <div class="col-8">
-                                <div class="d-flex align-items-center gap-2">
-                                    <input v-if="isEditing('start_date')" type="date" class="form-control form-control-sm font-size-13 flex-grow-1" v-model="drawerEditForm.start_date" @change="saveDrawerField('start_date')" @blur="cancelEdit" />
-                                    <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('start_date')" title="Bấm để chỉnh sửa">
-                                        {{ displayDate(drawerEditForm.start_date) }}
-                                    </span>
-                                    <span class="drawer-save-indicator" :class="getSaveStateClass('start_date')" :title="getSaveStateTitle('start_date')">
-                                        <i :class="getSaveIcon('start_date')"></i>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row g-2 mb-2 align-items-center">
-                            <div class="col-4 text-muted font-size-13">Hạn hoàn thành:</div>
-                            <div class="col-8">
-                                <div class="d-flex align-items-center gap-2">
-                                    <input v-if="isEditing('due_date')" type="date" class="form-control form-control-sm font-size-13 flex-grow-1" v-model="drawerEditForm.due_date" @change="saveDrawerField('due_date')" @blur="cancelEdit" />
-                                    <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('due_date')" title="Bấm để chỉnh sửa">
-                                        {{ displayDate(drawerEditForm.due_date) }}
-                                    </span>
-                                    <span class="drawer-save-indicator" :class="getSaveStateClass('due_date')" :title="getSaveStateTitle('due_date')">
-                                        <i :class="getSaveIcon('due_date')"></i>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Comments Section (CKEditor) -->
-                    <div class="jira-drawer-comments border-top pt-3 mt-4">
-                        <h3 class="font-size-14 font-weight-bold mb-3 text-dark d-flex align-items-center justify-content-between">
-                            <span><i class="fa fa-comments-o text-primary me-2"></i>Bình luận ({{ drawerComments.length }})</span>
-                            <span v-if="loadingComments" class="text-muted font-size-12"><i class="fa fa-spinner fa-spin me-1"></i>Đang tải...</span>
-                        </h3>
-
-                        <!-- List of Comments -->
-                        <div class="comments-list mb-3 pe-1" style="max-height: 280px; overflow-y: auto;">
-                            <div v-for="c in drawerComments" :key="c.id" class="comment-item p-2 mb-2 border rounded bg-light shadow-sm">
-                                <div class="d-flex align-items-center justify-content-between mb-1">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <UserAvatarPill :name="c.user?.name || 'User'" />
-                                        <span class="font-weight-bold font-size-13 text-dark">{{ c.user?.name || 'Thành viên' }}</span>
+                                <div class="drawer-card-body">
+                                    <template v-if="isEditing('description')">
+                                        <textarea
+                                            v-model="drawerEditForm.description"
+                                            @keyup.esc="cancelEdit"
+                                            class="form-control font-size-13"
+                                            rows="5"
+                                            placeholder="Thêm mô tả chi tiết công việc..."
+                                            ref="descriptionInputRef"
+                                        ></textarea>
+                                        <div class="d-flex align-items-center gap-2 mt-2">
+                                            <button type="button" class="tp-btn tp-btn-primary btn-sm" :disabled="fieldSaveState.description === 'saving'" @click="manualSaveField('description')">
+                                                <i v-if="fieldSaveState.description === 'saving'" class="fa fa-spinner fa-spin me-1"></i>
+                                                <i v-else class="fa fa-save me-1"></i> Lưu mô tả
+                                            </button>
+                                            <button type="button" class="tp-btn tp-btn-light btn-sm" @click="cancelEdit">
+                                                <i class="fa fa-times me-1"></i> Hủy
+                                            </button>
+                                            <span class="text-muted font-size-11 ms-auto"><i class="fa fa-keyboard-o me-1"></i>Esc để hủy</span>
+                                        </div>
+                                    </template>
+                                    <div v-else class="drawer-display-block" @click="startEdit('description')" title="Bấm để chỉnh sửa mô tả">
+                                        <span v-if="drawerEditForm.description" v-html="drawerEditForm.description"></span>
+                                        <span v-else class="text-muted font-italic">Bấm vào đây để thêm mô tả chi tiết...</span>
                                     </div>
-                                    <span class="text-muted font-size-11">{{ formatCommentTime(c.created_at) }}</span>
                                 </div>
-                                <div class="comment-body font-size-13 text-dark mt-1 ps-2 border-start border-2 border-primary ms-2" v-html="c.body"></div>
                             </div>
-                            <div v-if="!loadingComments && drawerComments.length === 0" class="text-muted small text-center p-3 border rounded background-light">
-                                Chưa có bình luận nào. Hãy gửi bình luận đầu tiên!
+
+                            <!-- Epic Child Tasks Section -->
+                            <div v-if="selectedTaskForDetail.issue_type === 'epic'" class="drawer-card-box mb-4">
+                                <div class="drawer-card-header">
+                                    <h4 class="drawer-card-title">
+                                        <i class="fa fa-tasks text-purple me-2"></i> Tasks thuộc Epic này ({{ getEpicChildTasks(selectedTaskForDetail.id).length }})
+                                    </h4>
+                                    <span class="badge bg-primary text-white font-size-11 rounded-pill">
+                                        Tiến độ: {{ getEpicProgress(selectedTaskForDetail) }}%
+                                    </span>
+                                </div>
+                                <div class="drawer-card-body">
+                                    <div class="pd-progress-bar mb-3">
+                                        <div class="pd-progress-fill" :style="{ width: getEpicProgress(selectedTaskForDetail) + '%' }"></div>
+                                    </div>
+                                    <div class="epic-child-list">
+                                        <div
+                                            v-for="child in getEpicChildTasks(selectedTaskForDetail.id)"
+                                            :key="child.id"
+                                            class="epic-child-row clickable-child-row"
+                                            @click="openDetailDrawer(child)"
+                                            title="Xem Task này"
+                                        >
+                                            <IssueTypeBadge :type="child.issue_type" />
+                                            <span class="task-key font-size-11 me-1">{{ getTaskKey(child) }}</span>
+                                            <span class="text-dark flex-grow-1 text-truncate font-size-13">{{ child.name }}</span>
+                                            <StatusBadge :status="child.status" />
+                                        </div>
+                                        <div v-if="!getEpicChildTasks(selectedTaskForDetail.id).length" class="text-muted small text-center p-3 border rounded bg-light">
+                                            Chưa có task nào thuộc Epic này.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Subtasks Section -->
+                            <div v-else-if="selectedTaskForDetail.issue_type !== 'subtask'" class="drawer-card-box mb-4">
+                                <div class="drawer-card-header">
+                                    <h4 class="drawer-card-title">
+                                        <i class="fa fa-sitemap text-info me-2"></i> Sub-tasks / Công việc con ({{ getSubtasks(selectedTaskForDetail.id).length }})
+                                    </h4>
+                                </div>
+                                <div class="drawer-card-body">
+                                    <div class="epic-child-list mb-3">
+                                        <div
+                                            v-for="sub in getSubtasks(selectedTaskForDetail.id)"
+                                            :key="sub.id"
+                                            class="epic-child-row clickable-child-row d-flex align-items-center justify-content-between"
+                                        >
+                                            <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden" @click="openDetailDrawer(sub)">
+                                                <input
+                                                    type="checkbox"
+                                                    :checked="['done', 'completed'].includes(sub.status)"
+                                                    @click.stop
+                                                    @change="toggleSubtaskStatus(sub)"
+                                                    class="form-check-input"
+                                                >
+                                                <IssueTypeBadge :type="sub.issue_type || 'subtask'" />
+                                                <span class="task-key font-size-11 text-muted">{{ getTaskKey(sub) }}</span>
+                                                <span class="text-dark text-truncate font-size-13" :style="['done', 'completed'].includes(sub.status) ? 'text-decoration: line-through; color: #94a3b8;' : ''">
+                                                    {{ sub.name }}
+                                                </span>
+                                            </div>
+                                            <StatusBadge :status="sub.status" />
+                                        </div>
+                                        <div v-if="!getSubtasks(selectedTaskForDetail.id).length" class="text-muted small text-center p-3 border rounded bg-light">
+                                            Chưa có sub-task nào.
+                                        </div>
+                                    </div>
+
+                                    <!-- Quick Add Subtask -->
+                                    <div class="d-flex gap-2">
+                                        <input
+                                            type="text"
+                                            v-model="newSubtaskTitleInDrawer"
+                                            @keyup.enter="handleCreateSubtaskInDrawer"
+                                            class="form-control form-control-sm font-size-13 rounded-3"
+                                            placeholder="Tên sub-task mới..."
+                                        />
+                                        <button type="button" class="tp-btn tp-btn-primary btn-sm rounded-3" @click="handleCreateSubtaskInDrawer" style="white-space: nowrap;">
+                                            <i class="fa fa-plus me-1"></i> Thêm Sub-task
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Comments & Activity Feed -->
+                            <div class="drawer-card-box mb-4">
+                                <div class="drawer-card-header">
+                                    <h4 class="drawer-card-title">
+                                        <i class="fa fa-comments-o text-primary me-2"></i> Thảo luận & Bình luận ({{ drawerComments.length }})
+                                    </h4>
+                                    <span v-if="loadingComments" class="text-muted font-size-12"><i class="fa fa-spinner fa-spin me-1"></i>Đang tải...</span>
+                                </div>
+                                <div class="drawer-card-body">
+                                    <!-- List of Comments -->
+                                    <div class="comments-list mb-3 pe-1" style="max-height: 280px; overflow-y: auto;">
+                                        <div v-for="c in drawerComments" :key="c.id" class="comment-item p-3 mb-2 border rounded-3 bg-white shadow-sm">
+                                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <UserAvatarPill :name="c.user?.name || 'User'" />
+                                                    <span class="font-weight-bold font-size-13 text-dark">{{ c.user?.name || 'Thành viên' }}</span>
+                                                </div>
+                                                <span class="text-muted font-size-11">{{ formatCommentTime(c.created_at) }}</span>
+                                            </div>
+                                            <div class="comment-body font-size-13 text-dark mt-2 ps-2 border-start border-3 border-primary ms-1" v-html="c.body"></div>
+                                        </div>
+                                        <div v-if="!loadingComments && drawerComments.length === 0" class="text-muted small text-center p-3 border rounded bg-light">
+                                            Chưa có bình luận nào. Hãy gửi bình luận đầu tiên!
+                                        </div>
+                                    </div>
+
+                                    <!-- CKEditor Comment Input -->
+                                    <div class="add-comment-wrapper mt-3">
+                                        <label class="form-label font-size-12 font-weight-bold text-muted mb-1">Viết bình luận mới:</label>
+                                        <textarea id="timeline-drawer-comment-editor" class="form-control" rows="3" placeholder="Nhập nội dung bình luận..."></textarea>
+                                        <div class="d-flex justify-content-end align-items-center mt-2">
+                                            <button type="button" class="tp-btn tp-btn-primary btn-sm rounded-pill px-3" :disabled="submittingComment" @click="submitDrawerComment">
+                                                <i v-if="submittingComment" class="fa fa-spinner fa-spin me-1"></i>
+                                                <i v-else class="fa fa-paper-plane me-1"></i> Gửi bình luận
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- CKEditor Input Box -->
-                        <div class="add-comment-wrapper mt-3">
-                            <label class="form-label font-size-12 font-weight-bold text-muted mb-1">Thêm bình luận mới:</label>
-                            <textarea id="timeline-drawer-comment-editor" class="form-control" rows="3" placeholder="Nhập nội dung bình luận..."></textarea>
-                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                <span class="text-muted font-size-11"><i class="fa fa-info-circle me-1"></i>Định dạng văn bản với CKEditor</span>
-                                <button type="button" class="tp-btn tp-btn-primary btn-sm" :disabled="submittingComment" @click="submitDrawerComment">
-                                    <i v-if="submittingComment" class="fa fa-spinner fa-spin me-1"></i>
-                                    <i v-else class="fa fa-paper-plane me-1"></i> Gửi bình luận
-                                </button>
+                        <!-- RIGHT SIDEBAR PANEL -->
+                        <div class="drawer-sidebar-col">
+                            <!-- Section: Status & Type -->
+                            <div class="sidebar-group-card mb-3">
+                                <h5 class="sidebar-group-title">Trạng thái & Phân loại</h5>
+                                
+                                <div class="sidebar-field-item">
+                                    <span class="sidebar-field-label">Trạng thái</span>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <div v-if="isEditing('status')" class="tp-select-custom-wrapper flex-grow-1">
+                                            <select class="form-select form-select-sm form-control form-control-sm tp-select-custom timeline-status-select" :class="`status-select-${drawerEditForm.status || 'todo'}`" v-model="drawerEditForm.status" @change="saveDrawerField('status')" @blur="cancelEdit">
+                                                <option value="todo" class="tp-opt-todo">🟡 Cần làm (To-Do)</option>
+                                                <option value="in_progress" class="tp-opt-in_progress">🔵 Đang làm (In Progress)</option>
+                                                <option value="done" class="tp-opt-done">🟢 Hoàn thành (Done)</option>
+                                            </select>
+                                        </div>
+                                        <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('status')" title="Bấm để chỉnh sửa">
+                                            <StatusBadge :status="drawerEditForm.status" />
+                                        </span>
+                                        <span class="drawer-save-indicator" :class="getSaveStateClass('status')" :title="getSaveStateTitle('status')">
+                                            <i :class="getSaveIcon('status')"></i>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="sidebar-field-item">
+                                    <span class="sidebar-field-label">Mức độ ưu tiên</span>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <div v-if="isEditing('priority')" class="tp-select-custom-wrapper flex-grow-1">
+                                            <select class="form-select form-select-sm form-control form-control-sm tp-select-custom" v-model="drawerEditForm.priority" @change="saveDrawerField('priority')" @blur="cancelEdit">
+                                                <option value="low">Thấp</option>
+                                                <option value="medium">Trung bình</option>
+                                                <option value="high">Cao / Gấp</option>
+                                            </select>
+                                            <i class="fa fa-chevron-down tp-select-icon"></i>
+                                        </div>
+                                        <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('priority')" title="Bấm để chỉnh sửa">
+                                            <PriorityBadge :priority="drawerEditForm.priority" />
+                                        </span>
+                                        <span class="drawer-save-indicator" :class="getSaveStateClass('priority')" :title="getSaveStateTitle('priority')">
+                                            <i :class="getSaveIcon('priority')"></i>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="sidebar-field-item">
+                                    <span class="sidebar-field-label">Loại Issue</span>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <div v-if="isEditing('issue_type')" class="tp-select-custom-wrapper flex-grow-1">
+                                            <select class="form-select form-select-sm form-control form-control-sm tp-select-custom" v-model="drawerEditForm.issue_type" @change="saveDrawerField('issue_type')" @blur="cancelEdit">
+                                                <option value="task">Task</option>
+                                                <option value="bug">Bug</option>
+                                                <option value="story">Story</option>
+                                                <option value="epic">Epic</option>
+                                                <option value="subtask">Sub-task</option>
+                                            </select>
+                                            <i class="fa fa-chevron-down tp-select-icon"></i>
+                                        </div>
+                                        <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('issue_type')" title="Bấm để chỉnh sửa">
+                                            {{ displayIssueType(drawerEditForm.issue_type) }}
+                                        </span>
+                                        <span class="drawer-save-indicator" :class="getSaveStateClass('issue_type')" :title="getSaveStateTitle('issue_type')">
+                                            <i :class="getSaveIcon('issue_type')"></i>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="sidebar-field-item">
+                                    <span class="sidebar-field-label">Story Points</span>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <input v-if="isEditing('story_points')" type="number" step="0.5" min="0" class="form-control form-control-sm tp-input-custom flex-grow-1" v-model.number="drawerEditForm.story_points" @keyup.enter="$event.target.blur()" @keyup.esc="cancelEdit" @blur="manualSaveField('story_points')" placeholder="Points" />
+                                        <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('story_points')" title="Bấm để chỉnh sửa">
+                                            {{ displayLabel(drawerEditForm.story_points, '— pts') }}
+                                        </span>
+                                        <button type="button" class="drawer-save-indicator drawer-save-btn" :class="getSaveStateClass('story_points')" :title="getSaveStateTitle('story_points')" @click="manualSaveField('story_points')">
+                                            <i :class="getSaveIcon('story_points')"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section: Assignee & People -->
+                            <div class="sidebar-group-card mb-3">
+                                <h5 class="sidebar-group-title">Nhân sự thực hiện</h5>
+                                
+                                <div class="sidebar-field-item">
+                                    <span class="sidebar-field-label">Người thực hiện</span>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <div v-if="isEditing('assignee_id')" class="tp-select-custom-wrapper flex-grow-1">
+                                            <select class="form-select form-select-sm form-control form-control-sm tp-select-custom" v-model="drawerEditForm.assignee_id" @change="saveDrawerField('assignee_id')" @blur="cancelEdit">
+                                                <option :value="null">Chưa gán</option>
+                                                <option v-for="u in assignableUsers" :key="u.id" :value="u.id">{{ u.name }}</option>
+                                            </select>
+                                            <i class="fa fa-chevron-down tp-select-icon"></i>
+                                        </div>
+                                        <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('assignee_id')" title="Bấm để chỉnh sửa">
+                                            <i class="fa fa-user-circle text-primary me-1"></i> {{ displayUserName(drawerEditForm.assignee_id) }}
+                                        </span>
+                                        <span class="drawer-save-indicator" :class="getSaveStateClass('assignee_id')" :title="getSaveStateTitle('assignee_id')">
+                                            <i :class="getSaveIcon('assignee_id')"></i>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="sidebar-field-item">
+                                    <span class="sidebar-field-label">Người báo cáo</span>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <div v-if="isEditing('reporter_id')" class="tp-select-custom-wrapper flex-grow-1">
+                                            <select class="form-select form-select-sm form-control form-control-sm tp-select-custom" v-model="drawerEditForm.reporter_id" @change="saveDrawerField('reporter_id')" @blur="cancelEdit">
+                                                <option :value="null">Chưa rõ</option>
+                                                <option v-for="u in assignableUsers" :key="u.id" :value="u.id">{{ u.name }}</option>
+                                            </select>
+                                            <i class="fa fa-chevron-down tp-select-icon"></i>
+                                        </div>
+                                        <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('reporter_id')" title="Bấm để chỉnh sửa">
+                                            <i class="fa fa-user-o text-muted me-1"></i> {{ displayUserName(drawerEditForm.reporter_id) }}
+                                        </span>
+                                        <span class="drawer-save-indicator" :class="getSaveStateClass('reporter_id')" :title="getSaveStateTitle('reporter_id')">
+                                            <i :class="getSaveIcon('reporter_id')"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section: Dates & Schedule -->
+                            <div class="sidebar-group-card mb-3">
+                                <h5 class="sidebar-group-title">Thời gian & Hạn chót</h5>
+
+                                <div class="sidebar-field-item">
+                                    <span class="sidebar-field-label">Ngày bắt đầu</span>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <input v-if="isEditing('start_date')" type="date" class="tp-input-custom flex-grow-1" v-model="drawerEditForm.start_date" @change="saveDrawerField('start_date')" @blur="cancelEdit" />
+                                        <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('start_date')" title="Bấm để chỉnh sửa">
+                                            <i class="fa fa-calendar-o text-muted me-1"></i> {{ displayDate(drawerEditForm.start_date) }}
+                                        </span>
+                                        <span class="drawer-save-indicator" :class="getSaveStateClass('start_date')" :title="getSaveStateTitle('start_date')">
+                                            <i :class="getSaveIcon('start_date')"></i>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="sidebar-field-item">
+                                    <span class="sidebar-field-label">Hạn hoàn thành</span>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <input v-if="isEditing('due_date')" type="date" class="tp-input-custom flex-grow-1" v-model="drawerEditForm.due_date" @change="saveDrawerField('due_date')" @blur="cancelEdit" />
+                                        <span v-else class="drawer-display-field flex-grow-1" @click="startEdit('due_date')" title="Bấm để chỉnh sửa">
+                                            <i class="fa fa-calendar text-primary me-1"></i> {{ displayDate(drawerEditForm.due_date) }}
+                                        </span>
+                                        <span class="drawer-save-indicator" :class="getSaveStateClass('due_date')" :title="getSaveStateTitle('due_date')">
+                                            <i :class="getSaveIcon('due_date')"></i>
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
                 <!-- Footer -->
                 <div class="jira-drawer-footer">
-                    <a :href="`/tasks/${selectedTaskForDetail.id}/edit`" class="tp-btn tp-btn-light me-2">
+                    <a :href="`/tasks/${selectedTaskForDetail.id}/edit`" class="btn btn-outline-secondary btn-sm rounded-pill px-3 me-2">
                         <i class="fa fa-pencil me-1"></i> Chỉnh sửa đầy đủ
                     </a>
-                    <a :href="`/tasks/${selectedTaskForDetail.id}`" class="tp-btn tp-btn-primary">
+                    <a :href="`/tasks/${selectedTaskForDetail.id}`" class="btn btn-primary btn-sm rounded-pill px-4 shadow-sm" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none;">
                         <i class="fa fa-eye me-1"></i> Xem chi tiết
                     </a>
                 </div>
@@ -2039,65 +2079,6 @@ onMounted(() => {
     gap: 10px;
     position: relative;
     width: 100%;
-    min-width: 0;
-}
-
-@media (max-width: 640px) {
-    .task-timeline-vue .pd-header {
-        align-items: stretch;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .task-timeline-vue .pd-title-row {
-        flex-wrap: wrap;
-    }
-
-    .task-timeline-vue .pd-title {
-        font-size: 22px;
-    }
-
-    .task-timeline-vue .pd-header > .d-flex {
-        width: 100%;
-        flex-wrap: wrap;
-    }
-
-    .task-timeline-vue .timeline-create-btn,
-    .task-timeline-vue .pd-header > .d-flex > * {
-        flex: 1 1 auto;
-    }
-
-    .task-timeline-vue .tp-filter-bar,
-    .task-timeline-vue .tp-filter-inputs {
-        align-items: stretch !important;
-    }
-
-    .task-timeline-vue .tp-search-box,
-    .task-timeline-vue .edit-select-wrapper {
-        width: 100% !important;
-        min-width: 0 !important;
-    }
-
-    .task-timeline-vue .timeline-team-stack {
-        margin-left: 0 !important;
-    }
-
-    .task-timeline-vue .tp-mobile-scroll-hint {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        margin: 0;
-        color: #64748b;
-        font-size: 12px;
-    }
-
-    .task-timeline-vue .timeline-floating-toolbar {
-        width: 100%;
-        margin: 0;
-        justify-content: center;
-        flex-wrap: wrap;
-        border-radius: 12px;
-    }
 }
 
 /* Team Stack */
@@ -2268,12 +2249,12 @@ onMounted(() => {
 }
 
 .seg-in-progress {
-    background: #388bff;
+    background: #38bdf8;
     height: 100%;
 }
 
 .seg-done {
-    background: #36b37e;
+    background: #22c55e;
     height: 100%;
 }
 
@@ -2440,9 +2421,9 @@ onMounted(() => {
     background: #5e6c84;
 }
 
-.bar-status-done { background: #36b37e; }
-.bar-status-in_progress { background: #388bff; }
-.bar-status-todo { background: #a5adba; }
+.bar-status-done { background: #22c55e !important; }
+.bar-status-in_progress { background: #38bdf8 !important; }
+.bar-status-todo { background: #f59e0b !important; }
 
 /* Left & Right Drag Handles */
 .gantt-resize-handle {
@@ -2639,8 +2620,8 @@ onMounted(() => {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(9, 30, 66, 0.4);
-    backdrop-filter: blur(4px);
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
     z-index: 1050;
     display: flex;
     justify-content: flex-end;
@@ -2648,14 +2629,16 @@ onMounted(() => {
 }
 
 .jira-drawer-content {
-    width: 720px;
-    max-width: 95vw;
+    width: 860px;
+    max-width: 96vw;
     height: 100%;
     background: #ffffff;
-    box-shadow: -8px 0 32px rgba(9, 30, 66, 0.25);
+    box-shadow: -16px 0 48px rgba(15, 23, 42, 0.28);
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
     display: flex;
     flex-direction: column;
-    animation: slideInRight 0.25s ease-out;
+    animation: slideInRight 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     min-width: 0;
     overflow: hidden;
 }
@@ -2666,88 +2649,158 @@ onMounted(() => {
 }
 
 .jira-drawer-header {
-    height: 56px;
-    padding: 0 20px;
-    border-bottom: 1px solid #dfe1e6;
+    height: 60px;
+    padding: 0 24px;
+    border-bottom: 1px solid #f1f5f9;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #f4f5f7;
+    background: #ffffff;
+}
+
+.drawer-project-crumb {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.drawer-task-key-badge {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    font-weight: 700;
+    font-size: 12.5px;
+    border-radius: 6px;
+    padding: 3px 10px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.drawer-external-link-btn {
+    color: #94a3b8;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.drawer-external-link-btn:hover {
+    color: #2563eb;
+    background: #eff6ff;
 }
 
 .jira-drawer-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     border: none;
     background: transparent;
-    font-size: 18px;
-    color: #5e6c84;
-    cursor: pointer;
-}
-
-.jira-drawer-close:hover {
-    color: #de350b;
-}
-
-.jira-drawer-body {
-    flex: 1;
-    padding: 24px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    min-width: 0;
-}
-
-.jira-drawer-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: #172b4d;
-    line-height: 1.3;
-}
-
-.epic-child-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.epic-child-row {
-    background: #ffffff;
-    border: 1px solid #dfe1e6;
-    border-radius: 6px;
-    padding: 8px 12px;
+    font-size: 16px;
+    color: #64748b;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
-.epic-child-row:hover {
-    background: #f4f5f7;
-    border-color: #0052cc;
+.jira-drawer-close:hover {
+    background: #fee2e2;
+    color: #ef4444;
 }
 
-.jira-drawer-details {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.detail-row {
-    display: grid;
-    grid-template-columns: 130px 1fr;
-    align-items: center;
-}
-
-.detail-label {
+.subtask-breadcrumb-bar {
+    padding: 8px 24px;
+    background: #f8fafc;
+    border-bottom: 1px solid #f1f5f9;
     font-size: 12.5px;
+}
+
+.drawer-title-container {
+    padding: 20px 24px 12px;
+    background: #ffffff;
+}
+
+.jira-drawer-body {
+    flex: 1;
+    padding: 0 24px 24px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.drawer-grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+}
+
+.drawer-card-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.drawer-card-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.drawer-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.drawer-card-body {
+    padding: 18px;
+}
+
+.sidebar-group-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.sidebar-group-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.sidebar-field-item {
+    margin-bottom: 12px;
+}
+
+.sidebar-field-item:last-child {
+    margin-bottom: 0;
+}
+
+.sidebar-field-label {
+    font-size: 11.5px;
+    color: #64748b;
     font-weight: 600;
-    color: #5e6c84;
+    display: block;
+    margin-bottom: 4px;
 }
 
 .jira-drawer-footer {
-    padding: 16px 20px;
-    border-top: 1px solid #dfe1e6;
-    background: #f4f5f7;
+    padding: 16px 24px;
+    border-top: 1px solid #e2e8f0;
+    background: #ffffff;
     display: flex;
+    align-items: center;
     justify-content: flex-end;
 }
 
@@ -2812,18 +2865,101 @@ onMounted(() => {
 }
 
 .status-select-todo {
-    background-color: #6c757d;
-    color: #ffffff;
+    background-color: #fef3c7 !important;
+    color: #b45309 !important;
+    border: 1px solid #fcd34d !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23b45309' d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E") !important;
 }
 
 .status-select-in_progress {
-    background-color: #0d6efd;
-    color: #ffffff;
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+    border: 1px solid #7dd3fc !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%230369a1' d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E") !important;
 }
 
 .status-select-done {
-    background-color: #198754;
-    color: #ffffff;
+    background-color: #dcfce7 !important;
+    color: #15803d !important;
+    border: 1px solid #86efac !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%2315803d' d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E") !important;
+}
+
+/* Custom Modal Drawer Select & Input Controls (No Bootstrap) */
+.tp-select-custom-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.tp-select-custom {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 100%;
+    height: 34px;
+    padding: 6px 28px 6px 12px !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+    background-color: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.tp-select-custom:hover {
+    border-color: #3b82f6 !important;
+    background-color: #f8fafc !important;
+}
+
+.tp-select-custom:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+    background-color: #ffffff !important;
+}
+
+.tp-select-icon {
+    position: absolute;
+    right: 10px;
+    pointer-events: none;
+    color: #64748b;
+    font-size: 10.5px;
+    transition: color 0.15s ease;
+}
+
+.tp-select-custom-wrapper:focus-within .tp-select-icon {
+    color: #2563eb;
+}
+
+.tp-input-custom {
+    width: 100%;
+    height: 34px;
+    padding: 6px 12px !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+    background-color: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.15s ease-in-out;
+}
+
+.tp-input-custom:hover {
+    border-color: #3b82f6 !important;
+    background-color: #f8fafc !important;
+}
+
+.tp-input-custom:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+    background-color: #ffffff !important;
 }
 
 /* Assignee Select Wrapper & Overlay */

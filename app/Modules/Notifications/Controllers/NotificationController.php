@@ -19,18 +19,13 @@ class NotificationController extends Controller
 
     public function index(Request $request): View
     {
-        $filter = $request->string('filter', 'all')->toString();
-        $query = Auth::user()->notifications()->orderBy('created_at', 'desc');
-        if ($filter === 'unread') {
-            $query->whereNull('read_at');
-        } elseif ($filter === 'read') {
-            $query->whereNotNull('read_at');
-        } else {
-            $filter = 'all';
-        }
-        $notifications = $query->paginate(20)->withQueryString();
+        $notifications = Auth::user()->notifications()->orderBy('created_at', 'desc')->paginate(20);
 
-        return view('notifications.index', ['notifications' => $notifications, 'filter' => $filter]);
+        foreach (Auth::user()->unreadNotifications as $notification) {
+            $notification->markAsRead();
+        }
+
+        return view('notifications.index', ['notifications' => $notifications]);
     }
 
     public function unreadCount(Request $request): JsonResponse

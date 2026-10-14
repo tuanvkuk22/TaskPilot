@@ -95,7 +95,7 @@ class StoreProjectHandler
 
         $this->repository->attachUser($project, $userId, 'owner', [
             'project.manage', 'project.edit', 'project.view',
-            'task.manage', 'task.view', 'task.create', 'task.edit',
+            'task.manage', 'task.assign', 'task.view', 'task.create', 'task.edit',
             'member.manage', 'member.view', 'member.invite',
             'document.manage', 'document.view',
             'meeting.manage', 'meeting.view',
@@ -111,7 +111,7 @@ class StoreProjectHandler
             if (! $this->repository->hasUser($project, $user->id)) {
                 $this->repository->attachUser($project, $user->id, 'Thành viên', [
                     'project.view', 'project.edit',
-                    'task.view', 'task.create', 'task.edit',
+                    'task.view', 'task.create', 'task.edit', 'task.assign',
                     'document.view', 'document.create', 'document.edit',
                     'meeting.view', 'meeting.create',
                     'comment.create', 'comment.view',
@@ -131,7 +131,7 @@ class StoreProjectHandler
 
                     $this->repository->attachUser($project, $teamUser->id, 'Thành viên', [
                         'project.view', 'project.edit',
-                        'task.view', 'task.create', 'task.edit',
+                        'task.view', 'task.create', 'task.edit', 'task.assign',
                         'document.view', 'document.create', 'document.edit',
                         'meeting.view', 'meeting.create',
                         'comment.create', 'comment.view',
@@ -164,7 +164,7 @@ class StoreProjectHandler
         $defaultRoles = [
             ['name' => 'Quản lý', 'permissions' => [
                 'project.manage', 'project.edit', 'project.view',
-                'task.manage', 'task.view', 'task.create', 'task.edit',
+                'task.manage', 'task.assign', 'task.view', 'task.create', 'task.edit',
                 'member.manage', 'member.view', 'member.invite',
                 'document.manage', 'document.view',
                 'meeting.manage', 'meeting.view',
@@ -173,7 +173,7 @@ class StoreProjectHandler
             ]],
             ['name' => 'Thành viên', 'permissions' => [
                 'project.view', 'project.edit',
-                'task.view', 'task.create', 'task.edit', 'task.status', 'task.priority',
+                'task.view', 'task.create', 'task.edit', 'task.assign', 'task.status', 'task.priority',
                 'member.view',
                 'document.view', 'document.create', 'document.edit',
                 'meeting.view', 'meeting.create',

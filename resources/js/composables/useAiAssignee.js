@@ -49,9 +49,12 @@ export async function fetchAiRecommendations(context, recommendUrl = '/tasks/rec
         }),
     });
 
-    const data = await response.json();
-    if (!data.success || !Array.isArray(data.recommendations)) {
-        throw new Error(data.message || 'Không thể tải gợi ý AI vào lúc này.');
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.success || !Array.isArray(data.recommendations)) {
+        const message = data.message === 'This action is unauthorized.'
+            ? 'Bạn không có quyền dùng AI gợi ý cho công việc này.'
+            : (data.message || 'Không thể tải gợi ý AI vào lúc này.');
+        throw new Error(message);
     }
 
     return data.recommendations;

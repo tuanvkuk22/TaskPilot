@@ -173,7 +173,7 @@ return [
          */
         ProjectsManager\Providers\AppServiceProvider::class,
         ProjectsManager\Providers\AuthServiceProvider::class,
-        ProjectsManager\Providers\BroadcastServiceProvider::class,
+        // ProjectsManager\Providers\BroadcastServiceProvider::class,
         ProjectsManager\Providers\EventServiceProvider::class,
         ProjectsManager\Providers\RouteServiceProvider::class,
 

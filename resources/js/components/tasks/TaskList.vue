@@ -142,7 +142,7 @@
 
         <div v-if="unassignedCount > 0" class="ai-unassigned-banner">
             <span>
-                <i class="fa fa-magic ai-unassigned-banner-icon"></i>
+                <i class="fa fa-magic" style="color: #8b5cf6; margin-right: 6px;"></i>
                 Có <strong>{{ unassignedCount }}</strong> công việc chưa phân công. Bấm
                 <strong>AI gợi ý tất cả</strong> để đề xuất người cho cả danh sách, hoặc nút
                 <strong>AI</strong> trên từng thẻ.
@@ -153,7 +153,6 @@
         </div>
 
         <!-- 1. KANBAN BOARD VIEW WITH HTML5 DRAG & DROP -->
-        <p v-if="viewMode === 'kanban'" class="tp-mobile-scroll-hint"><i class="fa fa-arrows-h"></i> Vuốt ngang để xem các cột</p>
         <div v-if="viewMode === 'kanban'" class="tp-kanban-board">
             <!-- Columns Definition -->
             <div
@@ -341,7 +340,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import HeaderBanner from '../common/HeaderBanner.vue';
 import StatCard from '../common/StatCard.vue';
 import StatusBadge from '../common/StatusBadge.vue';
@@ -352,7 +351,6 @@ import EmptyState from '../common/EmptyState.vue';
 import AiAssigneeSuggest from '../common/AiAssigneeSuggest.vue';
 import AiBatchSuggest from '../common/AiBatchSuggest.vue';
 import { assigneeFromCandidate } from '../../composables/useAiAssignee';
-import { subscribeToProject } from '../../realtime';
 
 const props = defineProps({
     tasks: { type: Array, default: () => [] },
@@ -375,9 +373,6 @@ if (successMessage.value) {
 
 // Reactive Task List State
 const taskList = ref([...props.tasks]);
-const realtimeUnsubscribers = [];
-onMounted(() => { (props.projects || []).forEach((project) => realtimeUnsubscribers.push(subscribeToProject(project.id, ({ task }) => { const index = taskList.value.findIndex((item) => item.id === task.id); if (index >= 0) taskList.value[index] = { ...taskList.value[index], ...task }; }))); });
-onUnmounted(() => realtimeUnsubscribers.forEach((unsubscribe) => unsubscribe()));
 
 watch(() => props.tasks, (newVal) => {
     taskList.value = [...newVal];

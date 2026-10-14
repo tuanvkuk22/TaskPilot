@@ -18,9 +18,6 @@ class AiRecommendationService
 
     protected array $projectHistoryCache = [];
 
-    /** @var array<string, array<int, int>> */
-    protected array $workloadCache = [];
-
     /**
      * Recommend assignees for a given task context.
      *
@@ -33,7 +30,6 @@ class AiRecommendationService
     public function recommend(array $taskData, ?int $projectId = null, int $topK = 5): array
     {
         $this->projectHistoryCache = [];
-        $this->workloadCache = [];
         $projectId = $projectId ?? $taskData['project_id'] ?? null;
         $candidateUsers = $this->getCandidateUsers($projectId);
 
@@ -51,9 +47,9 @@ class AiRecommendationService
     public function recommendMany(iterable $tasks, int $topK = 3): array
     {
         $this->projectHistoryCache = [];
-        $this->workloadCache = [];
         $candidateCache = [];
-        $items = [];
+        $contextCache = [];
+        $jobs = [];
 
         foreach ($tasks as $task) {
             $projectId = $task->project_id ? (int) $task->project_id : null;
@@ -61,24 +57,68 @@ class AiRecommendationService
             if (!isset($candidateCache[$cacheKey])) {
                 $candidateCache[$cacheKey] = $this->getCandidateUsers($projectId);
             }
-
-            $recommendations = $this->recommendWithCandidates([
-                'name' => $task->name,
-                'summary' => $task->name,
-                'description' => $task->description,
-                'issue_type' => $task->issue_type ?? 'task',
-                'priority' => $task->priority ?? 'medium',
-                'labels' => $task->labels ?? '',
-                'task_id' => $task->id,
+            $candidates = $candidateCache[$cacheKey];
+            if ($candidates->isEmpty()) {
+                $jobs[] = [
+                    'task' => $task,
+                    'project_id' => $projectId,
+                    'candidates' => $candidates,
+                    'payload' => null,
+                    'recommendations' => [],
+                ];
+                continue;
+            }
+            if (!isset($contextCache[$cacheKey])) {
+                $contextCache[$cacheKey] = $this->inferenceContext($candidates, $projectId);
+            }
+            $jobs[] = [
+                'task' => $task,
                 'project_id' => $projectId,
-            ], $candidateCache[$cacheKey], $projectId, $topK, false);
+                'candidates' => $candidates,
+                'payload' => $this->buildInferencePayload([
+                    'name' => $task->name,
+                    'summary' => $task->name,
+                    'description' => $task->description,
+                    'issue_type' => $task->issue_type ?? 'task',
+                    'priority' => $task->priority ?? 'medium',
+                    'labels' => $task->labels ?? '',
+                    'task_id' => $task->id,
+                    'project_id' => $projectId,
+                    'components' => $task->skills ? $task->skills->pluck('skill_name')->toArray() : [],
+                ], $contextCache[$cacheKey]),
+                'recommendations' => null,
+            ];
+        }
 
+        $pendingIndexes = [];
+        foreach ($jobs as $index => $job) {
+            if ($job['payload'] !== null) {
+                $pendingIndexes[] = $index;
+            }
+        }
+        if ($pendingIndexes) {
+            $payloads = array_map(static fn (int $index) => $jobs[$index]['payload'], $pendingIndexes);
+            $batch = $this->runPythonInferenceBatch(array_values($payloads), $topK);
+            foreach (array_values($pendingIndexes) as $batchIndex => $jobIndex) {
+                $jobs[$jobIndex]['recommendations'] = $this->mapRecommendations(
+                    $batch[$batchIndex] ?? [],
+                    $jobs[$jobIndex]['candidates'],
+                    ['task_id' => $jobs[$jobIndex]['task']->id],
+                    false
+                );
+            }
+        }
+
+        $items = [];
+        foreach ($jobs as $job) {
+            $task = $job['task'];
+            $recommendations = $job['recommendations'] ?? [];
             $items[] = [
                 'task_id' => $task->id,
                 'task_name' => $task->name,
                 'issue_type' => $task->issue_type,
                 'priority' => $task->priority,
-                'project_id' => $projectId,
+                'project_id' => $job['project_id'],
                 'recommendations' => $recommendations,
                 'suggested' => $recommendations[0] ?? null,
             ];
@@ -101,10 +141,21 @@ class AiRecommendationService
             return [];
         }
 
-        $workloads = $this->workloadsForCandidates($candidateUsers);
+        $payload = $this->buildInferencePayload($taskData, $this->inferenceContext($candidateUsers, $projectId));
+        return $this->mapRecommendations($this->runPythonInference($payload, $topK), $candidateUsers, $taskData, $persist);
+    }
+
+    /**
+     * Shared candidate list, project name, and assignment history for one project.
+     */
+    protected function inferenceContext(Collection $candidateUsers, ?int $projectId): array
+    {
+        $workloads = Task::query()->whereIn('assignee_id', $candidateUsers->modelKeys())
+            ->whereNotIn('status', ['done', 'closed', 'completed', 'resolved'])
+            ->selectRaw('assignee_id, COUNT(*) as active_count')->groupBy('assignee_id')
+            ->pluck('active_count', 'assignee_id');
         $formattedCandidates = $candidateUsers->map(function (User $user) use ($workloads) {
             $skills = $user->skills ? $user->skills->pluck('skill_name')->toArray() : [];
-            $activeTasksCount = (int) ($workloads[$user->id] ?? 0);
 
             return [
                 'id' => $user->id,
@@ -115,27 +166,22 @@ class AiRecommendationService
                 'department' => $user->department ?? '',
                 'status' => $user->status ?? 'active',
                 'skills' => $skills,
-                'active_tasks_count' => $activeTasksCount,
+                'active_tasks_count' => (int) ($workloads[$user->id] ?? 0),
             ];
         })->toArray();
 
         $projectName = '';
         $projectCode = '';
         $history = [];
-        $components = [];
         if ($projectId) {
             $project = Project::find($projectId);
             if ($project) {
                 $projectName = $project->name;
                 $projectCode = $project->project_code ?: $project->name;
             }
-
-            $historyTasks = $this->historyTasksForProject($projectId);
-            foreach ($historyTasks as $historyTask) {
-                if (!empty($taskData['task_id']) && (int) $historyTask->id === (int) $taskData['task_id']) {
-                    continue;
-                }
+            foreach ($this->historyTasksForProject($projectId) as $historyTask) {
                 $history[] = [
+                    'id' => (int) $historyTask->id,
                     'summary' => $historyTask->name,
                     'assignee' => $historyTask->assignee->username ?? $historyTask->assignee->email ?? '',
                     'username' => $historyTask->assignee->username ?? '',
@@ -145,28 +191,54 @@ class AiRecommendationService
             }
         }
 
-        if (!empty($taskData['task_id'])) {
+        return [
+            'candidates' => $formattedCandidates,
+            'projectname' => $projectCode ?: $projectName,
+            'history' => $history,
+        ];
+    }
+
+    protected function buildInferencePayload(array $taskData, array $context): array
+    {
+        $components = [];
+        if (isset($taskData['components']) && is_array($taskData['components'])) {
+            $components = $taskData['components'];
+        } elseif (!empty($taskData['task_id'])) {
             $current = Task::with('skills')->find($taskData['task_id']);
             if ($current && $current->skills) {
                 $components = $current->skills->pluck('skill_name')->toArray();
             }
         }
 
-        $payload = [
+        $taskId = !empty($taskData['task_id']) ? (int) $taskData['task_id'] : null;
+        $history = $context['history'];
+        if ($taskId) {
+            $history = array_values(array_filter(
+                $history,
+                static fn (array $row) => (int) ($row['id'] ?? 0) !== $taskId
+            ));
+        }
+        foreach ($history as &$row) {
+            unset($row['id']);
+        }
+        unset($row);
+
+        return [
             'summary' => $taskData['name'] ?? $taskData['summary'] ?? '',
             'description' => $taskData['description'] ?? '',
             'issuetype' => $taskData['issue_type'] ?? 'task',
             'priority' => $taskData['priority'] ?? 'medium',
-            'projectname' => $projectCode ?: $projectName,
+            'projectname' => $context['projectname'],
             'components' => implode(' ', $components),
             'labels' => $taskData['labels'] ?? '',
             'reporter' => auth()->user()?->username ?? auth()->user()?->email ?? '',
-            'candidate_users' => $formattedCandidates,
+            'candidate_users' => $context['candidates'],
             'history' => $history,
         ];
+    }
 
-        $recommendations = $this->runPythonInference($payload, $topK);
-
+    protected function mapRecommendations(array $recommendations, Collection $candidateUsers, array $taskData, bool $persist): array
+    {
         $results = [];
         foreach ($recommendations as $index => $item) {
             if (!is_array($item)) {
@@ -174,12 +246,7 @@ class AiRecommendationService
             }
 
             $matchedUser = $this->matchCandidateUser($candidateUsers, $item);
-            $formatted = $this->formatRecommendationForUi(
-                $item,
-                $matchedUser,
-                $index + 1,
-                (int) ($workloads[$matchedUser?->id] ?? 0)
-            );
+            $formatted = $this->formatRecommendationForUi($item, $matchedUser, $index + 1);
             if ($formatted === null) {
                 continue;
             }
@@ -234,7 +301,7 @@ class AiRecommendationService
     /**
      * Shape a recommendation for TaskCreate.vue (name, user_id, job_title, ...).
      */
-    protected function formatRecommendationForUi(array $item, ?User $matchedUser, int $rank, int $workload): ?array
+    protected function formatRecommendationForUi(array $item, ?User $matchedUser, int $rank): ?array
     {
         if (!$matchedUser) {
             return null;
@@ -262,7 +329,11 @@ class AiRecommendationService
             $username = $matchedUser->username ?? $matchedUser->email ?? $username;
             $email = $matchedUser->email ?? $email;
             $avatar = $matchedUser->avatar;
-            $activeTasks ??= $workload;
+            if ($activeTasks === null) {
+                $activeTasks = Task::where('assignee_id', $matchedUser->id)
+                    ->whereNotIn('status', ['done', 'closed', 'completed'])
+                    ->count();
+            }
         }
 
         if ($userId === null || $userId === '' || ($name === null || $name === '')) {
@@ -325,51 +396,45 @@ class AiRecommendationService
     /**
      * Run Python script inference.
      */
-    /** Resolve Python across Linux/macOS and Laragon on Windows. */
-    protected function resolvePythonBinary(): string
-    {
-        $configured = config('ai.python_binary');
-        if (is_string($configured) && $configured !== '') {
-            return $configured;
-        }
-
-        $candidates = [
-            base_path('.venv/Scripts/python.exe'),
-            base_path('.venv/bin/python3'),
-            'C:/laragon/bin/python/python-3.10/python.exe',
-            'C:/data/dev/laragon/bin/python/python-3.10/python.exe',
-        ];
-
-        foreach ($candidates as $candidate) {
-            if (is_file($candidate)) {
-                return $candidate;
-            }
-        }
-
-        return PHP_OS_FAMILY === 'Windows' ? 'python' : 'python3';
-    }
-
     protected function runPythonInference(array $payload, int $topK): array
     {
+        return $this->runPythonProcess($payload, $topK, 20);
+    }
+
+    /**
+     * Rank many issues in one Python process.
+     *
+     * @param list<array> $payloads
+     *
+     * @return list<array>
+     */
+    protected function runPythonInferenceBatch(array $payloads, int $topK): array
+    {
+        if ($payloads === []) {
+            return [];
+        }
+
+        return $this->runPythonProcess(['items' => array_values($payloads), 'top_k' => $topK], $topK, 60);
+    }
+
+    protected function runPythonProcess(array $payload, int $topK, int $timeout): array
+    {
+        $pythonBinary = base_path('.venv/bin/python3');
+        if (!file_exists($pythonBinary)) {
+            $pythonBinary = 'python3';
+        }
 
         $scriptPath = base_path('AI/assignee_recommender.py');
         if (!file_exists($scriptPath)) {
             abort(503, 'Dịch vụ gợi ý AI chưa sẵn sàng.');
         }
 
-        $process = new Process([
-            $pythonBinary, $scriptPath, 'predict', '--issue-json',
-            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-            '--top-k', (string) $topK,
-        ], base_path());
-        // Symfony replaces the process environment when setEnv() is called.
-        // Preserve Windows/Laragon variables (notably SystemRoot) so Python
-        // can initialise its secure random provider.
-        $environment = array_filter(getenv(), static fn ($value) => is_string($value));
-        $environment['PYTHONUTF8'] = '1';
-        $environment['PYTHONIOENCODING'] = 'utf-8';
-        $process->setEnv($environment);
-        $process->setTimeout(60);
+        $process = new Process(
+            [$pythonBinary, '-B', $scriptPath, 'predict', '--issue-json', '-', '--top-k', (string) $topK],
+            base_path()
+        );
+        $process->setInput(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        $process->setTimeout($timeout);
 
         try {
             $process->mustRun();
@@ -377,12 +442,10 @@ class AiRecommendationService
             if (!is_array($decoded) || !array_is_list($decoded)) {
                 throw new UnexpectedValueException('Invalid inference response.');
             }
+
             return $decoded;
         } catch (Exception $e) {
-            Log::warning('AI inference failed.', [
-                'exception' => get_class($e),
-                'stderr' => trim($process->getErrorOutput()),
-            ]);
+            Log::warning('AI inference failed.', ['exception' => get_class($e)]);
             abort(503, 'Không thể chạy gợi ý AI lúc này. Vui lòng thử lại.');
         }
     }

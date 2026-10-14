@@ -1,5 +1,4 @@
 @extends('layouts.app')
-
 @section('content')
 <div class="team-page" style="max-width:1400px;margin:0 auto;padding:25px 20px 50px;">
 

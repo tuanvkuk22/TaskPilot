@@ -33,6 +33,7 @@ export default defineConfig({
                 __dirname + '/resources/js/welcome.js',
                 __dirname + '/resources/js/home.js',
                 __dirname + '/resources/js/skills-profile.js',
+                __dirname + '/resources/js/user-profile.js',
                 __dirname + '/resources/css/home.css',
                 __dirname + '/resources/css/skills-profile.css',
             ],

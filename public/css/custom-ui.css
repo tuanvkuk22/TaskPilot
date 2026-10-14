@@ -2091,165 +2091,8 @@ body {
     font-size: 13px;
 }
 
-/* Notification Bell */
-.tp-notification-bell {
-    position: relative;
-    margin-right: 10px;
-}
+/* Notification Bell styles are now centrally managed in sidebar-layout.css */
 
-.tp-notification-bell .tp-notification-toggle {
-    padding: 18px 14px !important;
-    position: relative;
-    cursor: pointer;
-}
-
-.tp-notification-bell .tp-notification-toggle:hover {
-    color: var(--tp-primary);
-}
-
-.tp-notification-bell .tp-unread-count {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    min-width: 18px;
-    height: 18px;
-    padding: 2px 4px;
-    font-size: 10px;
-    font-weight: 700;
-    line-height: 1.2;
-    color: #fff;
-    background-color: #ea5455;
-    border-radius: 50%;
-    text-align: center;
-}
-
-.tp-notification-bell .fa-bell-o {
-    font-size: 18px;
-}
-
-.tp-notification-dropdown {
-    width: min(380px, calc(100vw - 24px)) !important;
-    width: 380px !important;
-    max-height: 500px;
-    overflow: hidden;
-    border: 1px solid #e6eef8;
-    border-radius: 8px;
-    background-color: #fff;
-    box-shadow: 0 10px 24px rgba(23, 43, 77, 0.16);
-    display: flex;
-    flex-direction: column;
-}
-
-.tp-notification-dropdown .tp-dropdown-header {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 16px;
-    min-height: 48px;
-    padding: 8px 12px !important;
-.tp-dropdown-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #e6eef8;
-}
-
-.tp-notification-dropdown .tp-dropdown-header > span {
-    color: #172b4d;
-    font-size: 16px;
-    font-weight: 700;
-}
-
-.tp-notification-dropdown .tp-view-all {
-    flex: 0 0 auto;
-    margin-left: auto;
-    color: #0052cc;
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.tp-dropdown-body {
-    min-height: 72px;
-    max-height: 390px;
-    flex: 1;
-    overflow-y: auto;
-}
-
-.tp-dropdown-body > .text-center {
-    margin: 0;
-    padding: 24px 16px !important;
-    color: #6b7c93;
-    font-size: 15px;
-}
-
-.tp-notification-item {
-    border-bottom: 1px solid #f0f0f0;
-    transition: background-color 0.2s ease;
-}
-
-.tp-notification-item:hover {
-    background-color: #f8f9fa;
-}
-
-.tp-notification-item.tp-unread {
-    background-color: #fff8f8;
-}
-
-.tp-notification-item.tp-unread .tp-notification-content {
-    border-left: 3px solid #0052cc;
-    padding-left: 10px;
-}
-
-.tp-notification-icon {
-    min-width: 36px;
-    height: 36px;
-    border-radius: 50%;
-}
-
-.tp-notification-content .fw-semibold {
-    color: #172b4d;
-    font-size: 14px;
-}
-
-.tp-notification-content .text-small {
-    font-size: 13px;
-}
-
-.tp-notification-actions .btn-link {
-    padding: 2px 6px;
-    opacity: 0.6;
-}
-
-.tp-notification-actions .btn-link:hover {
-    opacity: 1;
-}
-
-.tp-notification-dropdown .tp-dropdown-footer {
-    display: block;
-    padding: 8px 12px !important;
-.tp-dropdown-footer {
-    background-color: #f8f9fa;
-    border-top: 1px solid #e6eef8;
-}
-
-.tp-notification-dropdown .tp-dropdown-footer.d-none {
-    display: none !important;
-}
-
-.tp-view-all {
-    font-size: 12px;
-    font-weight: 600;
-}
-
-/* Notification dropdown: explicit component styles, independent of utilities. */
-.tp-notification-dropdown { width: min(400px, calc(100vw - 24px)) !important; max-height: min(520px, calc(100vh - 92px)); border-radius: 12px; }
-.tp-notification-dropdown .tp-dropdown-header { min-height: 54px; padding: 12px 14px !important; background: #fff; }
-.tp-dropdown-body { max-height: 380px; background: #fff; }
-.tp-dropdown-item { display: grid !important; grid-template-columns: 32px minmax(0, 1fr) 22px; gap: 10px; align-items: start; min-height: 82px; padding: 12px 14px !important; border-bottom: 1px solid #edf1f6; color: #172b4d !important; background: #fff; text-decoration: none !important; transition: background-color .16s ease; }
-.tp-dropdown-item:hover { background: #f7faff; }.tp-dropdown-item.tp-unread { background: linear-gradient(90deg, #edf5ff 0%, #fff 100%); }
-.tp-dropdown-icon { display: grid !important; width: 32px !important; height: 32px !important; margin: 0 !important; padding: 0 !important; place-items: center; border-radius: 10px !important; color: #2563eb !important; background: #e9f1ff !important; font-size: 13px; }
-.tp-dropdown-copy { display: grid; min-width: 0; gap: 3px; }.tp-dropdown-title { overflow: hidden; color: #172b4d; font-size: 13px; font-weight: 700; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }.tp-dropdown-message { display: -webkit-box; overflow: hidden; color: #64748b; font-size: 12px; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }.tp-dropdown-meta { overflow: hidden; color: #3b82c4; font-size: 11px; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }.tp-dropdown-meta i { margin-right: 3px; }
-.tp-dropdown-read { display: grid; width: 22px; height: 22px; margin-top: 5px; padding: 0; place-items: center; border: 0; border-radius: 6px; color: #3288c9; background: transparent; cursor: pointer; }.tp-dropdown-read:hover { color: #fff; background: #2563eb; }
-.tp-notification-dropdown .tp-dropdown-footer { padding: 10px 14px !important; background: #f8fafc; }
 
 /* Notification Center Page */
 .tp-notification-list .tp-notification-item {
@@ -2316,12 +2159,9 @@ body {
     color: #475569 !important;
     font-weight: 500 !important;
     font-size: 13.5px !important;
-    /* Keep the active/hover pill close to its label instead of filling the navbar row. */
-    padding: 8px 12px !important;
     padding: 12px 14px !important;
     border-radius: 8px !important;
     transition: all 0.18s ease-in-out !important;
-    margin: 8px 2px !important;
     margin: 4px 2px !important;
 }
 
@@ -2413,4 +2253,196 @@ body {
     color: #94a3b8 !important;
     padding: 6px 12px 2px !important;
 }
+
+/* Premium Toast Alert Banner Styling */
+.tp-alert-toast {
+    display: flex !important;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    position: relative;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: all 0.25s ease;
+}
+
+.tp-alert-success {
+    background: #ecfdf5 !important;
+    border: 1px solid #a7f3d0 !important;
+    color: #065f46 !important;
+}
+
+.tp-alert-success .tp-alert-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #10b981;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.tp-alert-danger {
+    background: #fef2f2 !important;
+    border: 1px solid #fecaca !important;
+    color: #991b1b !important;
+}
+
+.tp-alert-danger .tp-alert-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.tp-alert-content {
+    flex: 1;
+}
+
+.tp-alert-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 2px 0;
+    line-height: 1.3;
+}
+
+.tp-alert-message {
+    font-size: 13.5px;
+    margin: 0;
+}
+
+.tp-alert-list {
+    padding-left: 18px;
+    font-size: 13.5px;
+}
+
+.tp-alert-close {
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    color: inherit;
+    opacity: 0.6;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.tp-alert-close:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.06);
+}
+
+/* Timeline & App-wide 3 Status Colors: Yellow (To-Do), Light Blue (In Progress), Green (Done) */
+.tp-badge-status-todo,
+.status-todo {
+    background: #fef3c7 !important;
+    color: #b45309 !important;
+    border: 1px solid #fde68a !important;
+}
+
+.tp-badge-status-in_progress,
+.status-in_progress {
+    background: #e0f2fe !important;
+    color: #0369a1 !important;
+    border: 1px solid #bae6fd !important;
+}
+
+.tp-badge-status-done,
+.status-done {
+    background: #dcfce7 !important;
+    color: #15803d !important;
+    border: 1px solid #a7f3d0 !important;
+}
+
+/* Custom & Bootstrap Select Box Styling Support */
+.form-select,
+.form-control,
+.edit-select,
+.tp-select-custom {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-color: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    color: #0f172a !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    padding: 6px 30px 6px 12px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.15s ease-in-out !important;
+    cursor: pointer !important;
+}
+
+.form-select-sm,
+.form-control-sm {
+    padding: 4px 26px 4px 10px !important;
+    font-size: 12.5px !important;
+    border-radius: 6px !important;
+    height: 32px !important;
+}
+
+.form-select:hover,
+.form-control:hover,
+.edit-select:hover,
+.tp-select-custom:hover {
+    border-color: #3b82f6 !important;
+    background-color: #f8fafc !important;
+}
+
+.form-select:focus,
+.form-control:focus,
+.edit-select:focus,
+.tp-select-custom:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+    background-color: #ffffff !important;
+}
+
+/* Fix option element background inheritance when select is expanded */
+select.timeline-status-select option,
+select.tp-select-custom option,
+select.edit-select option {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    padding: 8px 12px !important;
+}
+
+option.tp-opt-todo {
+    color: #d97706 !important;
+    background-color: #ffffff !important;
+}
+
+option.tp-opt-in_progress {
+    color: #0284c7 !important;
+    background-color: #ffffff !important;
+}
+
+option.tp-opt-done {
+    color: #16a34a !important;
+    background-color: #ffffff !important;
+}
+
 

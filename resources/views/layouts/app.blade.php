@@ -7,20 +7,16 @@
     <title>{{ config('app.name', 'TaskPilot') }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}" rel="stylesheet">
-    <link href="{{ asset('css/design-tokens.css') }}?v={{ filemtime(public_path('css/design-tokens.css')) }}" rel="stylesheet">
     <link href="{{ asset('css/custom-ui.css') }}?v={{ filemtime(public_path('css/custom-ui.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/sidebar-layout.css') }}?v={{ file_exists(public_path('css/sidebar-layout.css')) ? filemtime(public_path('css/sidebar-layout.css')) : time() }}" rel="stylesheet">
     <link href="{{ asset('css/project-ui.css') }}?v={{ filemtime(public_path('css/project-ui.css')) }}" rel="stylesheet">
     <link href="{{ asset('css/project_roles.css') }}?v={{ filemtime(public_path('css/project_roles.css')) }}" rel="stylesheet">
-    <link href="{{ asset('css/review-ui.css') }}?v={{ filemtime(public_path('css/review-ui.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/design-tokens.css') }}?v={{ file_exists(public_path('css/design-tokens.css')) ? filemtime(public_path('css/design-tokens.css')) : time() }}" rel="stylesheet">
+    <link href="{{ asset('css/design-system.css') }}?v={{ file_exists(public_path('css/design-system.css')) ? filemtime(public_path('css/design-system.css')) : time() }}" rel="stylesheet">
+    <link href="{{ asset('css/dark-mode.css') }}?v={{ file_exists(public_path('css/dark-mode.css')) ? filemtime(public_path('css/dark-mode.css')) : time() }}" rel="stylesheet">
     @stack('styles')
-    <link href="{{ asset('css/dark-mode.css') }}?v={{ filemtime(public_path('css/dark-mode.css')) }}" rel="stylesheet">
-    <link href="{{ asset('css/mobile-workspace.css') }}?v={{ filemtime(public_path('css/mobile-workspace.css')) }}" rel="stylesheet">
-    <link href="{{ asset('css/ai-batch-polish.css') }}?v={{ filemtime(public_path('css/ai-batch-polish.css')) }}" rel="stylesheet">
-    <link href="{{ asset('css/design-system.css') }}?v={{ filemtime(public_path('css/design-system.css')) }}" rel="stylesheet">
-    <link href="{{ asset('css/team-ui.css') }}?v={{ filemtime(public_path('css/team-ui.css')) }}" rel="stylesheet">
-    <link href="{{ asset('css/meeting-ui.css') }}?v={{ filemtime(public_path('css/meeting-ui.css')) }}" rel="stylesheet">
     <style>
         body, button, input, select, textarea, .navbar, .btn, h1, h2, h3, h4, h5, h6, label, p, span, a, div {
             font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
@@ -31,157 +27,240 @@
         }
     </style>
     <script src="https://use.fontawesome.com/874dbadbd7.js" defer></script>
+    <script src="{{ asset('js/sidebar-layout.js') }}?v={{ file_exists(public_path('js/sidebar-layout.js')) ? filemtime(public_path('js/sidebar-layout.js')) : time() }}" defer></script>
     <script>(function(){try{var t=localStorage.getItem('taskpilot-theme');if(t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('tp-theme-dark')}catch(e){}})();</script>
 </head>
 <body>
 <div id="app">
-    <nav class="navbar navbar-default navbar-static-top tp-navbar" role="navigation">
-        <div class="container">
-            <div class="navbar-header">
-                @auth
-                    <button type="button" id="theme-toggle-mobile" class="tp-theme-toggle tp-theme-toggle--mobile" aria-label="Chuyển sang chế độ tối" aria-pressed="false" title="Chuyển sang chế độ tối">
-                        <i class="fa fa-moon-o" aria-hidden="true"></i>
-                        <span class="sr-only">Chuyển chế độ sáng/tối</span>
+    @auth
+        <div class="tp-app-wrapper" id="tp-app-root">
+            <!-- Mobile Backdrop -->
+            <div class="tp-sidebar-backdrop" id="tp-sidebar-backdrop"></div>
+
+            <!-- Vertical Sidebar (Thanh điều hướng dọc) -->
+            <aside class="tp-sidebar" id="tp-sidebar">
+                <!-- Sidebar Header: Logo / Brand -->
+                <div class="tp-sidebar-header">
+                    <a class="tp-sidebar-brand" href="{{ route('home') }}">
+                        <span class="tp-brand-logo"><i class="fa fa-check"></i></span>
+                        <span class="tp-brand-text">TaskPilot</span>
+                    </a>
+                    <button type="button" class="tp-mobile-close-btn" id="tp-mobile-close" aria-label="Đóng menu">
+                        <i class="fa fa-times"></i>
                     </button>
-                @endauth
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#app-navbar-collapse" aria-expanded="false">
-                    <span class="sr-only">Mở điều hướng</span>
-                    <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="{{ auth()->check() ? route('home') : route('welcome') }}">
-                    <span class="tp-brand-mark"><i class="fa fa-check"></i></span> TaskPilot
-                </a>
-            </div>
-            <div class="collapse navbar-collapse" id="app-navbar-collapse">
-                @auth
-                    <ul class="nav navbar-nav">
-                        <li class="{{ request()->routeIs('home') ? 'active' : '' }}">
-                            <a href="{{ route('home') }}"><i class="fa fa-th-large nav-icon"></i> Tổng quan</a>
-                        </li>
-                        <li class="{{ request()->routeIs('projects.*') ? 'active' : '' }}">
-                            <a href="{{ route('projects.index') }}"><i class="fa fa-folder nav-icon"></i> Dự án</a>
-                        </li>
-                        <li class="{{ request()->routeIs('tasks.*') ? 'active' : '' }}">
-                            <a href="{{ route('tasks.index') }}"><i class="fa fa-tasks nav-icon"></i> Công việc</a>
-                        </li>
-                        <li class="{{ request()->routeIs('teams.*') ? 'active' : '' }}">
-                            <a href="{{ route('teams.index') }}"><i class="fa fa-users nav-icon"></i> Đội nhóm</a>
-                        </li>
-                        <li class="{{ request()->routeIs('companies.*') ? 'active' : '' }}">
-                            <a href="{{ route('companies.index') }}"><i class="fa fa-building nav-icon"></i> Khách hàng</a>
-                        </li>
-                        <li class="{{ request()->routeIs('skills.*') ? 'active' : '' }}">
-                            <a href="{{ route('skills.index') }}" class="tp-nav-skills-badge">
-                                <i class="fa fa-magic nav-icon-ai"></i> Hồ sơ kỹ năng
-                            </a>
-                        </li>
-                    </ul>
-                @endauth
-                <ul class="nav navbar-nav navbar-right">
-                    @guest
-                        <li><a href="{{ route('login') }}"><i class="fa fa-sign-in"></i> Đăng nhập</a></li>
-                        <li><a href="{{ route('register') }}"><i class="fa fa-user-plus"></i> Đăng ký</a></li>
-                    @else
-                        <li class="{{ request()->routeIs('guide') ? 'active' : '' }}"><a href="{{ route('guide') }}" title="Hướng dẫn sử dụng"><i class="fa fa-question-circle"></i> Hướng dẫn</a></li>
+                </div>
+
+                <!-- Sidebar Body: Navigation Links -->
+                <div class="tp-sidebar-body">
+                    <div class="tp-sidebar-group">
+                        <div class="tp-sidebar-heading">Làm việc</div>
+                        <a href="{{ route('home') }}" class="tp-sidebar-link {{ request()->routeIs('home') ? 'active' : '' }}" data-title="Tổng quan">
+                            <i class="fa fa-th-large tp-link-icon"></i>
+                            <span class="tp-link-text">Tổng quan</span>
+                        </a>
+                        <a href="{{ route('projects.index') }}" class="tp-sidebar-link {{ request()->routeIs('projects.*') ? 'active' : '' }}" data-title="Dự án">
+                            <i class="fa fa-folder tp-link-icon"></i>
+                            <span class="tp-link-text">Dự án</span>
+                        </a>
+                        <a href="{{ route('tasks.index') }}" class="tp-sidebar-link {{ request()->routeIs('tasks.*') ? 'active' : '' }}" data-title="Công việc">
+                            <i class="fa fa-tasks tp-link-icon"></i>
+                            <span class="tp-link-text">Công việc</span>
+                        </a>
+                        <a href="{{ route('teams.index') }}" class="tp-sidebar-link {{ request()->routeIs('teams.*') ? 'active' : '' }}" data-title="Đội nhóm">
+                            <i class="fa fa-users tp-link-icon"></i>
+                            <span class="tp-link-text">Đội nhóm</span>
+                        </a>
+                        <a href="{{ route('companies.index') }}" class="tp-sidebar-link {{ request()->routeIs('companies.*') ? 'active' : '' }}" data-title="Khách hàng">
+                            <i class="fa fa-building tp-link-icon"></i>
+                            <span class="tp-link-text">Khách hàng</span>
+                        </a>
+                    </div>
+
+                    <div class="tp-sidebar-group">
+                        <div class="tp-sidebar-heading">Hệ thống</div>
+                        <a href="{{ route('guide') }}" class="tp-sidebar-link {{ request()->routeIs('guide') ? 'active' : '' }}" data-title="Hướng dẫn sử dụng">
+                            <i class="fa fa-question-circle tp-link-icon"></i>
+                            <span class="tp-link-text">Hướng dẫn sử dụng</span>
+                        </a>
+                        <a href="{{ route('profile.index') }}" class="tp-sidebar-link {{ request()->routeIs('profile.*') ? 'active' : '' }}" data-title="Hồ sơ cá nhân">
+                            <i class="fa fa-user tp-link-icon"></i>
+                            <span class="tp-link-text">Hồ sơ cá nhân</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Sidebar Footer: Collapse Toggle Button -->
+                <div class="tp-sidebar-footer">
+                    <button type="button" class="tp-collapse-toggle-btn" id="tp-sidebar-collapse" title="Thu gọn / Mở rộng menu">
+                        <i class="fa fa-angle-double-left"></i>
+                        <span class="tp-collapse-text">Thu gọn menu</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Content Container -->
+            <div class="tp-main-container">
+                <!-- Topbar Header (Chứa ô tìm kiếm toàn cục & tác vụ nhanh) -->
+                <header class="tp-topbar">
+                    <div class="tp-topbar-left">
+                        <button type="button" class="tp-mobile-menu-btn" id="tp-mobile-toggle" aria-label="Mở menu">
+                            <i class="fa fa-bars"></i>
+                        </button>
+
+                        <!-- Global Search Bar -->
+                        <div class="tp-search-container" id="tp-search-container">
+                            <div class="tp-search-input-wrap">
+                                <i class="fa fa-search tp-search-icon"></i>
+                                <input type="text" id="tp-global-search-input" class="tp-search-input" placeholder="Tìm kiếm dự án, công việc... (Ctrl + K)" autocomplete="off">
+                                <span class="tp-search-shortcut">Ctrl K</span>
+                            </div>
+                            <!-- Live search dropdown -->
+                            <div class="tp-search-dropdown" id="tp-search-dropdown"></div>
+                        </div>
+                    </div>
+
+                    <div class="tp-topbar-right">
+                        <!-- Quick Create Task Action -->
+                        <a href="{{ route('tasks.create') }}" class="tp-quick-btn tp-btn-primary" title="Tạo công việc mới">
+                            <i class="fa fa-plus"></i>
+                            <span>Tạo mới</span>
+                        </a>
+
+                        <!-- Dark Mode Toggle Button -->
+                        <button type="button" class="tp-topbar-action-item tp-theme-toggle-btn" id="theme-toggle-header" aria-label="Chuyển chế độ tối/sáng" title="Chuyển chế độ tối/sáng">
+                            <i class="fa fa-moon-o"></i>
+                        </button>
+
+                        <!-- Notification Bell Component -->
                         @include('partials.notification_bell')
-                        <li class="tp-theme-switcher">
-                            <button type="button" id="theme-toggle-header" class="tp-theme-toggle" aria-label="Chuyển sang chế độ tối" aria-pressed="false" title="Chuyển sang chế độ tối">
-                                <i class="fa fa-moon-o" aria-hidden="true"></i>
-                                <span class="sr-only">Chuyển chế độ sáng/tối</span>
-                            </button>
-                        </li>
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle tp-user-dropdown-btn" data-toggle="dropdown" role="button" aria-expanded="false">
+
+                        <!-- User Profile Dropdown -->
+                        <div class="tp-user-menu" id="tp-user-menu">
+                            <button type="button" class="tp-user-btn" id="tp-user-dropdown-btn">
                                 <span class="tp-user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
                                 <span class="tp-user-name">{{ auth()->user()->name }}</span>
-                                <span class="caret"></span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-right tp-dropdown-menu" role="menu">
-                                <li class="dropdown-header">Hồ sơ & Hệ thống</li>
-                                <li><a href="{{ route('skills.index') }}"><i class="fa fa-sliders"></i> Hồ sơ kỹ năng AI</a></li>
-                                <li><a href="{{ route('guide') }}"><i class="fa fa-book"></i> Hướng dẫn sử dụng</a></li>
-                                <li><a href="#" id="theme-toggle"><i class="fa fa-moon-o"></i> <span data-theme-label>Chế độ tối</span></a></li>
-                                <li class="divider"></li>
-                                <li><a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="text-danger"><i class="fa fa-power-off"></i> Đăng xuất</a></li>
-                            </ul>
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display:none">@csrf</form>
-                        </li>
-                    @endguest
-                </ul>
+                                <i class="fa fa-angle-down tp-user-caret"></i>
+                            </button>
+                            <div class="tp-user-dropdown-menu" id="tp-user-dropdown-menu">
+                                <div class="tp-dropdown-user-header">
+                                    <div class="tp-dropdown-user-name">{{ auth()->user()->name }}</div>
+                                    <div class="tp-dropdown-user-email">{{ auth()->user()->email }}</div>
+                                </div>
+                                <a href="{{ route('profile.index') }}" class="tp-dropdown-item">
+                                    <i class="fa fa-user"></i> <span>Hồ sơ cá nhân</span>
+                                </a>
+                                <a href="{{ route('guide') }}" class="tp-dropdown-item">
+                                    <i class="fa fa-book"></i> <span>Hướng dẫn sử dụng</span>
+                                </a>
+                                <div style="height: 1px; background: #f1f5f9; margin: 4px 0;"></div>
+                                <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="tp-dropdown-item text-danger">
+                                    <i class="fa fa-power-off"></i> <span>Đăng xuất</span>
+                                </a>
+                            </div>
+                        </div>
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display:none">@csrf</form>
+                    </div>
+                </header>
+
+                <!-- Page Main Body -->
+                <main class="tp-main-content">
+                    <div class="tp-content-body container-fluid">
+                        @include('partials.errors')
+                        @include('partials.success')
+                        <div class="row">@yield('content')</div>
+                    </div>
+                </main>
             </div>
         </div>
-    </nav>
-
-    <main class="tp-main">
-      <div class="container">
-        @include('partials.errors')
-        @include('partials.success')
-        <div class="row">@yield('content')</div>
-      </div>
-    </main>
+    @else
+        <!-- Guest Top Navigation Bar -->
+        <nav class="navbar navbar-default navbar-static-top tp-navbar" role="navigation" style="margin-bottom: 0;">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#app-navbar-collapse" aria-expanded="false">
+                        <span class="sr-only">Mở điều hướng</span>
+                        <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="{{ route('welcome') }}">
+                        <span class="tp-brand-mark"><i class="fa fa-check"></i></span> TaskPilot
+                    </a>
+                </div>
+                <div class="collapse navbar-collapse" id="app-navbar-collapse">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="{{ route('login') }}"><i class="fa fa-sign-in"></i> Đăng nhập</a></li>
+                        <li><a href="{{ route('register') }}"><i class="fa fa-user-plus"></i> Đăng ký</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <main class="tp-main" style="padding-top: 30px;">
+            <div class="container">
+                @include('partials.errors')
+                @include('partials.success')
+                <div class="row">@yield('content')</div>
+            </div>
+        </main>
+    @endauth
 </div>
-    @yield('jqueryScript')
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var toggles = document.querySelectorAll('#theme-toggle, #theme-toggle-header, #theme-toggle-mobile');
-        if (!toggles.length) return;
 
-        function updateThemeControls() {
-            var isDark = document.documentElement.classList.contains('tp-theme-dark');
-            toggles.forEach(function (toggle) {
-                var icon = toggle.querySelector('i.fa');
-                var label = toggle.querySelector('[data-theme-label]');
-                var action = isDark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối';
+@yield('jqueryScript')
+<script>
+(function() {
+    // Theme toggle handling
+    var themeToggles = document.querySelectorAll('#theme-toggle-header, .tp-theme-toggle');
+    function updateThemeControls() {
+        var isDark = document.documentElement.classList.contains('tp-theme-dark');
+        themeToggles.forEach(function(toggle) {
+            var icon = toggle.querySelector('i.fa');
+            var action = isDark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối';
+            toggle.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+            toggle.setAttribute('aria-label', action);
+            toggle.setAttribute('title', action);
+            if (icon) {
+                icon.className = isDark ? 'fa fa-sun-o' : 'fa fa-moon-o';
+            }
+        });
+    }
 
-                toggle.setAttribute('aria-pressed', isDark ? 'true' : 'false');
-                toggle.setAttribute('aria-label', action);
-                toggle.setAttribute('title', action);
-                if (icon) icon.className = isDark ? 'fa fa-sun-o' : 'fa fa-moon-o';
-                if (label) label.textContent = isDark ? 'Chế độ sáng' : 'Chế độ tối';
-            });
-        }
+    themeToggles.forEach(function(toggle) {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.documentElement.classList.toggle('tp-theme-dark');
+            try {
+                localStorage.setItem('taskpilot-theme', document.documentElement.classList.contains('tp-theme-dark') ? 'dark' : 'light');
+            } catch (err) {}
+            updateThemeControls();
+        });
+    });
 
-        toggles.forEach(function (toggle) {
-            toggle.addEventListener('click', function (event) {
-                event.preventDefault();
-                document.documentElement.classList.toggle('tp-theme-dark');
-                try {
-                    localStorage.setItem('taskpilot-theme', document.documentElement.classList.contains('tp-theme-dark') ? 'dark' : 'light');
-                } catch (error) {}
-                updateThemeControls();
+    updateThemeControls();
+
+    // Bootstrap dropdown fallback
+    if (typeof jQuery === 'undefined' && !window.bootstrap) {
+        var toggles = document.querySelectorAll('[data-toggle="dropdown"]');
+        toggles.forEach(function(toggle) {
+            toggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var menu = this.nextElementSibling;
+                if (menu && menu.classList.contains('dropdown-menu')) {
+                    var isOpen = menu.style.display === 'block';
+                    menu.style.display = isOpen ? 'none' : 'block';
+                    if (!isOpen) {
+                        var closeFn = function(ev) {
+                            if (!menu.contains(ev.target) && !toggle.contains(ev.target)) {
+                                menu.style.display = 'none';
+                                document.removeEventListener('click', closeFn);
+                            }
+                        };
+                        document.addEventListener('click', closeFn);
+                    }
+                }
             });
         });
-
-        updateThemeControls();
-    });
-    </script>
-    <script>
-    (function() {
-        if (typeof jQuery === 'undefined' && !window.bootstrap) {
-            var toggles = document.querySelectorAll('[data-toggle="dropdown"]');
-            toggles.forEach(function(toggle) {
-                toggle.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    var menu = this.nextElementSibling;
-                    if (menu && menu.classList.contains('dropdown-menu')) {
-                        var isOpen = menu.style.display === 'block';
-                        menu.style.display = isOpen ? 'none' : 'block';
-                        if (!isOpen) {
-                            var closeFn = function(ev) {
-                                if (!menu.contains(ev.target) && !toggle.contains(ev.target)) {
-                                    menu.style.display = 'none';
-                                    document.removeEventListener('click', closeFn);
-                                }
-                            };
-                            document.addEventListener('click', closeFn);
-                        }
-                    }
-                });
-            });
-        }
-    })();
-    </script>
-    @stack('scripts')
+    }
+})();
+</script>
+@stack('scripts')
 </body>
 </html>

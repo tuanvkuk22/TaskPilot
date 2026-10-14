@@ -1,32 +1,20 @@
 <template>
     <div class="project-members-vue">
-        <!-- Shared project shell: identical hierarchy to Board and Timeline. -->
-        <div class="pd-header mb-3">
-            <div class="pd-header-left">
-                <div class="pd-breadcrumb mb-1">
-                    <a href="/projects">Dự án</a><span>/</span><span>{{ project.name }}</span><span>/</span><span class="text-dark font-weight-bold">Thành viên</span>
-                </div>
-                <div class="pd-title-row">
-                    <h1 class="pd-title">{{ project.name }}</h1>
-                    <span class="pd-project-key">{{ project.project_code || 'PROJ' }}</span>
-                    <span class="pd-project-status">{{ project.status || 'active' }}</span>
-                </div>
+        <!-- HEADER -->
+        <div class="pm-header">
+            <div class="pm-header-left">
+                <span class="pm-eyebrow">THÀNH VIÊN DỰ ÁN</span>
+                <h1 class="pm-title">Quản lý thành viên</h1>
+                <p class="pm-subtitle">
+                    {{ project.name }} · {{ members.length }} thành viên
+                </p>
             </div>
-            <div class="pm-project-actions">
-                <button type="button" class="tp-btn tp-btn-light" @click="openImportDrawer"><i class="fa fa-file-excel-o"></i><span>Nhập Excel</span></button>
-                <button type="button" class="tp-btn tp-btn-primary" @click="openInviteDrawer"><i class="fa fa-user-plus"></i><span>Mời thành viên</span></button>
+            <div class="pm-header-actions">
+                <a :href="`/projects/${project.id}`" class="pm-btn pm-btn-default">
+                    <i class="fa fa-arrow-left"></i>
+                    <span>Quay lại</span>
+                </a>
             </div>
-        </div>
-
-        <div class="pd-project-nav mb-4">
-            <a :href="`/projects/${project.id}`" class="pd-nav-item">Tổng quan</a>
-            <a :href="`/projects/${project.id}/board`" class="pd-nav-item">Bảng</a>
-            <a :href="`/projects/${project.id}/members`" class="pd-nav-item active">Thành viên</a>
-            <a :href="`/projects/${project.id}/roles`" class="pd-nav-item">Vai trò &amp; Quyền</a>
-            <a :href="`/projects/${project.id}/sprints`" class="pd-nav-item">Backlog / Sprint</a>
-            <a :href="`/projects/${project.id}/timeline`" class="pd-nav-item">Timeline</a>
-            <a :href="`/projects/${project.id}/roadmap`" class="pd-nav-item">Roadmap</a>
-            <a :href="`/projects/${project.id}/reports`" class="pd-nav-item">Báo cáo</a>
         </div>
 
         <!-- ALERTS -->
@@ -768,19 +756,6 @@ function closeMessages() {
 }
 </script>
 <style scoped>
-.pm-project-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-@media (max-width: 640px) {
-    .pm-project-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-}
-
 /* HEADER */
 .pm-header {
     display: flex;

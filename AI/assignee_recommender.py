@@ -6,38 +6,14 @@ import argparse
 import ast
 import json
 import math
-import os
 import random
 import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Iterable
 
-import numpy as np
-import pandas as pd
-
-try:
-    import torch
-    from torch import nn
-    from torch.utils.data import DataLoader, Dataset
-
-    TORCH_AVAILABLE = True
-except ModuleNotFoundError:
-    # Serving has a deterministic heuristic fallback and must remain available
-    # on installations that do not need the optional training runtime.
-    torch = None
-
-    class Dataset:  # pragma: no cover - only used when attempting training without torch
-        pass
-
-    class _TorchModules:
-        class Module:
-            pass
-
-    nn = _TorchModules()
-    DataLoader = object
-    TORCH_AVAILABLE = False
+# Torch / pandas / numpy are imported lazily in _ensure_ml() so the Laravel
+# serving path (heuristic ranking of TaskPilot users) does not pay a 2–5s import.
 
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 GENERIC_TOKENS = {
@@ -77,93 +53,121 @@ CONFIDENCE_CAP = 0.93
 FALLBACK_CAP = 0.58
 DEFAULT_DATASET = Path(__file__).resolve().parent / "dataset"
 DEFAULT_CHECKPOINT = Path(__file__).resolve().parent / "models" / "assignee_recommender.pt"
+_ML_EXPORTS = ("IssueDataset", "AssigneeNetwork", "torch", "nn", "np", "pd", "DataLoader", "Dataset")
+_ml_loaded = False
 
 
-class IssueDataset(Dataset):
-    """PyTorch Dataset for TaskPilot issue data."""
+def _ensure_ml() -> None:
+    """Import PyTorch stack once — only when training or --use-model serving."""
+    global _ml_loaded, torch, nn, np, pd, DataLoader, Dataset, IssueDataset, AssigneeNetwork
+    if _ml_loaded:
+        return
+    import numpy as np
+    import pandas as pd
+    import torch
+    from torch import nn
+    from torch.utils.data import DataLoader, Dataset
 
-    def __init__(self, tokens: np.ndarray, categories: np.ndarray, numeric: np.ndarray, labels: np.ndarray):
-        self.tokens = torch.as_tensor(tokens, dtype=torch.long)
-        self.categories = torch.as_tensor(categories, dtype=torch.long)
-        self.numeric = torch.as_tensor(numeric, dtype=torch.float32)
-        self.labels = torch.as_tensor(labels, dtype=torch.long)
+    class IssueDataset(Dataset):
+        """PyTorch Dataset for TaskPilot issue data."""
 
-    def __len__(self) -> int:
-        return len(self.labels)
+        def __init__(self, tokens, categories, numeric, labels):
+            self.tokens = torch.as_tensor(tokens, dtype=torch.long)
+            self.categories = torch.as_tensor(categories, dtype=torch.long)
+            self.numeric = torch.as_tensor(numeric, dtype=torch.float32)
+            self.labels = torch.as_tensor(labels, dtype=torch.long)
 
-    def __getitem__(self, index: int):
-        return (
-            self.tokens[index],
-            self.categories[index],
-            self.numeric[index],
-            self.labels[index],
-        )
+        def __len__(self) -> int:
+            return len(self.labels)
+
+        def __getitem__(self, index: int):
+            return (
+                self.tokens[index],
+                self.categories[index],
+                self.numeric[index],
+                self.labels[index],
+            )
+
+    class AssigneeNetwork(nn.Module):
+        """Enhanced Deep Learning Multi-Branch Neural Network for Assignee Recommendation."""
+
+        def __init__(
+            self,
+            vocabulary_size: int,
+            category_sizes: list[int],
+            numeric_size: int,
+            class_count: int,
+            embedding_dim: int = 128,
+            cat_embed_dim: int = 32,
+            hidden_dim1: int = 512,
+            hidden_dim2: int = 256,
+            dropout_p: float = 0.3,
+        ):
+            super().__init__()
+            self.token_embedding = nn.Embedding(vocabulary_size, embedding_dim, padding_idx=0)
+            self.text_conv = nn.Conv1d(embedding_dim, embedding_dim, kernel_size=3, padding=1)
+            self.embed_dropout = nn.Dropout(min(dropout_p, 0.2))
+
+            self.category_embeddings = nn.ModuleList(
+                [nn.Embedding(max(size, 2), cat_embed_dim) for size in category_sizes]
+            )
+            input_size = embedding_dim + len(category_sizes) * cat_embed_dim + numeric_size
+
+            self.fc1 = nn.Linear(input_size, hidden_dim1)
+            self.norm1 = nn.LayerNorm(hidden_dim1)
+            self.act1 = nn.GELU()
+            self.dropout1 = nn.Dropout(dropout_p)
+
+            self.fc2 = nn.Linear(hidden_dim1, hidden_dim2)
+            self.norm2 = nn.LayerNorm(hidden_dim2)
+            self.act2 = nn.GELU()
+            self.dropout2 = nn.Dropout(dropout_p)
+
+            self.fc3 = nn.Linear(hidden_dim2, hidden_dim2)
+            self.norm3 = nn.LayerNorm(hidden_dim2)
+            self.act3 = nn.GELU()
+            self.dropout3 = nn.Dropout(dropout_p)
+
+            self.output_layer = nn.Linear(hidden_dim2, class_count)
+
+        def forward(self, tokens, categories, numeric):
+            mask = tokens.ne(0).unsqueeze(-1)
+            token_vectors = self.embed_dropout(self.token_embedding(tokens))
+            conv_out = self.text_conv(token_vectors.transpose(1, 2)).transpose(1, 2)
+            token_vectors = token_vectors + conv_out
+            token_sum = (token_vectors * mask).sum(dim=1)
+            token_count = mask.sum(dim=1).clamp_min(1)
+            text_vector = token_sum / token_count
+            category_vectors = [
+                embedding(categories[:, index])
+                for index, embedding in enumerate(self.category_embeddings)
+            ]
+            combined = torch.cat([text_vector, *category_vectors, numeric], dim=1)
+            x = self.dropout1(self.act1(self.norm1(self.fc1(combined))))
+            res = self.dropout2(self.act2(self.norm2(self.fc2(x))))
+            x = self.dropout3(self.act3(self.norm3(self.fc3(res))) + res)
+            return self.output_layer(x)
+
+    globals().update(
+        {
+            "torch": torch,
+            "nn": nn,
+            "np": np,
+            "pd": pd,
+            "DataLoader": DataLoader,
+            "Dataset": Dataset,
+            "IssueDataset": IssueDataset,
+            "AssigneeNetwork": AssigneeNetwork,
+        }
+    )
+    _ml_loaded = True
 
 
-class AssigneeNetwork(nn.Module):
-    """Enhanced Deep Learning Multi-Branch Neural Network for Assignee Recommendation."""
-
-    def __init__(
-        self,
-        vocabulary_size: int,
-        category_sizes: list[int],
-        numeric_size: int,
-        class_count: int,
-        embedding_dim: int = 128,
-        cat_embed_dim: int = 32,
-        hidden_dim1: int = 512,
-        hidden_dim2: int = 256,
-    ):
-        super().__init__()
-        self.token_embedding = nn.Embedding(vocabulary_size, embedding_dim, padding_idx=0)
-        self.text_conv = nn.Conv1d(embedding_dim, embedding_dim, kernel_size=3, padding=1)
-
-        self.category_embeddings = nn.ModuleList(
-            [nn.Embedding(max(size, 2), cat_embed_dim) for size in category_sizes]
-        )
-        input_size = embedding_dim + len(category_sizes) * cat_embed_dim + numeric_size
-
-        self.fc1 = nn.Linear(input_size, hidden_dim1)
-        self.norm1 = nn.LayerNorm(hidden_dim1)
-        self.act1 = nn.GELU()
-        self.dropout1 = nn.Dropout(0.2)
-
-        self.fc2 = nn.Linear(hidden_dim1, hidden_dim2)
-        self.norm2 = nn.LayerNorm(hidden_dim2)
-        self.act2 = nn.GELU()
-        self.dropout2 = nn.Dropout(0.2)
-
-        self.fc3 = nn.Linear(hidden_dim2, hidden_dim2)
-        self.norm3 = nn.LayerNorm(hidden_dim2)
-        self.act3 = nn.GELU()
-
-        self.output_layer = nn.Linear(hidden_dim2, class_count)
-
-    def forward(self, tokens: torch.Tensor, categories: torch.Tensor, numeric: torch.Tensor) -> torch.Tensor:
-        # Text embedding branch: Token Embedding + Conv1d + Masked Pooling
-        mask = tokens.ne(0).unsqueeze(-1)
-        token_vectors = self.token_embedding(tokens) # [B, T, D]
-
-        # Apply 1D Convolution over sequence (transpose to [B, D, T])
-        conv_out = self.text_conv(token_vectors.transpose(1, 2)).transpose(1, 2)
-        token_vectors = token_vectors + conv_out # Residual text feature
-
-        token_sum = (token_vectors * mask).sum(dim=1)
-        token_count = mask.sum(dim=1).clamp_min(1)
-        text_vector = token_sum / token_count
-
-        # Categorical embedding branch
-        category_vectors = [
-            embedding(categories[:, index])
-            for index, embedding in enumerate(self.category_embeddings)
-        ]
-
-        # Fusion & Deep Multi-layer Perceptron (MLP)
-        combined = torch.cat([text_vector, *category_vectors, numeric], dim=1)
-        x = self.dropout1(self.act1(self.norm1(self.fc1(combined))))
-        res = self.dropout2(self.act2(self.norm2(self.fc2(x))))
-        x = self.act3(self.norm3(self.fc3(res))) + res # Residual block
-        return self.output_layer(x)
+def __getattr__(name: str):
+    if name in _ML_EXPORTS:
+        _ensure_ml()
+        return globals()[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def normalize(value) -> str:
@@ -282,7 +286,8 @@ def enrich_project(row: dict, project_context: dict[str, dict]) -> dict:
     return row
 
 
-def csv_chunks(path: Path, columns: list[str], chunksize: int = 50_000) -> Iterable[pd.DataFrame]:
+def csv_chunks(path: Path, columns: list[str], chunksize: int = 50_000):
+    _ensure_ml()
     available = pd.read_csv(path, nrows=0).columns.tolist()
     usecols = [column for column in columns if column in available]
     yield from pd.read_csv(
@@ -432,13 +437,14 @@ def build_examples(
         numeric_rows.append([np.log1p(value) for value in issue_history])
         target_rows.append(label_to_id[label])
 
+    _ensure_ml()
     numeric = np.asarray(numeric_rows, dtype=np.float32)
     if len(numeric):
         numeric = (numeric - numeric.mean(axis=0)) / (numeric.std(axis=0) + 1e-6)
     return np.asarray(token_rows), np.asarray(category_rows), numeric, np.asarray(target_rows), label_to_id
 
 
-def reciprocal_rank_sum(ranking: torch.Tensor, targets: torch.Tensor) -> float:
+def reciprocal_rank_sum(ranking, targets) -> float:
     """Sum of 1/(rank + 1) for the true class of each row.
 
     `ranking` is a [batch, classes] tensor of class indices sorted by descending
@@ -450,11 +456,43 @@ def reciprocal_rank_sum(ranking: torch.Tensor, targets: torch.Tensor) -> float:
     matches = ranking.eq(targets.unsqueeze(1)).nonzero(as_tuple=False)
     if matches.numel() == 0:
         return 0.0
-    rank_positions = matches[:, 1].to(dtype=torch.float32)
+    rank_positions = matches[:, 1].float()
     return float((1.0 / (rank_positions + 1.0)).sum().item())
 
 
+def metric_improved(current: float, best: float, min_delta: float = 0.0, mode: str = "min") -> bool:
+    """True when `current` beats `best` by at least `min_delta`."""
+    if not math.isfinite(best):
+        return math.isfinite(current)
+    if mode == "min":
+        return current < best - min_delta
+    if mode == "max":
+        return current > best + min_delta
+    raise ValueError(f"Unknown comparison mode: {mode}")
+
+
+def update_early_stop(
+    current: float,
+    best: float,
+    remaining: int,
+    patience: int,
+    min_delta: float = 0.0,
+    mode: str = "min",
+) -> tuple[float, int, bool, bool]:
+    """Track a monitored metric and decide whether training should halt.
+
+    Returns ``(best, remaining, improved, should_stop)``.
+    """
+    if patience < 1:
+        raise ValueError("patience must be >= 1")
+    if metric_improved(current, best, min_delta, mode):
+        return current, patience, True, False
+    remaining -= 1
+    return best, remaining, False, remaining <= 0
+
+
 def evaluate_model(model, data_loader, device, class_count):
+    _ensure_ml()
     model.eval()
     loss_function = nn.CrossEntropyLoss()
     total_loss = 0.0
@@ -484,6 +522,7 @@ def evaluate_model(model, data_loader, device, class_count):
 
 
 def train(args):
+    _ensure_ml()
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -520,19 +559,30 @@ def train(args):
     train_set = IssueDataset(tokens[:split], category_rows[:split], numeric[:split], targets[:split])
     validation_set = IssueDataset(tokens[split:], category_rows[split:], numeric[split:], targets[split:])
     device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
+    dropout_p = float(getattr(args, "dropout", 0.3))
+    weight_decay = float(getattr(args, "weight_decay", 5e-3))
+    label_smoothing = float(getattr(args, "label_smoothing", 0.05))
+    patience = int(getattr(args, "patience", 3))
+    min_delta = float(getattr(args, "min_delta", 0.005))
+    grad_clip = float(getattr(args, "grad_clip", 1.0))
+
     category_sizes = [max(mapping.values(), default=1) + 1 for mapping in categories]
     model = AssigneeNetwork(
-        len(vocabulary), category_sizes, numeric.shape[1], len(labels)
+        len(vocabulary), category_sizes, numeric.shape[1], len(labels), dropout_p=dropout_p
     ).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=1e-3)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=1e-5)
-    loss_function = nn.CrossEntropyLoss()
+    train_loss_fn = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True)
     validation_loader = DataLoader(validation_set, batch_size=args.batch_size)
 
     best_accuracy = -1.0
     best_state = None
     best_metrics = None
+    best_epoch = 0
+    best_val_loss = float("inf")
+    stop_remaining = patience
+    stopped_early = False
     for epoch in range(1, args.epochs + 1):
         model.train()
         total_loss = 0.0
@@ -542,8 +592,10 @@ def train(args):
             batch_numeric = batch_numeric.to(device)
             batch_targets = batch_targets.to(device)
             optimizer.zero_grad()
-            loss = loss_function(model(batch_tokens, batch_categories, batch_numeric), batch_targets)
+            loss = train_loss_fn(model(batch_tokens, batch_categories, batch_numeric), batch_targets)
             loss.backward()
+            if grad_clip > 0:
+                nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
             optimizer.step()
             total_loss += loss.item() * len(batch_targets)
 
@@ -558,7 +610,18 @@ def train(args):
         if metrics["top1"] > best_accuracy or best_state is None:
             best_accuracy = metrics["top1"]
             best_metrics = metrics
+            best_epoch = epoch
             best_state = {key: value.detach().cpu().clone() for key, value in model.state_dict().items()}
+        best_val_loss, stop_remaining, _improved, should_stop = update_early_stop(
+            metrics["loss"], best_val_loss, stop_remaining, patience, min_delta, "min"
+        )
+        if should_stop:
+            stopped_early = True
+            print(
+                f"early_stop=epoch {epoch} (val_loss stalled for {patience} epochs; "
+                f"keeping epoch {best_epoch} val_top1={best_accuracy:.4f})"
+            )
+            break
 
     checkpoint_path = Path(args.checkpoint)
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
@@ -574,6 +637,16 @@ def train(args):
             "numeric_std": numeric.std(axis=0).tolist(),
             "category_sizes": category_sizes,
             "evaluation": best_metrics,
+            "best_epoch": best_epoch,
+            "stopped_early": stopped_early,
+            "regularization": {
+                "dropout": dropout_p,
+                "weight_decay": weight_decay,
+                "label_smoothing": label_smoothing,
+                "patience": patience,
+                "min_delta": min_delta,
+                "grad_clip": grad_clip,
+            },
         },
         checkpoint_path,
     )
@@ -849,42 +922,46 @@ def heuristic_recommendations(payload: dict, top_k: int) -> list[dict]:
     return ranked[:top_k]
 
 
-def predict(args):
-    payload = json.loads(args.issue_json) if args.issue_json else vars(args)
-    validate_prediction_payload(payload, args.top_k)
-    system_users = payload.get("candidate_users", [])
+    ranked.sort(key=lambda item: item["score"], reverse=True)
+    return ranked[:top_k]
 
-    checkpoint_path = Path(args.checkpoint)
 
-    if not checkpoint_path.exists():
-        print(json.dumps(heuristic_recommendations(payload, args.top_k), ensure_ascii=False, indent=2))
-        return
+def emit_json(data) -> None:
+    json.dump(data, sys.stdout, ensure_ascii=False, separators=(",", ":"))
+    sys.stdout.write("\n")
 
-    if not TORCH_AVAILABLE:
-        print("PyTorch unavailable; using heuristic scoring", file=sys.stderr)
-        print(json.dumps(heuristic_recommendations(payload, args.top_k), ensure_ascii=False, indent=2))
-        return
 
-    try:
-        # PyTorch Checkpoint Inference
-        checkpoint = torch.load(checkpoint_path, map_location="cpu")
-        categories = checkpoint["categories"]
-        vocabulary = checkpoint["vocabulary"]
-        labels = checkpoint["labels"]
+def read_predict_payload(args):
+    raw = getattr(args, "issue_json", None)
+    if raw in (None, ""):
+        if not sys.stdin.isatty():
+            raw = sys.stdin.read()
+        else:
+            return vars(args)
+    elif raw == "-":
+        raw = sys.stdin.read()
+    if isinstance(raw, str) and raw.strip().startswith(("{", "[")):
+        return json.loads(raw)
+    return vars(args)
 
-        model = AssigneeNetwork(
-            len(vocabulary),
-            checkpoint["category_sizes"],
-            len(checkpoint["numeric_mean"]),
-            len(labels),
-        )
-        model.load_state_dict(checkpoint["state_dict"])
-        model.eval()
-    except (OSError, RuntimeError, KeyError, ValueError, EOFError) as exc:
-        print(f"Model unavailable ({type(exc).__name__}); using heuristic scoring", file=sys.stderr)
-        print(json.dumps(heuristic_recommendations(payload, args.top_k), ensure_ascii=False, indent=2))
-        return
 
+def pytorch_recommendations(payload: dict, top_k: int, args, checkpoint_path: Path) -> list[dict]:
+    """Rank with the trained classifier. Loads torch on first call."""
+    _ensure_ml()
+    checkpoint = torch.load(checkpoint_path, map_location="cpu")
+    categories = checkpoint["categories"]
+    vocabulary = checkpoint["vocabulary"]
+    labels = checkpoint["labels"]
+    model = AssigneeNetwork(
+        len(vocabulary),
+        checkpoint["category_sizes"],
+        len(checkpoint["numeric_mean"]),
+        len(labels),
+    )
+    model.load_state_dict(checkpoint["state_dict"])
+    model.eval()
+
+    system_users = payload.get("candidate_users") or []
     row = {
         key: normalize(payload.get(key, ""))
         for key in (
@@ -899,7 +976,6 @@ def predict(args):
             "labels",
         )
     }
-
     tokens = torch.tensor([encode_tokens(combined_text(row), vocabulary, checkpoint["max_tokens"])])
     category_values = torch.tensor([[
         encode_category(row["projectname"], categories[0]),
@@ -925,10 +1001,8 @@ def predict(args):
             model_index = next((label_indices[key] for key in user_keys if key in label_indices), None)
             if model_index is not None:
                 matched.append((user, model_index))
-
         if not matched:
-            print(json.dumps(heuristic_recommendations(payload, args.top_k), ensure_ascii=False, indent=2))
-            return
+            return heuristic_recommendations(payload, top_k)
 
         vals = torch.tensor([max(float(probabilities[index]), 0.0) for _user, index in matched])
         denom = float(vals.sum().clamp(min=1e-12))
@@ -945,15 +1019,10 @@ def predict(args):
                 system_users,
             )
             scored_candidates.append(
-                format_recommendation(
-                    user=user,
-                    score=float(score),
-                    match_reasons=reasons,
-                )
+                format_recommendation(user=user, score=float(score), match_reasons=reasons)
             )
         scored_candidates.sort(key=lambda item: item["score"], reverse=True)
-        print(json.dumps(scored_candidates[: args.top_k], ensure_ascii=False, indent=2))
-        return
+        return scored_candidates[:top_k]
 
     profiles = load_profiles(Path(args.dataset_dir), labels, args.chunksize)
     project = row["projectname"]
@@ -965,20 +1034,17 @@ def predict(args):
         and profiles.get(label, {}).get("active", True)
     ]
     candidate_indices = (
-        project_members if len(project_members) >= args.top_k else list(range(len(labels)))
+        project_members if len(project_members) >= top_k else list(range(len(labels)))
     )
-    ranked = sorted(candidate_indices, key=lambda index: float(probabilities[index]), reverse=True)[: args.top_k]
-
+    ranked = sorted(candidate_indices, key=lambda index: float(probabilities[index]), reverse=True)[:top_k]
     results = []
     for index in ranked:
         label = labels[index]
         prob = round(float(probabilities[index]), 4)
         disp_name = profiles.get(label, {}).get("display_name", label)
         is_active = profiles.get(label, {}).get("active", True)
-
         reasons = generate_match_reasons(label, disp_name, prob, payload, system_users)
         matched = find_candidate_user(label, system_users)
-
         results.append(
             format_recommendation(
                 user=matched,
@@ -990,8 +1056,41 @@ def predict(args):
                 match_reasons=reasons,
             )
         )
+    return results
 
-    print(json.dumps(results, ensure_ascii=False, indent=2))
+
+def recommend_for_payload(payload: dict, top_k: int, args) -> list[dict]:
+    validate_prediction_payload(payload, top_k)
+    system_users = payload.get("candidate_users") or []
+    use_model = bool(getattr(args, "use_model", False))
+    if system_users and not use_model:
+        return heuristic_recommendations(payload, top_k)
+    checkpoint_path = Path(args.checkpoint)
+    if not checkpoint_path.exists():
+        return heuristic_recommendations(payload, top_k)
+    try:
+        return pytorch_recommendations(payload, top_k, args, checkpoint_path)
+    except (OSError, RuntimeError, KeyError, ValueError, EOFError) as exc:
+        print(f"Model unavailable ({type(exc).__name__}); using heuristic scoring", file=sys.stderr)
+        return heuristic_recommendations(payload, top_k)
+
+
+def predict(args):
+    payload = read_predict_payload(args)
+    if isinstance(payload, dict) and isinstance(payload.get("items"), list):
+        top_k = payload.get("top_k", args.top_k)
+        if type(top_k) is not int:
+            top_k = args.top_k
+        rows = []
+        for item in payload["items"]:
+            if not isinstance(item, dict):
+                raise ValueError("items must be an array of objects")
+            rows.append(recommend_for_payload(item, top_k, args))
+        emit_json(rows)
+        return
+    if not isinstance(payload, dict):
+        raise ValueError("Prediction payload must be an object")
+    emit_json(recommend_for_payload(payload, args.top_k, args))
 
 
 def parser() -> argparse.ArgumentParser:
@@ -1009,12 +1108,28 @@ def parser() -> argparse.ArgumentParser:
     train_parser.add_argument("--max-tokens", type=int, default=48)
     train_parser.add_argument("--batch-size", type=int, default=512)
     train_parser.add_argument("--epochs", type=int, default=8)
-    train_parser.add_argument("--learning-rate", type=float, default=2e-3)
+    train_parser.add_argument("--learning-rate", type=float, default=1.5e-3)
+    train_parser.add_argument("--dropout", type=float, default=0.3)
+    train_parser.add_argument("--weight-decay", type=float, default=5e-3)
+    train_parser.add_argument("--label-smoothing", type=float, default=0.05)
+    train_parser.add_argument("--patience", type=int, default=3, help="Early-stop patience on val_loss")
+    train_parser.add_argument("--min-delta", type=float, default=0.005, help="Minimum val_loss improvement")
+    train_parser.add_argument("--grad-clip", type=float, default=1.0)
     train_parser.add_argument("--cpu", action="store_true")
 
     predict_parser = subparsers.add_parser("predict")
-    predict_parser.add_argument("--issue-json", help="JSON object containing issue fields")
+    predict_parser.add_argument(
+        "--issue-json",
+        nargs="?",
+        const="-",
+        help="Issue JSON, or - to read stdin. Accepts {items:[...], top_k} for batch.",
+    )
     predict_parser.add_argument("--top-k", type=int, default=5)
+    predict_parser.add_argument(
+        "--use-model",
+        action="store_true",
+        help="Load the PyTorch checkpoint even when candidate_users are supplied.",
+    )
     for predict_argument in (
         "projectname",
         "summary",
@@ -1034,8 +1149,6 @@ def parser() -> argparse.ArgumentParser:
 if __name__ == "__main__":
     arguments = parser().parse_args()
     if arguments.command == "train":
-        if not TORCH_AVAILABLE:
-            parser().error("PyTorch is required for training. Install AI/requirements-ci.txt first.")
         train(arguments)
     else:
         predict(arguments)

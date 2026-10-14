@@ -55,9 +55,9 @@ class AiRecommendationController extends Controller
         ]);
 
         $task = !empty($validated['task_id'])
-            ? Task::findOrFail($validated['task_id'])
+            ? Task::with('project')->findOrFail($validated['task_id'])
             : new Task(['project_id' => $validated['project_id'] ?? null, 'user_id' => $request->user()->id]);
-        $this->authorize('assign', $task);
+        $this->authorize('recommend', $task);
         if ($task->exists) {
             abort_if(isset($validated['project_id']) && (int) $validated['project_id'] !== (int) $task->project_id, 422, 'Task does not belong to this project.');
             $validated['project_id'] = $task->project_id;
@@ -92,11 +92,12 @@ class AiRecommendationController extends Controller
         ]);
 
         $tasks = Task::query()
+            ->with('skills')
             ->whereIn('id', $validated['task_ids'])
             ->get();
 
         foreach ($tasks as $task) {
-            $this->authorize('assign', $task);
+            $this->authorize('recommend', $task);
         }
         $tasks = $tasks->filter(fn (Task $task) => !$task->assignee_id && !in_array($task->status, ['done', 'closed', 'completed', 'resolved'], true));
 

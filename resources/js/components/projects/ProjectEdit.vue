@@ -163,7 +163,7 @@
                                         :class="{ 'is-invalid': errors.budget }"
                                         placeholder="0"
                                         min="0"
-                                        step="100000"
+                                        step="any"
                                     >
                                     <span class="edit-input-addon">VND</span>
                                 </div>

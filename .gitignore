@@ -46,3 +46,7 @@ AI/dataset/*.csv
 /.coverage
 /tests/browser/test-results/
 /tests/browser/playwright-report/
+
+# Backups & Large Binary Models
+.env.bak
+AI/models/

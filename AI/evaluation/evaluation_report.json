@@ -1,0 +1,13 @@
+{
+  "checkpoint": "/home/tuantn1807/project/TaskPilot/AI/models/assignee_recommender.pt",
+  "labels_count": 1639,
+  "vocabulary_size": 50002,
+  "metrics": {
+    "samples": 40000,
+    "loss": 2.032472102332115,
+    "top1": 0.6666,
+    "top3": 0.73705,
+    "top5": 0.76875,
+    "mrr": 0.7129942825078964
+  }
+}

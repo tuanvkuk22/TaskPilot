@@ -2,13 +2,10 @@
 
 @section('content')
 <link href="{{ asset('build/assets/project-roles.css') }}" rel="stylesheet">
-<link href="{{ asset('build/assets/task-shared.css') }}?v={{ file_exists(public_path('build/assets/task-shared.css')) ? filemtime(public_path('build/assets/task-shared.css')) : time() }}" rel="stylesheet">
-<div class="project-dashboard-vue container-fluid py-3" style="max-width: 1400px;">
 <div id="project-roles-app">
     <div style="padding: 20px; color: #666;">
         Đang tải giao diện quản lý vai trò...
     </div>
-</div>
 </div>
 @endsection
 

@@ -1,5 +1,5 @@
 # CPU-only dependencies for the recommender tests and production inference.
 --extra-index-url https://download.pytorch.org/whl/cpu
 numpy==2.2.6
-pandas==3.0.6
-torch==2.14.1+cpu
+pandas==2.2.3
+torch==2.7.1+cpu

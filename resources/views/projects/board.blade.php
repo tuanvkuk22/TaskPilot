@@ -42,7 +42,6 @@
         <a href="{{ route('sprints.index', $project) }}" class="pd-nav-item">Backlog / Sprint</a>
         <a href="{{ route('projects.timeline', $project) }}" class="pd-nav-item">Timeline</a>
         <a href="{{ route('projects.roadmap', $project) }}" class="pd-nav-item">Roadmap</a>
-        <a href="{{ route('projects.reports.show', $project) }}" class="pd-nav-item">Báo cáo</a>
     </div>
 
     <!-- Vue TaskPilot Kanban App (Includes Live Stats + Filters + Board) -->

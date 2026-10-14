@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use ProjectsManager\AiAssigneeRecommendation;
 use ProjectsManager\Project;
+use ProjectsManager\Services\AiRecommendationService;
 use ProjectsManager\Task;
 use ProjectsManager\User;
 use Tests\TestCase;
@@ -91,6 +92,38 @@ class AiRecommendationTest extends TestCase
         $this->actingAs($owner)->postJson('/tasks/recommend-assignee', [
             'task_id' => $task->id, 'project_id' => $otherProject->id, 'name' => $task->name,
         ])->assertStatus(422);
+    }
+
+    public function test_project_member_can_request_recommendation(): void
+    {
+        [, $member, , $task] = $this->context();
+        $this->mock(AiRecommendationService::class, function ($mock) {
+            $mock->shouldReceive('recommend')->once()->andReturn([]);
+        });
+        $this->actingAs($member)->postJson('/tasks/recommend-assignee', [
+            'task_id' => $task->id, 'name' => $task->name,
+        ])->assertOk()->assertJson(['success' => true, 'recommendations' => []]);
+    }
+
+    public function test_owner_can_request_recommendation(): void
+    {
+        [$owner, , , $task] = $this->context();
+        $this->mock(AiRecommendationService::class, function ($mock) {
+            $mock->shouldReceive('recommend')->once()->andReturn([]);
+        });
+        $this->actingAs($owner)->postJson('/tasks/recommend-assignee', [
+            'task_id' => $task->id, 'name' => $task->name,
+        ])->assertOk();
+    }
+
+    public function test_member_with_english_role_can_assign(): void
+    {
+        [, $member, $project, $task] = $this->context();
+        $project->users()->updateExistingPivot($member->id, ['role' => 'member', 'permissions' => null]);
+        $this->actingAs($member)->postJson('/tasks/ai-assign-batch', [
+            'assignments' => [['task_id' => $task->id, 'user_id' => $member->id]],
+        ])->assertOk();
+        $this->assertEquals($member->id, $task->fresh()->assignee_id);
     }
 
     public function test_reset_denies_outsiders(): void
