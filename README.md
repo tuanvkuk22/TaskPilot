@@ -1,6 +1,6 @@
 Project Manager
 
-Project Manager is a simple *Project Management System* built with *Laravel Framework 13.24.0*. It is designed for companies to manage users, companies, projects, tasks, roles, and comments in one place.
+Project Manager is a simple *Project Management System* built with *Laravel Framework 13.35.0*. It is designed for companies to manage users, companies, projects, tasks, roles, and comments in one place.
 
 ## Features
 
@@ -151,6 +151,6 @@ For frontend assets, install the required dependencies and run the project's con
 This project is open-source software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 ## CI/CD
 
-GitHub Actions kiểm tra PHP, frontend, AI và WebRTC; hỗ trợ deploy staging/production qua SSH, health check và rollback code. Xem [hướng dẫn CI/CD](docs/CI-CD.md) để cấu hình server, secrets, branch protection và yêu cầu runtime Laravel 13.24.0.
+GitHub Actions kiểm tra PHP, frontend, AI và WebRTC; hỗ trợ deploy staging/production qua SSH, health check và rollback code. Xem [hướng dẫn CI/CD](docs/CI-CD.md) để cấu hình server, secrets, branch protection và yêu cầu runtime Laravel 13.35.0.
 
-Chi tiết nâng cấp và kiểm thử: [Laravel 13.24.0](docs/LARAVEL-13-UPGRADE.md).
+Chi tiết nâng cấp và kiểm thử: [Laravel 13.35.0](docs/LARAVEL-13-UPGRADE.md).
