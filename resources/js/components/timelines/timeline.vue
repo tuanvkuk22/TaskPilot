@@ -42,7 +42,7 @@
             <a :href="`/projects/${project.id}/roles`" class="pd-nav-item">Vai trò &amp; Quyền</a>
             <a :href="`/sprints?project_id=${project.id}`" class="pd-nav-item">Backlog / Sprint</a>
             <a :href="`/projects/${project.id}/timeline`" class="pd-nav-item active">Timeline</a>
-            <a :href="`/projects/${project.id}/roadmap`" class="pd-nav-item">Roadmap</a>
+            <a :href="`/projects/${project.id}/roadmap`" class="pd-nav-item">Lịch biểu</a>
         </div>
 
         <!-- 3. JIRA SEARCH & FILTER TOOLBAR -->

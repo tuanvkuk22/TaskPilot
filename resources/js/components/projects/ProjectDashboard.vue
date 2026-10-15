@@ -1,78 +1,189 @@
 <template>
     <div class="project-dashboard-vue">
-        <!-- 1. HEADER -->
-        <div class="pd-header mb-3">
-            <div class="pd-header-left">
-                <div class="pd-breadcrumb mb-1">
-                    <a href="/projects">Dự án</a>
-                    <span>/</span>
-                    <span>{{ project.name }}</span>
+        <!-- 1. LUXURY HERO BANNER -->
+        <div class="pd-hero-banner mb-4">
+            <div class="pd-hero-content">
+                <div class="pd-hero-left">
+                    <!-- Project Avatar / Monogram -->
+                    <div class="pd-project-avatar" :title="project.name">
+                        {{ projectInitials }}
+                    </div>
+
+                    <div class="pd-hero-details">
+                        <!-- Breadcrumb -->
+                        <div class="pd-breadcrumb-modern">
+                            <a href="/projects"><i class="fa fa-folder-o me-1"></i>Dự án</a>
+                            <span class="pd-breadcrumb-sep">/</span>
+                            <span>{{ project.name }}</span>
+                        </div>
+
+                        <!-- Title Row -->
+                        <div class="pd-hero-title-row">
+                            <h1 class="pd-hero-title">{{ project.name }}</h1>
+                            <span class="pd-code-badge">{{ project.project_code || 'PROJ' }}</span>
+                            <span class="pd-status-pill" :class="'status-' + (project.status || 'active').toLowerCase()">
+                                <span class="pd-pulse-dot" :class="project.status === 'completed' ? 'dot-done' : (project.status === 'archived' ? 'dot-paused' : '')"></span>
+                                {{ project.status || 'ACTIVE' }}
+                            </span>
+                            <a :href="`/projects/${project.id}/edit`" class="pd-hero-settings-link" title="Cài đặt dự án">
+                                <i class="fa fa-cog"></i>
+                            </a>
+                        </div>
+
+                        <!-- Meta Chips -->
+                        <div class="pd-hero-chips">
+                            <span class="pd-hero-chip chip-timeline" :title="`Thời gian: ${formatDate(project.start_date)} - ${formatDate(project.end_date)}`">
+                                <i class="fa fa-calendar-check-o"></i>
+                                <span>{{ formatDate(project.start_date) }} - {{ formatDate(project.end_date) }}</span>
+                                <span v-if="daysRemainingInfo" class="pd-days-badge" :class="{ 'is-urgent': daysRemainingInfo.urgent }">
+                                    {{ daysRemainingInfo.label }}
+                                </span>
+                            </span>
+
+                            <span class="pd-hero-chip chip-priority">
+                                <i class="fa fa-bolt"></i>
+                                <span>Ưu tiên: <strong>{{ priorityLabel(project.priority) }}</strong></span>
+                            </span>
+
+                            <span class="pd-hero-chip chip-budget">
+                                <i class="fa fa-credit-card"></i>
+                                <span>{{ project.budget ? formatNumber(project.budget) + ' VND' : 'Ngân sách: Chưa đặt' }}</span>
+                            </span>
+
+                            <span class="pd-hero-chip chip-team">
+                                <i class="fa fa-users"></i>
+                                <span>{{ teamCount }} thành viên</span>
+                            </span>
+                        </div>
+                    </div>
                 </div>
-                <div class="pd-title-row">
-                    <h1 class="pd-title">{{ project.name }}</h1>
-                    <span class="pd-project-key">{{ project.project_code || 'PROJ' }}</span>
-                    <span class="pd-project-status">{{ project.status || 'ACTIVE' }}</span>
-                    <a :href="`/projects/${project.id}/edit`" class="pd-settings-btn" title="Cài đặt dự án">
-                        <i class="fa fa-cog"></i>
+
+                <!-- Hero Right Actions -->
+                <div class="pd-hero-actions">
+                    <AiBatchSuggest :tasks="unassignedOpenTasks" :project-id="project.id" @applied="applyBatchResults" @reset="applyAiTestReset" />
+                    <a :href="`/tasks/create?project_id=${project.id}`" class="pd-hero-btn-primary">
+                        <i class="fa fa-plus-circle"></i>
+                        <span>Tạo công việc mới</span>
                     </a>
                 </div>
-                <div class="pd-meta mt-2">
-                    <span class="pd-meta-item">
-                        <i class="fa fa-calendar"></i>
-                        {{ formatDate(project.start_date) }} - {{ formatDate(project.end_date) }}
-                    </span>
-                    <span class="pd-meta-item">
-                        <i class="fa fa-flag"></i>
-                        {{ priorityLabel(project.priority) }}
-                    </span>
-                    <span class="pd-meta-item">
-                        <i class="fa fa-money"></i>
-                        {{ project.budget ? formatNumber(project.budget) + ' VND' : 'Chưa đặt' }}
-                    </span>
+            </div>
+        </div>
+
+        <!-- 2. MODERN PILL NAVIGATION -->
+        <div class="pd-project-nav mb-4">
+            <a href="/projects" class="pd-nav-item">
+                <i class="fa fa-folder-open-o"></i>
+                <span>Tất cả dự án</span>
+            </a>
+            <a :href="`/projects/${project.id}`" class="pd-nav-item" :class="{ active: currentTab === 'overview' }" @click.prevent="currentTab = 'overview'">
+                <i class="fa fa-th-large"></i>
+                <span>Tổng quan</span>
+            </a>
+            <a :href="`/projects/${project.id}/board`" class="pd-nav-item" :class="{ active: currentTab === 'board' }" @click.prevent="currentTab = 'board'">
+                <i class="fa fa-trello"></i>
+                <span>Bảng (Board)</span>
+            </a>
+            <a :href="`/projects/${project.id}/sprints`" class="pd-nav-item">
+                <i class="fa fa-cubes"></i>
+                <span>Backlog / Sprint</span>
+            </a>
+            <a :href="`/projects/${project.id}/members`" class="pd-nav-item">
+                <i class="fa fa-users"></i>
+                <span>Thành viên</span>
+            </a>
+            <a :href="`/projects/${project.id}/roles`" class="pd-nav-item">
+                <i class="fa fa-shield"></i>
+                <span>Vai trò &amp; Quyền</span>
+            </a>
+            <a :href="`/projects/${project.id}/timeline`" class="pd-nav-item">
+                <i class="fa fa-calendar"></i>
+                <span>Timeline</span>
+            </a>
+            <a :href="`/projects/${project.id}/roadmap`" class="pd-nav-item">
+                <i class="fa fa-calendar"></i>
+                <span>Lịch biểu</span>
+            </a>
+            <a :href="`#activity`" class="pd-nav-item" :class="{ active: currentTab === 'activity' }" @click.prevent="currentTab = 'activity'">
+                <i class="fa fa-history"></i>
+                <span>Nhật ký hoạt động</span>
+            </a>
+        </div>
+
+        <!-- 3. REAL-TIME REACTIVE KPI STATS ROW -->
+        <div class="pd-stats mb-4">
+            <!-- Total Tasks -->
+            <div class="pd-stat-card pd-stat-total">
+                <div class="pd-stat-header">
+                    <div class="pd-stat-label">Tổng công việc</div>
+                    <div class="pd-stat-icon-wrap total">
+                        <i class="fa fa-list-alt"></i>
+                    </div>
+                </div>
+                <div class="pd-stat-main">
+                    <div class="pd-stat-value">{{ stats.total }}</div>
+                    <div class="pd-stat-tag">Toàn bộ Scope</div>
+                </div>
+                <div class="pd-stat-footer">
+                    <span class="pd-stat-hint">Khối lượng công việc dự án</span>
                 </div>
             </div>
-            <div class="d-flex align-items-center gap-2">
-                <AiBatchSuggest :tasks="unassignedOpenTasks" :project-id="project.id" @applied="applyBatchResults" @reset="applyAiTestReset" />
-                <a :href="`/tasks/create?project_id=${project.id}`" class="tp-btn tp-btn-primary">
-                    <i class="fa fa-plus-circle" style="color: #ffffff !important;"></i>
-                    <span>Tạo công việc mới</span>
-                </a>
-            </div>
-        </div>
 
-        <!-- 2. PROJECT SUB-NAV -->
-        <div class="pd-project-nav mb-4">
-            <a href="/projects" class="pd-nav-item">Dự án</a>
-            <a :href="`/projects/${project.id}`" class="pd-nav-item" :class="{ active: currentTab === 'overview' }" @click.prevent="currentTab = 'overview'">Tổng quan</a>
-            <a :href="`/projects/${project.id}/board`" class="pd-nav-item" :class="{ active: currentTab === 'board' }" @click.prevent="currentTab = 'board'">Bảng (Board)</a>
-            <a :href="`/projects/${project.id}/members`" class="pd-nav-item">Thành viên</a>
-            <a :href="`/projects/${project.id}/roles`" class="pd-nav-item">Vai trò &amp; Quyền</a>
-            <a :href="`/sprints?project_id=${project.id}`" class="pd-nav-item">Backlog / Sprint</a>
-            <a :href="`/projects/${project.id}/timeline`" class="pd-nav-item">Timeline</a>
-            <a :href="`/projects/${project.id}/roadmap`" class="pd-nav-item">Roadmap</a>
-            <a :href="`#activity`" class="pd-nav-item" :class="{ active: currentTab === 'activity' }" @click.prevent="currentTab = 'activity'">Nhật ký hoạt động</a>
-        </div>
-
-        <!-- 3. REAL-TIME REACTIVE KPI STATS ROW (Updates instantly on drag-and-drop) -->
-        <div class="pd-stats mb-4">
-            <div class="pd-stat-card">
-                <div class="pd-stat-label"><i class="fa fa-list-alt text-primary me-1"></i>Tổng công việc</div>
-                <div class="pd-stat-value">{{ stats.total }}</div>
-            </div>
+            <!-- Done Tasks -->
             <div class="pd-stat-card pd-stat-done">
-                <div class="pd-stat-label"><i class="fa fa-check-circle text-success me-1"></i>Hoàn thành</div>
-                <div class="pd-stat-value">{{ stats.done }}</div>
-                <div class="pd-stat-percent">{{ stats.total ? Math.round(stats.done / stats.total * 100) : 0 }}%</div>
+                <div class="pd-stat-header">
+                    <div class="pd-stat-label">Hoàn thành</div>
+                    <div class="pd-stat-icon-wrap done">
+                        <i class="fa fa-check-circle"></i>
+                    </div>
+                </div>
+                <div class="pd-stat-main">
+                    <div class="pd-stat-value text-emerald">{{ stats.done }}</div>
+                    <div class="pd-stat-badge badge-success">{{ stats.total ? Math.round(stats.done / stats.total * 100) : 0 }}%</div>
+                </div>
+                <div class="pd-stat-progress-bar">
+                    <div class="pd-stat-progress-fill fill-done" :style="{ width: (stats.total ? Math.round(stats.done / stats.total * 100) : 0) + '%' }"></div>
+                </div>
             </div>
+
+            <!-- In Progress -->
             <div class="pd-stat-card pd-stat-progress">
-                <div class="pd-stat-label"><i class="fa fa-spinner text-info me-1"></i>Đang thực hiện</div>
-                <div class="pd-stat-value">{{ stats.inProgress }}</div>
-                <div class="pd-stat-percent">{{ stats.total ? Math.round(stats.inProgress / stats.total * 100) : 0 }}%</div>
+                <div class="pd-stat-header">
+                    <div class="pd-stat-label">Đang thực hiện</div>
+                    <div class="pd-stat-icon-wrap progress">
+                        <i class="fa fa-spinner fa-spin-hover"></i>
+                    </div>
+                </div>
+                <div class="pd-stat-main">
+                    <div class="pd-stat-value text-indigo">{{ stats.inProgress }}</div>
+                    <div class="pd-stat-badge badge-info">{{ stats.total ? Math.round(stats.inProgress / stats.total * 100) : 0 }}%</div>
+                </div>
+                <div class="pd-stat-progress-bar">
+                    <div class="pd-stat-progress-fill fill-progress" :style="{ width: (stats.total ? Math.round(stats.inProgress / stats.total * 100) : 0) + '%' }"></div>
+                </div>
             </div>
+
+            <!-- Overdue / High Priority -->
             <div class="pd-stat-card pd-stat-overdue">
-                <div class="pd-stat-label"><i class="fa fa-exclamation-triangle text-danger me-1"></i>Ưu tiên cao / Quá hạn</div>
-                <div class="pd-stat-value">{{ stats.highOrOverdue }}</div>
-                <div class="pd-stat-percent">{{ stats.total ? Math.round(stats.highOrOverdue / stats.total * 100) : 0 }}%</div>
+                <div class="pd-stat-header">
+                    <div class="pd-stat-label">Ưu tiên cao / Quá hạn</div>
+                    <div class="pd-stat-icon-wrap overdue">
+                        <i class="fa fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+                <div class="pd-stat-main">
+                    <div class="pd-stat-value text-rose">{{ stats.highOrOverdue }}</div>
+                    <div class="pd-stat-badge" :class="stats.highOrOverdue > 0 ? 'badge-danger' : 'badge-neutral'">
+                        {{ stats.highOrOverdue > 0 ? 'Cần xử lý' : 'An toàn' }}
+                    </div>
+                </div>
+                <div class="pd-stat-footer">
+                    <span v-if="stats.highOrOverdue > 0" class="pd-stat-alert-text">
+                        <i class="fa fa-circle text-danger me-1"></i>Có việc cần chú ý giải quyết
+                    </span>
+                    <span v-else class="pd-stat-safe-text">
+                        <i class="fa fa-check text-success me-1"></i>Tiến độ an toàn, không có rủi ro
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -86,17 +197,33 @@
                         <h2 class="pd-jira-card-title">
                             <i class="fa fa-line-chart text-primary me-2"></i>Tiến độ dự án tổng thể
                         </h2>
+                        <span class="pd-health-badge" :class="projectHealth.class">
+                            <i class="fa" :class="projectHealth.icon"></i>
+                            {{ projectHealth.label }}
+                        </span>
                     </div>
                     <div class="pd-jira-card-body">
-                        <div class="pd-progress-bar mb-2">
-                            <div class="pd-progress-fill" :style="{ width: progressPercent + '%' }"></div>
+                        <div class="pd-progress-header-row">
+                            <span class="text-muted small">Tỷ lệ công việc hoàn tất</span>
+                            <span class="font-weight-bold font-size-16 text-primary">{{ progressPercent }}%</span>
                         </div>
-                        <div class="pd-progress-labels">
-                            <span>Start {{ formatDate(project.start_date) }}</span>
-                            <span>Today {{ todayLabel }}</span>
-                            <span>End {{ formatDate(project.end_date) }}</span>
+                        <div class="pd-progress-bar-luxury mb-3">
+                            <div class="pd-progress-fill-luxury" :style="{ width: progressPercent + '%' }"></div>
                         </div>
-                        <div class="pd-progress-percent mt-2">{{ progressPercent }}%</div>
+                        <div class="pd-progress-milestones">
+                            <div class="pd-milestone-item">
+                                <span class="pd-milestone-label">Bắt đầu</span>
+                                <span class="pd-milestone-val">{{ formatDate(project.start_date) }}</span>
+                            </div>
+                            <div class="pd-milestone-item text-center">
+                                <span class="pd-milestone-label">Hôm nay</span>
+                                <span class="pd-milestone-val text-primary">{{ todayLabel }}</span>
+                            </div>
+                            <div class="pd-milestone-item text-right">
+                                <span class="pd-milestone-label">Hạn chót</span>
+                                <span class="pd-milestone-val">{{ formatDate(project.end_date) }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -113,54 +240,67 @@
                     <div class="pd-jira-card-body">
                         <div v-if="recentTasks.length" class="pd-task-list">
                             <div v-for="task in recentTasks" :key="task.id" class="pd-task-row">
-                                <div class="pd-task-key">{{ task.project ? task.project.project_code : 'TP' }}-{{ task.id }}</div>
-                                <div class="pd-task-name">
-                                    <a :href="`/tasks/${task.id}`" class="text-dark font-weight-bold text-decoration-none">
+                                <div>
+                                    <span class="pd-task-key-tag">{{ task.project ? task.project.project_code : 'TP' }}-{{ task.id }}</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2" style="min-width: 0;">
+                                    <IssueTypeBadge :type="task.issue_type" />
+                                    <a :href="`/tasks/${task.id}`" class="pd-task-title-link">
                                         {{ task.name }}
                                     </a>
                                 </div>
-                                <span class="pd-priority-badge" :class="'pd-priority-' + (task.priority || 'low')">
-                                    {{ priorityLabel(task.priority) }}
-                                </span>
-                                <span class="pd-task-assignee">{{ task.assignee?.name || 'Chưa gán' }}</span>
-                                <span class="pd-task-date">{{ formatDate(task.due_date) }}</span>
+                                <div>
+                                    <PriorityBadge :priority="task.priority" />
+                                </div>
+                                <div>
+                                    <UserAvatarPill :name="task.assignee ? (task.assignee.full_name || task.assignee.name) : 'Chưa gán'" />
+                                </div>
+                                <div class="text-muted small text-nowrap">
+                                    <i class="fa fa-calendar-o me-1"></i>{{ formatDate(task.due_date || task.end_date) }}
+                                </div>
                             </div>
                         </div>
-                        <div v-else class="pd-empty">Chưa có task nào trong dự án này.</div>
+                        <div v-else class="pd-empty">Chưa có công việc nào trong dự án này.</div>
                     </div>
                 </div>
             </div>
 
             <!-- RIGHT COLUMN -->
             <div class="pd-sidebar">
-                <!-- AI INSIGHTS -->
-                <div class="pd-jira-card">
+                <!-- AI COPILOT INSIGHTS -->
+                <div class="pd-jira-card pd-ai-card">
                     <div class="pd-jira-card-header">
                         <h2 class="pd-jira-card-title">
-                            <i class="fa fa-magic text-warning me-2"></i>AI gợi ý phân công
+                            <i class="fa fa-magic text-purple me-2" style="color: #8b5cf6;"></i>AI Assistant &amp; Phân công
                         </h2>
+                        <span class="pd-ai-badge">
+                            <i class="fa fa-sparkles"></i> Copilot
+                        </span>
                     </div>
                     <div class="pd-jira-card-body">
-                        <div class="pd-insight-item">
+                        <div class="pd-insight-item mb-2">
                             <i class="fa fa-shield text-primary"></i>
                             <span>{{ risks.length }} rủi ro cần chú ý</span>
                         </div>
-                        <div v-if="risks.length" class="pd-risk-list">
-                            <div v-for="risk in risks" :key="risk" class="pd-risk-item">
-                                • {{ risk }}
+                        <div v-if="risks.length" class="pd-risk-alert-box">
+                            <div v-for="risk in risks" :key="risk" class="pd-risk-alert-item">
+                                <i class="fa fa-exclamation-circle"></i>
+                                <span>{{ risk }}</span>
                             </div>
                         </div>
-                        <div v-else class="pd-empty-small">Không có rủi ro đáng kể.</div>
+                        <div v-else class="pd-empty-small text-success">
+                            <i class="fa fa-check-circle me-1"></i> Không có rủi ro đáng kể nào.
+                        </div>
 
-                        <div class="pd-insight-item mt-3">
+                        <div class="pd-insight-item mt-3 mb-2">
                             <i class="fa fa-user-times" style="color: #8b5cf6;"></i>
                             <span>{{ unassignedOpenTasks.length }} công việc chưa phân công</span>
                         </div>
                         <div v-if="unassignedOpenTasks.length" class="ai-insight-unassigned">
                             <div v-for="task in unassignedOpenTasks.slice(0, 5)" :key="task.id" class="ai-insight-row">
-                                <a :href="`/tasks/${task.id}`" class="text-dark text-decoration-none" style="min-width: 0;">
-                                    <div class="ai-home-item-title text-truncate">{{ task.name }}</div>
-                                    <div class="ai-home-item-meta">{{ priorityLabel(task.priority) }}</div>
+                                <a :href="`/tasks/${task.id}`" class="text-dark text-decoration-none" style="min-width: 0; flex: 1;">
+                                    <div class="ai-home-item-title text-truncate font-weight-bold font-size-13">{{ task.name }}</div>
+                                    <div class="ai-home-item-meta text-muted small">{{ priorityLabel(task.priority) }}</div>
                                 </a>
                                 <AiAssigneeSuggest
                                     :task="task"
@@ -185,13 +325,13 @@
                         <div v-if="workDistribution.length" class="pd-dist-list">
                             <div v-for="item in workDistribution" :key="item.label" class="pd-dist-row">
                                 <span class="pd-dist-label">{{ item.label }}</span>
-                                <span class="pd-dist-value">{{ item.count }}</span>
+                                <span class="pd-dist-value">{{ item.count }} ({{ item.percent }}%)</span>
                                 <div class="pd-dist-bar">
                                     <div class="pd-dist-fill" :style="{ width: item.percent + '%' }"></div>
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="pd-empty-small">Chưa có dữ liệu.</div>
+                        <div v-else class="pd-empty-small">Chưa có dữ liệu phân bổ.</div>
                     </div>
                 </div>
             </div>
@@ -606,6 +746,49 @@ const stats = computed(() => {
 const progressPercent = computed(() => {
     if (!stats.value.total) return 0;
     return Math.round((stats.value.done / stats.value.total) * 100);
+});
+
+const projectInitials = computed(() => {
+    const name = props.project?.name || 'TP';
+    const words = name.trim().split(/\s+/);
+    if (words.length >= 2) {
+        return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+});
+
+const teamCount = computed(() => {
+    return (props.project?.users || []).length || assigneesList.value.length || 1;
+});
+
+const daysRemainingInfo = computed(() => {
+    if (!props.project?.end_date) return null;
+    const end = new Date(props.project.end_date);
+    if (isNaN(end)) return null;
+    const todayZero = new Date();
+    todayZero.setHours(0, 0, 0, 0);
+    const endZero = new Date(end);
+    endZero.setHours(0, 0, 0, 0);
+    const diffTime = endZero.getTime() - todayZero.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) {
+        return { label: `Quá hạn ${Math.abs(diffDays)} ngày`, urgent: true };
+    } else if (diffDays === 0) {
+        return { label: 'Hôm nay là hạn chót', urgent: true };
+    } else {
+        return { label: `Còn ${diffDays} ngày`, urgent: diffDays <= 3 };
+    }
+});
+
+const projectHealth = computed(() => {
+    const highOrOverdue = stats.value.highOrOverdue;
+    if (highOrOverdue >= 3) {
+        return { label: 'Cần can thiệp', class: 'health-danger', icon: 'fa-exclamation-circle' };
+    }
+    if (highOrOverdue >= 1) {
+        return { label: 'Cần lưu ý', class: 'health-warning', icon: 'fa-exclamation-triangle' };
+    }
+    return { label: 'Đúng kế hoạch', class: 'health-good', icon: 'fa-check-circle' };
 });
 
 const todayLabel = computed(() => {

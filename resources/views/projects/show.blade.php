@@ -2,6 +2,7 @@
 
 @section('content')
 <link href="{{ asset('build/assets/task-shared.css') }}?v={{ file_exists(public_path('build/assets/task-shared.css')) ? filemtime(public_path('build/assets/task-shared.css')) : time() }}" rel="stylesheet">
+<link href="{{ asset('css/project-dashboard-luxury.css') }}?v={{ file_exists(public_path('css/project-dashboard-luxury.css')) ? filemtime(public_path('css/project-dashboard-luxury.css')) : time() }}" rel="stylesheet">
 @if(file_exists(public_path('build/assets/project-dashboard.css')))
 <link href="{{ asset('build/assets/project-dashboard.css') }}?v={{ filemtime(public_path('build/assets/project-dashboard.css')) }}" rel="stylesheet">
 @endif

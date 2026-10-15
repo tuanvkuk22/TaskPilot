@@ -361,6 +361,7 @@ const props = defineProps({
     selectedStatus: { type: String, default: '' },
     selectedPriority: { type: String, default: '' },
     successMessage: { type: String, default: '' },
+    effectiveWorkflow: { type: Object, default: () => null },
 });
 
 const successMessage = ref(props.successMessage);
@@ -428,11 +429,24 @@ const draggedTask = ref(null);
 const draggedTaskId = ref(null);
 const activeDropColumn = ref(null);
 
-const columns = [
-    { key: 'todo', label: 'Cần làm', icon: 'fa fa-circle-o', iconColor: '#64748b', badgeBg: '#f1f5f9', badgeColor: '#475569' },
-    { key: 'in_progress', label: 'Đang thực hiện', icon: 'fa fa-spinner', iconColor: '#2563eb', badgeBg: '#eff6ff', badgeColor: '#2563eb' },
-    { key: 'done', label: 'Hoàn thành', icon: 'fa fa-check-circle', iconColor: '#10b981', badgeBg: '#d1fae5', badgeColor: '#059669' },
-];
+const columns = computed(() => {
+    if (props.effectiveWorkflow && props.effectiveWorkflow.statuses && props.effectiveWorkflow.statuses.length > 0) {
+        return props.effectiveWorkflow.statuses.map(s => ({
+            key: s.key,
+            label: s.name,
+            icon: s.icon ? `fa ${s.icon}` : 'fa fa-circle-o',
+            iconColor: s.color || '#64748b',
+            badgeBg: '#f1f5f9',
+            badgeColor: s.color || '#475569',
+            category: s.category || 'in_progress',
+        }));
+    }
+    return [
+        { key: 'todo', label: 'Cần làm', icon: 'fa fa-circle-o', iconColor: '#64748b', badgeBg: '#f1f5f9', badgeColor: '#475569' },
+        { key: 'in_progress', label: 'Đang thực hiện', icon: 'fa fa-spinner', iconColor: '#2563eb', badgeBg: '#eff6ff', badgeColor: '#2563eb' },
+        { key: 'done', label: 'Hoàn thành', icon: 'fa fa-check-circle', iconColor: '#10b981', badgeBg: '#d1fae5', badgeColor: '#059669' },
+    ];
+});
 
 const hasActiveFilters = computed(() => {
     return searchQuery.value !== '' ||
@@ -517,9 +531,16 @@ const filteredTasks = computed(() => {
 
 function getTasksByStatus(group) {
     return filteredTasks.value.filter(task => {
-        if (group === 'todo') return ['todo', 'backlog', 'open', 'new'].includes(task.status) || !task.status;
-        if (group === 'in_progress') return ['in_progress', 'doing', 'review', 'in_review'].includes(task.status);
-        if (group === 'done') return ['done', 'completed', 'resolved', 'closed'].includes(task.status);
+        if (task.status === group) return true;
+        if (group === 'todo' || group === 'open' || group === 'draft' || group === 'application') {
+            return ['todo', 'backlog', 'open', 'new', 'draft', 'application'].includes(task.status) || !task.status;
+        }
+        if (group === 'in_progress' || group === 'in_development' || group === 'content_creation' || group === 'screening') {
+            return ['in_progress', 'doing', 'in_development', 'content_creation', 'screening'].includes(task.status);
+        }
+        if (group === 'done') {
+            return ['done', 'completed', 'resolved', 'closed'].includes(task.status);
+        }
         return false;
     });
 }
@@ -588,12 +609,55 @@ async function handleDrop(event, colKey) {
         });
 
         const data = await res.json();
-        if (!data.success) {
+        if (!res.ok || !data.success) {
             task.status = oldStatus;
-            alert('Không thể chuyển trạng thái công việc.');
+            if (data.gate_type === 'approval_gate') {
+                const sig = prompt(data.message + '\n\nNhập chữ ký duyệt của Tech Lead hoặc Khách hàng để tiếp tục:');
+                if (sig && sig.trim()) {
+                    await sendMoveWithPayload(task, newStatus, { approval_signature: sig.trim() }, oldStatus);
+                }
+            } else if (data.gate_type === 'validation_rule' && data.required_action === 'worklog') {
+                const hours = prompt(data.message + '\n\nNhập số giờ làm việc thực tế (worklog):', '1.0');
+                if (hours && parseFloat(hours) > 0) {
+                    await sendMoveWithPayload(task, newStatus, { worklog_hours: parseFloat(hours) }, oldStatus);
+                }
+            } else if (data.gate_type === 'validation_rule' && data.required_action === 'test_result') {
+                const tr = prompt(data.message + '\n\nGhi nhận kết quả kiểm thử (Test Result / Passed):', 'Passed');
+                if (tr && tr.trim()) {
+                    await sendMoveWithPayload(task, newStatus, { test_status: 'passed', test_result: tr.trim() }, oldStatus);
+                }
+            } else {
+                alert(data.message || 'Không thể chuyển trạng thái công việc.');
+            }
         }
     } catch (err) {
         console.error('Error moving task:', err);
+        task.status = oldStatus;
+    }
+}
+
+async function sendMoveWithPayload(task, newStatus, payload, oldStatus) {
+    try {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const res = await fetch(`/tasks/${task.id}/move`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token || '',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus, ...payload })
+        });
+        const data = await res.json();
+        if (data.success) {
+            task.status = newStatus;
+            alert(`Đã chuyển trạng thái sang "${newStatus}" thành công.`);
+        } else {
+            task.status = oldStatus;
+            alert(data.message || 'Không thể chuyển trạng thái.');
+        }
+    } catch (e) {
         task.status = oldStatus;
     }
 }

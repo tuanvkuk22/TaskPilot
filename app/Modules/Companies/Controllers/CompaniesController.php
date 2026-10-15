@@ -57,7 +57,14 @@ class CompaniesController extends Controller
      */
     public function create(): View
     {
-        return view('companies.create');
+        return view('companies.create', [
+            'company' => null,
+            'is_edit' => false,
+            'action_url' => route('companies.store'),
+            'back_url' => route('companies.index'),
+            'errors' => session('errors') ? session('errors')->toArray() : [],
+            'old' => old(),
+        ]);
     }
 
     /**
@@ -106,7 +113,14 @@ class CompaniesController extends Controller
     {
         $company = $this->showCompanyHandler->handle($company);
 
-        return view('companies.edit', ['company' => $company]);
+        return view('companies.edit', [
+            'company' => $company,
+            'is_edit' => true,
+            'action_url' => route('companies.update', $company->id),
+            'back_url' => route('companies.show', $company->id),
+            'errors' => session('errors') ? session('errors')->toArray() : [],
+            'old' => old(),
+        ]);
     }
 
     /**

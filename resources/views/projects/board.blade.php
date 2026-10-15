@@ -41,7 +41,7 @@
         <a href="{{ route('projects.roles.index', $project) }}" class="pd-nav-item">Vai trò &amp; Quyền</a>
         <a href="{{ route('sprints.index', $project) }}" class="pd-nav-item">Backlog / Sprint</a>
         <a href="{{ route('projects.timeline', $project) }}" class="pd-nav-item">Timeline</a>
-        <a href="{{ route('projects.roadmap', $project) }}" class="pd-nav-item">Roadmap</a>
+        <a href="{{ route('projects.roadmap', $project) }}" class="pd-nav-item">Lịch biểu</a>
     </div>
 
     <!-- Vue TaskPilot Kanban App (Includes Live Stats + Filters + Board) -->
@@ -60,6 +60,7 @@
         selected_project: @json($project->id),
         selected_status: '',
         selected_priority: '',
+        effective_workflow: @json($effective_workflow ?? null),
     };
 </script>
 <script type="module" src="{{ asset('build/assets/task-index.js') }}?v={{ file_exists(public_path('build/assets/task-index.js')) ? filemtime(public_path('build/assets/task-index.js')) : time() }}"></script>

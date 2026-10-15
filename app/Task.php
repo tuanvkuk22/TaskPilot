@@ -16,9 +16,17 @@ class Task extends Model
         'company_id', 'description', 'status', 'priority', 'issue_type', 'assignee_id', 'reporter_id',
         'issue_key',
         'due_date', 'start_date', 'end_date', 'story_points', 'labels', 'sprint', 'parent_id', 'sprint_id',
+        'test_result', 'test_status', 'approved_by', 'approved_at', 'approval_signature', 'approval_role',
     ];
 
-    protected $casts = ['due_date' => 'date', 'start_date' => 'date', 'end_date' => 'date', 'story_points' => 'decimal:1'];
+    protected $casts = [
+        'due_date' => 'date',
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'story_points' => 'decimal:1',
+        'approved_at' => 'datetime',
+    ];
+
 
 
     public function user(){
@@ -51,4 +59,6 @@ class Task extends Model
     public function worklogs() { return $this->hasMany(Worklog::class); }
     public function skills() { return $this->hasMany(TaskSkill::class, 'task_id'); }
     public function aiRecommendations() { return $this->hasMany(AiAssigneeRecommendation::class, 'task_id'); }
+    public function approver() { return $this->belongsTo(User::class, 'approved_by'); }
 }
+

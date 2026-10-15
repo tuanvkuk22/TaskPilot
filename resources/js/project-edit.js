@@ -15,6 +15,8 @@ const app = createApp(ProjectEdit, {
     updateUrl: window.projectEditData?.update_url || '',
     projectsIndexUrl: window.projectEditData?.projects_index_url || '',
     projectImageUrl: window.projectEditData?.project_image_url || '',
+    effectiveWorkflow: window.projectEditData?.effective_workflow || null,
+    defaultWorkflows: window.projectEditData?.default_workflows || {},
 });
 
 app.mount('#project-edit-app');

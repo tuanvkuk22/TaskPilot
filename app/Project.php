@@ -13,16 +13,111 @@ class Project extends Model
         'description',
         'company_id',
         'user_id',
-        'days', 'status', 'archived', 'project_type', 'team_name', 'project_code',
+        'days', 'status', 'archived', 'project_type', 'workflow_config', 'team_name', 'project_code',
         'start_date', 'end_date', 'budget', 'priority', 'customer_name', 'location',
         'objective', 'category_id', 'team_id',
     ];
 
-    protected $casts = ['archived' => 'boolean', 'start_date' => 'date', 'end_date' => 'date', 'budget' => 'decimal:2'];
+    protected $casts = [
+        'archived' => 'boolean',
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'budget' => 'decimal:2',
+        'workflow_config' => 'array',
+    ];
+
+    public static function defaultWorkflowForType(?string $type = 'software'): array
+    {
+        $type = strtolower((string) $type);
+        if ($type === 'marketing') {
+            return [
+                'project_type' => 'marketing',
+                'statuses' => [
+                    ['key' => 'draft', 'name' => 'Draft / Lên ý tưởng', 'color' => '#64748b', 'category' => 'todo', 'is_initial' => true, 'icon' => 'fa-lightbulb-o'],
+                    ['key' => 'content_creation', 'name' => 'Sản xuất nội dung', 'color' => '#3b82f6', 'category' => 'in_progress', 'icon' => 'fa-pencil'],
+                    ['key' => 'design_review', 'name' => 'Thiết kế & Review', 'color' => '#ec4899', 'category' => 'review', 'icon' => 'fa-paint-brush'],
+                    ['key' => 'approval', 'name' => 'Duyệt chiến dịch', 'color' => '#8b5cf6', 'category' => 'review', 'icon' => 'fa-handshake-o'],
+                    ['key' => 'published', 'name' => 'Xuất bản / Chạy ads', 'color' => '#06b6d4', 'category' => 'testing', 'icon' => 'fa-rocket'],
+                    ['key' => 'done', 'name' => 'Hoàn thành (Done)', 'color' => '#10b981', 'category' => 'done', 'is_final' => true, 'icon' => 'fa-check-circle'],
+                ],
+                'approval_gates' => [
+                    'require_tech_lead' => false,
+                    'require_customer' => true,
+                    'note' => 'Bắt buộc Khách hàng hoặc Lead phê duyệt trước khi hoàn thành.',
+                ],
+                'validation_rules' => [
+                    'require_worklog' => true,
+                    'require_test_result' => false,
+                    'note' => 'Bắt buộc nhập thời gian thực tế (worklog) trước khi đóng task.',
+                ],
+            ];
+        }
+
+        if ($type === 'hr') {
+            return [
+                'project_type' => 'hr',
+                'statuses' => [
+                    ['key' => 'application', 'name' => 'Tiếp nhận hồ sơ', 'color' => '#64748b', 'category' => 'todo', 'is_initial' => true, 'icon' => 'fa-file-text-o'],
+                    ['key' => 'screening', 'name' => 'Sàng lọc ứng viên', 'color' => '#3b82f6', 'category' => 'in_progress', 'icon' => 'fa-search'],
+                    ['key' => 'interview', 'name' => 'Phỏng vấn', 'color' => '#8b5cf6', 'category' => 'review', 'icon' => 'fa-users'],
+                    ['key' => 'offer', 'name' => 'Đề nghị tuyển dụng (Offer)', 'color' => '#f59e0b', 'category' => 'review', 'icon' => 'fa-gift'],
+                    ['key' => 'onboarding', 'name' => 'Onboarding thử việc', 'color' => '#06b6d4', 'category' => 'testing', 'icon' => 'fa-id-card-o'],
+                    ['key' => 'done', 'name' => 'Hoàn tất tuyển dụng', 'color' => '#10b981', 'category' => 'done', 'is_final' => true, 'icon' => 'fa-check-circle'],
+                ],
+                'approval_gates' => [
+                    'require_tech_lead' => false,
+                    'require_customer' => true,
+                    'note' => 'Bắt buộc Trưởng bộ phận hoặc Khách hàng ký duyệt trước khi hoàn thành.',
+                ],
+                'validation_rules' => [
+                    'require_worklog' => true,
+                    'require_test_result' => false,
+                    'note' => 'Bắt buộc nhập thời gian thực tế (worklog) trước khi đóng task.',
+                ],
+            ];
+        }
+
+        // Default: Software
+        return [
+            'project_type' => 'software',
+            'statuses' => [
+                ['key' => 'open', 'name' => 'Open', 'color' => '#64748b', 'category' => 'todo', 'is_initial' => true, 'icon' => 'fa-circle-o'],
+                ['key' => 'in_development', 'name' => 'In Development', 'color' => '#3b82f6', 'category' => 'in_progress', 'icon' => 'fa-code'],
+                ['key' => 'code_review', 'name' => 'Code Review', 'color' => '#8b5cf6', 'category' => 'review', 'icon' => 'fa-eye'],
+                ['key' => 'qa_testing', 'name' => 'QA Testing', 'color' => '#f59e0b', 'category' => 'testing', 'icon' => 'fa-bug'],
+                ['key' => 'uat', 'name' => 'UAT', 'color' => '#06b6d4', 'category' => 'review', 'icon' => 'fa-check-square'],
+                ['key' => 'done', 'name' => 'Done', 'color' => '#10b981', 'category' => 'done', 'is_final' => true, 'icon' => 'fa-check-circle'],
+            ],
+            'approval_gates' => [
+                'require_tech_lead' => true,
+                'require_customer' => false,
+                'note' => 'Bắt buộc phải có chữ ký duyệt của Tech Lead hoặc Khách hàng trước khi chuyển trạng thái sang Done.',
+            ],
+            'validation_rules' => [
+                'require_worklog' => true,
+                'require_test_result' => true,
+                'note' => 'Bắt buộc nhập thời gian thực tế (worklog) hoặc kết quả test trước khi đóng task.',
+            ],
+        ];
+    }
+
+    public function getEffectiveWorkflowAttribute(): array
+    {
+        if (!empty($this->workflow_config) && is_array($this->workflow_config) && !empty($this->workflow_config['statuses'])) {
+            return $this->workflow_config;
+        }
+
+        return self::defaultWorkflowForType($this->project_type ?? 'software');
+    }
+
 
 
     public function users(){
 		return $this->belongsToMany(User::class)->withPivot('role', 'permissions');
+    }
+
+    public function members(){
+        return $this->users();
     }
 
     public function roles(){

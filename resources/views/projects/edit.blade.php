@@ -22,6 +22,8 @@
         update_url: @json($update_url ?? route('projects.update', $project->id)),
         projects_index_url: @json(route('projects.index')),
         project_image_url: @json($project->image ? \Illuminate\Support\Facades\Storage::url($project->image) : ''),
+        effective_workflow: @json($effective_workflow ?? null),
+        default_workflows: @json($default_workflows ?? []),
     };
 </script>
 <script type="module" src="{{ asset('build/assets/project-edit.js') }}?v={{ filemtime(public_path('build/assets/project-edit.js')) }}"></script>

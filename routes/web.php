@@ -85,12 +85,18 @@ Route::middleware('auth')->group(function (): void {
     Route::resource('tasks', TasksController::class);
     Route::match(['post', 'patch', 'put'], 'tasks/{task}/move', [TasksController::class, 'move'])->name('tasks.move');
     Route::post('tasks/{task}/worklog', [TasksController::class, 'worklog'])->name('tasks.worklog');
+    Route::post('tasks/{task}/approve', [TasksController::class, 'approve'])->name('tasks.approve');
+    Route::post('tasks/{task}/test-result', [TasksController::class, 'saveTestResult'])->name('tasks.test-result');
 
     Route::get('projects/{project}/sprints', [SprintsController::class, 'index'])->name('sprints.index');
     Route::post('projects/{project}/sprints', [SprintsController::class, 'store'])->name('sprints.store');
-
-    Route::post('sprints/{sprint}/start', [SprintsController::class, 'start'])->name('sprints.start');
-    Route::post('sprints/{sprint}/close', [SprintsController::class, 'close'])->name('sprints.close');
+    Route::post('projects/{project}/sprints/{sprint}/start', [SprintsController::class, 'start'])->name('sprints.start');
+    Route::post('projects/{project}/sprints/{sprint}/close', [SprintsController::class, 'close'])->name('sprints.close');
+    Route::match(['post', 'put'], 'projects/{project}/tasks/{task}/sprint', [SprintsController::class, 'moveTask'])->name('sprints.tasks.move');
+    Route::post('projects/{project}/tasks/quick-backlog', [SprintsController::class, 'quickStoreTask'])->name('sprints.tasks.quick-store');
+    Route::post('tasks/{task}/story-points', [SprintsController::class, 'updateStoryPoints'])->name('sprints.tasks.story-points');
+    Route::post('sprints/{sprint}/start', [SprintsController::class, 'start']);
+    Route::post('sprints/{sprint}/close', [SprintsController::class, 'close']);
 
     Route::resource('teams', TeamsController::class);
     Route::post('teams/{team}/invite', [TeamsController::class, 'invite'])->name('teams.invite');
