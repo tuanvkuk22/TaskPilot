@@ -1,5 +1,23 @@
 @extends('layouts.app')
+
 @section('content')
-<section class="tp-page-head"><div><span class="tp-eyebrow">CUSTOMERS</span><h1>Chỉnh sửa {{ $company->name }}</h1><p>Cập nhật hồ sơ và thông tin liên hệ khách hàng.</p></div><a href="{{ route('companies.show',$company) }}" class="btn btn-default">Quay lại</a></section>
-<section class="tp-surface tp-form"><div class="tp-surface-body"><form method="POST" action="{{ route('companies.update',$company) }}">@csrf @method('PUT') @include('companies.partials.form',['company'=>$company])<div class="tp-actions"><button class="btn btn-primary">Lưu thay đổi</button><a href="{{ route('companies.show',$company) }}" class="btn btn-default">Hủy</a></div></form></div></section>
+<link href="{{ asset('build/assets/company-form.css') }}?v={{ file_exists(public_path('build/assets/company-form.css')) ? filemtime(public_path('build/assets/company-form.css')) : time() }}" rel="stylesheet">
+<div class="col-xs-12 tp-company-form-container-wrap" style="padding-left: 0; padding-right: 0; width: 100%;">
+    <div id="company-form-app"></div>
+</div>
+@endsection
+
+@section('jqueryScript')
+<script>
+    window.companyFormData = {
+        company: @json($company),
+        is_edit: true,
+        action_url: @json($action_url ?? route('companies.update', $company->id)),
+        back_url: @json($back_url ?? route('companies.show', $company->id)),
+        csrf_token: @json(csrf_token()),
+        errors: @json($errors ?? []),
+        old: @json($old ?? old()),
+    };
+</script>
+<script type="module" src="{{ asset('build/assets/company-form.js') }}?v={{ file_exists(public_path('build/assets/company-form.js')) ? filemtime(public_path('build/assets/company-form.js')) : time() }}"></script>
 @endsection

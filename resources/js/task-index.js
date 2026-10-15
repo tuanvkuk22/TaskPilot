@@ -13,6 +13,7 @@ const app = createApp(TaskList, {
     selectedStatus: d.selected_status || '',
     selectedPriority: d.selected_priority || '',
     successMessage: d.success_message || '',
+    effectiveWorkflow: d.effective_workflow || null,
 });
 
 app.mount('#task-index-app');

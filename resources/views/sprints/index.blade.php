@@ -49,7 +49,7 @@
                 <i class="fa fa-calendar"></i> Timeline
             </a>
             <a href="{{ route('projects.roadmap', $project) }}" class="tp-project-nav-tab">
-                <i class="fa fa-map-signs"></i> Roadmap
+                <i class="fa fa-calendar"></i> Lịch biểu
             </a>
             @if(\Illuminate\Support\Facades\Route::has('projects.reports.show'))
             <a href="{{ route('projects.reports.show', $project) }}" class="tp-project-nav-tab">

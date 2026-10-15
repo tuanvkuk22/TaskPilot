@@ -85,6 +85,8 @@ Route::middleware('auth')->group(function (): void {
     Route::resource('tasks', TasksController::class);
     Route::match(['post', 'patch', 'put'], 'tasks/{task}/move', [TasksController::class, 'move'])->name('tasks.move');
     Route::post('tasks/{task}/worklog', [TasksController::class, 'worklog'])->name('tasks.worklog');
+    Route::post('tasks/{task}/approve', [TasksController::class, 'approve'])->name('tasks.approve');
+    Route::post('tasks/{task}/test-result', [TasksController::class, 'saveTestResult'])->name('tasks.test-result');
 
     Route::get('projects/{project}/sprints', [SprintsController::class, 'index'])->name('sprints.index');
     Route::post('projects/{project}/sprints', [SprintsController::class, 'store'])->name('sprints.store');

@@ -203,7 +203,7 @@ class TasksController extends Controller
         $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'issue_type' => ['sometimes', 'required', 'in:task,bug,story,epic,subtask'],
-            'status' => ['sometimes', 'required', 'in:todo,in_progress,done'],
+            'status' => ['sometimes', 'required', 'string', 'max:100'],
             'priority' => ['sometimes', 'required', 'in:low,medium,high'],
             'assignee_id' => ['nullable', 'integer', 'exists:users,id'],
             'reporter_id' => ['nullable', 'integer', 'exists:users,id'],
@@ -216,10 +216,25 @@ class TasksController extends Controller
             'parent_id' => ['nullable', 'integer', 'exists:tasks,id'],
             'description' => ['nullable', 'string'],
         ]);
+
+        if ($request->has('status') && $request->input('status') !== $task->status) {
+            $gateError = $this->validateWorkflowGates($task, $request->input('status'), $request);
+            if ($gateError) {
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $gateError['message'],
+                        'gate_type' => $gateError['type'],
+                    ], 422);
+                }
+                return back()->withInput()->withErrors(['status' => $gateError['message']]);
+            }
+        }
+
         $this->updateTaskHandler->handle($task, $request->all());
 
         if ($request->wantsJson() || $request->ajax()) {
-            return response()->json(['success' => true, 'task' => $task->fresh(['project', 'assignee', 'reporter', 'parent'])]);
+            return response()->json(['success' => true, 'task' => $task->fresh(['project', 'assignee', 'reporter', 'parent', 'worklogs', 'approver'])]);
         }
 
         if ($request->has('redirect_to_show') || url()->previous() == route('tasks.show', $task->id)) {
@@ -233,13 +248,84 @@ class TasksController extends Controller
     public function move(Request $request, Task $task): \Illuminate\Http\JsonResponse
     {
         $data = $request->validate([
-            'status' => ['required', 'in:todo,in_progress,done'],
+            'status' => ['required', 'string', 'max:100'],
+            'approval_signature' => ['nullable', 'string', 'max:255'],
+            'approval_role' => ['nullable', 'string', 'max:50'],
+            'worklog_hours' => ['nullable', 'numeric', 'min:0.1', 'max:24'],
+            'worklog_description' => ['nullable', 'string', 'max:1000'],
+            'test_status' => ['nullable', 'string', 'in:passed,failed,not_tested'],
+            'test_result' => ['nullable', 'string', 'max:2000'],
         ]);
+
+        if ($data['status'] !== $task->status) {
+            $gateError = $this->validateWorkflowGates($task, $data['status'], $request);
+            if ($gateError) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $gateError['message'],
+                    'gate_type' => $gateError['type'],
+                    'required_action' => $gateError['required_action'],
+                ], 422);
+            }
+        }
 
         $this->updateTaskHandler->handle($task, ['status' => $data['status']]);
 
-        return response()->json(['success' => true, 'status' => $data['status']]);
+        return response()->json([
+            'success' => true,
+            'status' => $data['status'],
+            'task' => $task->fresh(['project', 'assignee', 'reporter', 'parent', 'worklogs', 'approver']),
+        ]);
     }
+
+    public function approve(Request $request, Task $task): \Illuminate\Http\JsonResponse
+    {
+        $data = $request->validate([
+            'signature' => ['required', 'string', 'max:255'],
+            'role' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $task->update([
+            'approved_by' => Auth::id(),
+            'approved_at' => now(),
+            'approval_signature' => $data['signature'],
+            'approval_role' => $data['role'] ?? 'tech_lead',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã ký duyệt công việc thành công.',
+            'task' => $task->fresh(['approver', 'worklogs']),
+        ]);
+    }
+
+    public function saveTestResult(Request $request, Task $task): \Illuminate\Http\JsonResponse
+    {
+        $data = $request->validate([
+            'test_status' => ['required', 'string', 'in:passed,failed,not_tested'],
+            'test_result' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $task->update([
+            'test_status' => $data['test_status'],
+            'test_result' => $data['test_result'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã ghi nhận kết quả kiểm thử thành công.',
+            'task' => $task->fresh(),
+        ]);
+    }
+
+    protected function validateWorkflowGates(Task $task, string $targetStatus, Request $request): ?array
+    {
+        // Approval gates and validation rules removed per user request
+        return null;
+    }
+
+
+
 
     /**
      * Remove the specified task from storage.

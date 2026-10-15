@@ -1,0 +1,1229 @@
+/* ==========================================================================
+   TASKPILOT - LUXURY ENTERPRISE PROJECT DASHBOARD STYLES
+   Designed with Linear / Jira Cloud Executive Aesthetic
+   Full Light & Dark Theme Support (html.tp-theme-dark)
+   ========================================================================== */
+
+:root {
+    --pd-primary: #2563eb;
+    --pd-primary-hover: #1d4ed8;
+    --pd-primary-light: #eff6ff;
+    --pd-primary-glow: rgba(37, 99, 235, 0.25);
+    
+    --pd-emerald: #10b981;
+    --pd-emerald-light: #ecfdf5;
+    --pd-emerald-border: #a7f3d0;
+    
+    --pd-indigo: #6366f1;
+    --pd-indigo-light: #eef2ff;
+    
+    --pd-purple: #8b5cf6;
+    --pd-purple-light: #f5f3ff;
+    
+    --pd-rose: #f43f5e;
+    --pd-rose-light: #fff1f2;
+    --pd-rose-border: #fecdd3;
+    
+    --pd-amber: #f59e0b;
+    --pd-amber-light: #fffbeb;
+    
+    --pd-card-bg: #ffffff;
+    --pd-card-border: #e2e8f0;
+    --pd-card-hover-border: #cbd5e1;
+    
+    --pd-text-main: #0f172a;
+    --pd-text-muted: #64748b;
+    --pd-text-subtle: #94a3b8;
+    
+    --pd-radius-sm: 8px;
+    --pd-radius-md: 12px;
+    --pd-radius-lg: 16px;
+    --pd-radius-pill: 9999px;
+    
+    --pd-shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+    --pd-shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+    --pd-shadow-hover: 0 14px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+}
+
+/* Base Wrapper */
+.project-dashboard-vue {
+    width: 100%;
+    min-width: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif !important;
+    color: var(--pd-text-main);
+    padding-bottom: 40px;
+}
+
+/* ==========================================================================
+   1. HERO HEADER BANNER
+   ========================================================================== */
+.pd-hero-banner {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid var(--pd-card-border);
+    border-radius: var(--pd-radius-lg);
+    padding: 22px 26px;
+    margin-bottom: 20px;
+    box-shadow: var(--pd-shadow-card);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s ease;
+}
+
+.pd-hero-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #2563eb, #6366f1, #8b5cf6, #10b981);
+}
+
+.pd-hero-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.pd-hero-left {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    flex: 1;
+    min-width: 280px;
+}
+
+/* Project Avatar / Monogram */
+.pd-project-avatar {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+    flex-shrink: 0;
+    border: 2px solid #ffffff;
+}
+
+.pd-hero-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.pd-breadcrumb-modern {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--pd-text-muted);
+    margin-bottom: 6px;
+}
+
+.pd-breadcrumb-modern a {
+    color: var(--pd-primary);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.pd-breadcrumb-modern a:hover {
+    color: var(--pd-primary-hover);
+    text-decoration: underline;
+}
+
+.pd-breadcrumb-sep {
+    color: var(--pd-text-subtle);
+    font-size: 10px;
+}
+
+.pd-hero-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.pd-hero-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--pd-text-main);
+    margin: 0;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+}
+
+.pd-code-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    letter-spacing: 0.05em;
+}
+
+/* Pulsing Status Pill */
+.pd-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 10px;
+    border-radius: var(--pd-radius-pill);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.pd-status-pill.status-active {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+}
+
+.pd-status-pill.status-completed {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+}
+
+.pd-status-pill.status-archived {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+}
+
+.pd-pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: pdPulse 2s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+
+@keyframes pdPulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.pd-pulse-dot.dot-paused {
+    background-color: #f59e0b;
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+}
+
+.pd-pulse-dot.dot-done {
+    background-color: #2563eb;
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
+}
+
+.pd-hero-settings-link {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--pd-radius-sm);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--pd-text-muted);
+    background: #ffffff;
+    border: 1px solid var(--pd-card-border);
+    transition: all 0.2s ease;
+    text-decoration: none !important;
+}
+
+.pd-hero-settings-link:hover {
+    color: var(--pd-primary);
+    background: var(--pd-primary-light);
+    border-color: #bfdbfe;
+    transform: rotate(30deg);
+}
+
+/* Meta Chips */
+.pd-hero-chips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pd-hero-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: var(--pd-radius-pill);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    font-size: 12px;
+    color: var(--pd-text-muted);
+    font-weight: 500;
+    transition: all 0.15s ease;
+}
+
+.pd-hero-chip i {
+    font-size: 12px;
+}
+
+.pd-hero-chip:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    color: var(--pd-text-main);
+}
+
+.pd-hero-chip.chip-timeline i { color: #3b82f6; }
+.pd-hero-chip.chip-priority i { color: #f59e0b; }
+.pd-hero-chip.chip-budget i { color: #10b981; }
+.pd-hero-chip.chip-team i { color: #8b5cf6; }
+
+.pd-days-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #2563eb;
+    margin-left: 2px;
+}
+
+.pd-days-badge.is-urgent {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+/* Hero Actions */
+.pd-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pd-hero-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    border-radius: var(--pd-radius-sm);
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff !important;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    text-decoration: none !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+}
+
+.pd-hero-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+}
+
+.pd-hero-btn-primary i, .pd-hero-btn-primary span {
+    color: #ffffff !important;
+}
+
+/* ==========================================================================
+   2. PILL NAVIGATION BAR
+   ========================================================================== */
+.pd-project-nav {
+    background: #ffffff;
+    border: 1px solid var(--pd-card-border);
+    border-radius: var(--pd-radius-md);
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 24px;
+    box-shadow: var(--pd-shadow-subtle);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.pd-project-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.pd-nav-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: var(--pd-radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+    text-decoration: none !important;
+    white-space: nowrap;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+}
+
+.pd-nav-item i {
+    font-size: 13px;
+    color: #94a3b8;
+    transition: color 0.15s ease;
+}
+
+.pd-nav-item:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+}
+
+.pd-nav-item:hover i {
+    color: var(--pd-primary);
+}
+
+.pd-nav-item.active {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.28);
+}
+
+.pd-nav-item.active i {
+    color: #ffffff !important;
+}
+
+/* ==========================================================================
+   3. LUXURY KPI STATS GRID
+   ========================================================================== */
+.pd-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.pd-stat-card {
+    background: #ffffff;
+    border: 1px solid var(--pd-card-border);
+    border-radius: var(--pd-radius-md);
+    padding: 18px 20px;
+    box-shadow: var(--pd-shadow-subtle);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.pd-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--pd-shadow-hover);
+    border-color: var(--pd-card-hover-border);
+}
+
+.pd-stat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.pd-stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--pd-text-muted);
+}
+
+.pd-stat-icon-wrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.pd-stat-icon-wrap.total {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.pd-stat-icon-wrap.done {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.pd-stat-icon-wrap.progress {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.pd-stat-icon-wrap.overdue {
+    background: #fff1f2;
+    color: #e11d48;
+}
+
+.pd-stat-main {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.pd-stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--pd-text-main);
+    letter-spacing: -0.03em;
+}
+
+.pd-stat-value.text-emerald { color: #059669; }
+.pd-stat-value.text-indigo { color: #4f46e5; }
+.pd-stat-value.text-rose { color: #e11d48; }
+
+.pd-stat-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: var(--pd-radius-pill);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.pd-stat-badge.badge-success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.pd-stat-badge.badge-info {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.pd-stat-badge.badge-danger {
+    background: #ffe4e6;
+    color: #9f1239;
+}
+
+.pd-stat-badge.badge-neutral {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.pd-stat-tag {
+    font-size: 11px;
+    color: #64748b;
+    background: #f8fafc;
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+}
+
+/* Micro progress bar inside KPI card */
+.pd-stat-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #f1f5f9;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.pd-stat-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+}
+
+.pd-stat-progress-fill.fill-done {
+    background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.pd-stat-progress-fill.fill-progress {
+    background: linear-gradient(90deg, #6366f1, #4f46e5);
+}
+
+.pd-stat-footer {
+    display: flex;
+    align-items: center;
+    font-size: 11.5px;
+    color: var(--pd-text-muted);
+}
+
+.pd-stat-alert-text {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.pd-stat-safe-text {
+    color: #059669;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   4. OVERVIEW CARDS (Progress, Recent Tasks, AI Assistant)
+   ========================================================================== */
+.pd-grid {
+    display: grid;
+    grid-template-columns: 1.35fr 0.85fr;
+    gap: 22px;
+    align-items: start;
+}
+
+.pd-main, .pd-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.pd-jira-card {
+    background: #ffffff;
+    border: 1px solid var(--pd-card-border);
+    border-radius: var(--pd-radius-md);
+    box-shadow: var(--pd-shadow-subtle);
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pd-jira-card:hover {
+    border-color: var(--pd-card-hover-border);
+    box-shadow: var(--pd-shadow-card);
+}
+
+.pd-jira-card-header {
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pd-jira-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--pd-text-main);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.01em;
+}
+
+.pd-jira-card-body {
+    padding: 20px;
+}
+
+/* Progress Card Enhancements */
+.pd-progress-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.pd-health-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: var(--pd-radius-pill);
+    font-size: 11.5px;
+    font-weight: 700;
+}
+
+.pd-health-badge.health-good {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+}
+
+.pd-health-badge.health-warning {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fde68a;
+}
+
+.pd-health-badge.health-danger {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.pd-progress-bar-luxury {
+    width: 100%;
+    height: 14px;
+    background: #e2e8f0;
+    border-radius: var(--pd-radius-pill);
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+    margin-bottom: 10px;
+}
+
+.pd-progress-fill-luxury {
+    height: 100%;
+    border-radius: var(--pd-radius-pill);
+    background: linear-gradient(90deg, #2563eb 0%, #6366f1 50%, #10b981 100%);
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+.pd-progress-milestones {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--pd-text-muted);
+}
+
+.pd-milestone-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pd-milestone-label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--pd-text-subtle);
+}
+
+.pd-milestone-val {
+    font-weight: 600;
+    color: var(--pd-text-main);
+}
+
+/* Recent Tasks Luxury List */
+.pd-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pd-task-row {
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    border-radius: 10px;
+    display: grid;
+    grid-template-columns: 85px 1fr auto auto auto;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 16px;
+    transition: all 0.15s ease;
+}
+
+.pd-task-row:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateX(2px);
+}
+
+.pd-task-key-tag {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #475569;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    text-align: center;
+}
+
+.pd-task-title-link {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #0f172a;
+    text-decoration: none !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.15s ease;
+}
+
+.pd-task-title-link:hover {
+    color: var(--pd-primary);
+}
+
+/* AI Copilot Widget */
+.pd-ai-card {
+    border: 1px solid rgba(139, 92, 246, 0.3) !important;
+    background: linear-gradient(180deg, #ffffff 0%, #faf5ff 100%) !important;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.08) !important;
+}
+
+.pd-ai-card .pd-jira-card-header {
+    background: rgba(245, 243, 255, 0.6);
+    border-bottom: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.pd-ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: var(--pd-radius-pill);
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.pd-risk-alert-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.pd-risk-alert-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #fff1f2;
+    border-left: 3px solid #e11d48;
+    color: #9f1239;
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.pd-risk-alert-item i {
+    font-size: 14px;
+    color: #e11d48;
+}
+
+.ai-insight-unassigned {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ai-insight-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    transition: all 0.15s ease;
+}
+
+.ai-insight-row:hover {
+    border-color: #cbd5e1;
+    box-shadow: var(--pd-shadow-subtle);
+}
+
+/* Work Distribution */
+.pd-dist-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.pd-dist-row {
+    display: grid;
+    grid-template-columns: 85px 40px 1fr;
+    align-items: center;
+    gap: 12px;
+}
+
+.pd-dist-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.pd-dist-value {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0f172a;
+    text-align: right;
+}
+
+.pd-dist-bar {
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.pd-dist-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+    transition: width 0.3s ease;
+}
+
+/* ==========================================================================
+   5. KANBAN BOARD SECTION (Board Tab)
+   ========================================================================== */
+.pd-kanban-section {
+    animation: pdFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pdFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tp-kanban-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.tp-kanban-column {
+    background: #f8fafc;
+    border: 1px solid var(--pd-card-border);
+    border-radius: 14px;
+    padding: 16px;
+    min-height: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.tp-kanban-column.is-drop-target {
+    background: #eff6ff;
+    border: 2px dashed #3b82f6 !important;
+    box-shadow: 0 0 16px rgba(59, 130, 246, 0.2);
+}
+
+.tp-kanban-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.tp-kanban-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tp-kanban-count {
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: var(--pd-radius-pill);
+}
+
+.tp-kanban-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 440px;
+}
+
+.tp-kanban-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    cursor: grab;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    user-select: none;
+}
+
+.tp-kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    border-color: #cbd5e1;
+}
+
+.tp-kanban-card:active {
+    cursor: grabbing;
+}
+
+.tp-kanban-card.is-dragging {
+    opacity: 0.35;
+    transform: scale(0.98);
+    border: 2px dashed #2563eb;
+    background: #eff6ff;
+}
+
+/* ==========================================================================
+   6. DARK MODE THEME (html.tp-theme-dark)
+   Executive Deep Slate Palette
+   ========================================================================== */
+html.tp-theme-dark .project-dashboard-vue {
+    --pd-card-bg: #111c38;
+    --pd-card-border: rgba(255, 255, 255, 0.08);
+    --pd-card-hover-border: rgba(255, 255, 255, 0.16);
+    --pd-text-main: #f8fafc;
+    --pd-text-muted: #94a3b8;
+    --pd-text-subtle: #64748b;
+    color: #f8fafc;
+}
+
+/* Dark Mode Hero */
+html.tp-theme-dark .pd-hero-banner {
+    background: linear-gradient(135deg, #111c38 0%, #0b1329 100%);
+    border-color: rgba(255, 255, 255, 0.09);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+html.tp-theme-dark .pd-hero-title {
+    color: #ffffff;
+}
+
+html.tp-theme-dark .pd-code-badge {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+html.tp-theme-dark .pd-hero-settings-link {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+html.tp-theme-dark .pd-hero-settings-link:hover {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+html.tp-theme-dark .pd-hero-chip {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+}
+
+html.tp-theme-dark .pd-hero-chip:hover {
+    background: #27354f;
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+
+html.tp-theme-dark .pd-status-pill.status-active {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: #34d399;
+}
+
+/* Dark Mode Nav */
+html.tp-theme-dark .pd-project-nav {
+    background: #111c38;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+}
+
+html.tp-theme-dark .pd-nav-item {
+    color: #94a3b8;
+}
+
+html.tp-theme-dark .pd-nav-item:hover {
+    background: #1e293b;
+    color: #ffffff;
+}
+
+html.tp-theme-dark .pd-nav-item i {
+    color: #64748b;
+}
+
+html.tp-theme-dark .pd-nav-item:hover i {
+    color: #60a5fa;
+}
+
+/* Dark Mode KPI Cards */
+html.tp-theme-dark .pd-stat-card {
+    background: #111c38;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+html.tp-theme-dark .pd-stat-card:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.6);
+}
+
+html.tp-theme-dark .pd-stat-value {
+    color: #ffffff;
+}
+
+html.tp-theme-dark .pd-stat-tag {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+html.tp-theme-dark .pd-stat-progress-bar {
+    background: #1e293b;
+}
+
+/* Dark Mode Overview Cards */
+html.tp-theme-dark .pd-jira-card {
+    background: #111c38;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.tp-theme-dark .pd-jira-card-header {
+    background: #142244;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+html.tp-theme-dark .pd-jira-card-title {
+    color: #ffffff;
+}
+
+html.tp-theme-dark .pd-progress-bar-luxury {
+    background: #1e293b;
+}
+
+html.tp-theme-dark .pd-milestone-val {
+    color: #f1f5f9;
+}
+
+html.tp-theme-dark .pd-task-row {
+    background: #142244;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+html.tp-theme-dark .pd-task-row:hover {
+    background: #1a2c56;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+html.tp-theme-dark .pd-task-title-link {
+    color: #f8fafc;
+}
+
+html.tp-theme-dark .pd-task-title-link:hover {
+    color: #60a5fa;
+}
+
+html.tp-theme-dark .pd-task-key-tag {
+    background: #1e293b;
+    color: #94a3b8;
+}
+
+/* Dark Mode AI Card */
+html.tp-theme-dark .pd-ai-card {
+    background: linear-gradient(180deg, #131c3a 0%, #171638 100%) !important;
+    border-color: rgba(139, 92, 246, 0.25) !important;
+}
+
+html.tp-theme-dark .pd-ai-card .pd-jira-card-header {
+    background: rgba(139, 92, 246, 0.12);
+}
+
+html.tp-theme-dark .pd-risk-alert-item {
+    background: rgba(225, 29, 72, 0.15);
+    color: #fda4af;
+    border-left-color: #f43f5e;
+}
+
+html.tp-theme-dark .ai-insight-row {
+    background: #142244;
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+html.tp-theme-dark .ai-insight-row:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+html.tp-theme-dark .pd-dist-label {
+    color: #cbd5e1;
+}
+
+html.tp-theme-dark .pd-dist-value {
+    color: #ffffff;
+}
+
+html.tp-theme-dark .pd-dist-bar {
+    background: #1e293b;
+}
+
+/* Dark Mode Kanban Board */
+html.tp-theme-dark .tp-kanban-column {
+    background: #0f182f;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.tp-theme-dark .tp-kanban-column.is-drop-target {
+    background: #172445;
+    border-color: #60a5fa !important;
+}
+
+html.tp-theme-dark .tp-kanban-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+html.tp-theme-dark .tp-kanban-title {
+    color: #ffffff;
+}
+
+html.tp-theme-dark .tp-kanban-card {
+    background: #142244;
+    border-color: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+html.tp-theme-dark .tp-kanban-card:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5);
+}
+
+html.tp-theme-dark .tp-kanban-card-title {
+    color: #f8fafc !important;
+}
+
+html.tp-theme-dark .tp-kanban-card.is-dragging {
+    background: #1e293b;
+}
+
+html.tp-theme-dark .tp-kanban-empty {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(17, 28, 56, 0.3);
+    color: #64748b;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .pd-grid {
+        grid-template-columns: 1fr;
+    }
+    .pd-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .pd-stats {
+        grid-template-columns: 1fr;
+    }
+    .pd-hero-content {
+        flex-direction: column;
+    }
+    .pd-hero-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}

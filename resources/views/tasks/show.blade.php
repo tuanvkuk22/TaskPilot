@@ -142,29 +142,63 @@
 
                     <div class="edit-card-body">
                         <!-- Status & Labels Banner -->
+                        @php
+                            $projectWorkflow = $task->project ? $task->project->effective_workflow : \ProjectsManager\Project::defaultWorkflowForType('software');
+                            $wfStatuses = $projectWorkflow['statuses'] ?? [
+                                ['key' => 'todo', 'name' => 'Cần làm', 'color' => '#64748b', 'icon' => 'fa-circle-o'],
+                                ['key' => 'in_progress', 'name' => 'Đang thực hiện', 'color' => '#3b82f6', 'icon' => 'fa-spinner'],
+                                ['key' => 'done', 'name' => 'Hoàn thành', 'color' => '#10b981', 'icon' => 'fa-check-circle'],
+                            ];
+                            $currStatus = collect($wfStatuses)->firstWhere('key', $task->status) ?? [
+                                'key' => $task->status,
+                                'name' => ucfirst($task->status ?? 'todo'),
+                                'color' => '#64748b',
+                                'icon' => 'fa-circle-o'
+                            ];
+                        @endphp
+
+                        <!-- Visual Workflow Progression Pipeline -->
+                        <div class="tp-task-workflow-strip mb-3 p-3 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="small font-weight-bold text-uppercase text-muted">
+                                    <i class="fa fa-sitemap text-primary me-1"></i>
+                                    Quy trình dự án: {{ strtoupper($task->project->project_type ?? 'software') }}
+                                </span>
+                                <span class="badge" style="background-color: {{ $currStatus['color'] ?? '#3b82f6' }}; color: #fff;">
+                                    {{ $currStatus['name'] }}
+                                </span>
+                            </div>
+
+                            <div class="tp-wf-mini-nodes d-flex align-items-center flex-wrap gap-1">
+                                @foreach($wfStatuses as $wIdx => $st)
+                                    <div class="tp-wf-node-item d-flex align-items-center gap-1 {{ $task->status === $st['key'] ? 'is-active' : '' }}" style="padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; {{ $task->status === $st['key'] ? 'background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;' : 'background: #fff; color: #475569; border: 1px solid #e2e8f0;' }}">
+                                        <span style="width: 7px; height: 7px; border-radius: 50%; background-color: {{ $st['color'] ?? '#64748b' }};"></span>
+                                        <span>{{ $st['name'] }}</span>
+                                    </div>
+                                    @if(!$loop->last)
+                                        <i class="fa fa-angle-right text-muted" style="font-size: 11px;"></i>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+
                         <div class="tp-status-banner mb-4">
                             <!-- Status Inline Selector -->
                             <div class="d-flex align-items-center gap-2">
                                 <span class="status-label">Trạng thái:</span>
-                                @php
-                                    $statusMap = [
-                                        'todo' => ['label' => 'Cần làm', 'class' => 'tp-badge-status-todo', 'icon' => 'fa-circle-o'],
-                                        'in_progress' => ['label' => 'Đang thực hiện', 'class' => 'tp-badge-status-in_progress', 'icon' => 'fa-spinner'],
-                                        'done' => ['label' => 'Hoàn thành', 'class' => 'tp-badge-status-done', 'icon' => 'fa-check-circle'],
-                                    ];
-                                    $stInfo = $statusMap[$task->status] ?? $statusMap['todo'];
-                                @endphp
                                 <div class="jira-inline-badge-wrap">
-                                    <div id="status-badge-view" class="tp-badge {{ $stInfo['class'] }} font-size-13 px-3 py-1 {{ $canEdit ? 'clickable' : '' }}" @if($canEdit) onclick="toggleInlineEdit('status')" @endif title="Bấm để đổi trạng thái">
-                                        <i class="fa {{ $stInfo['icon'] }}" id="status-icon-el"></i>
-                                        <span id="status-text-el">{{ $stInfo['label'] }}</span>
+                                    <div id="status-badge-view" class="tp-badge font-size-13 px-3 py-1 {{ $canEdit ? 'clickable' : '' }}" style="background-color: {{ $currStatus['color'] ?? '#3b82f6' }}; color: #fff;" @if($canEdit) onclick="toggleInlineEdit('status')" @endif title="Bấm để đổi trạng thái">
+                                        <i class="fa {{ $currStatus['icon'] ?? 'fa-circle-o' }}" id="status-icon-el"></i>
+                                        <span id="status-text-el">{{ $currStatus['name'] }}</span>
                                         @if($canEdit)<i class="fa fa-caret-down ms-1"></i>@endif
                                     </div>
                                     @if($canEdit)
                                     <select id="status-select-el" class="edit-select jira-inline-select" style="display: none;" onchange="saveInlineField('status', this.value)" onblur="cancelInlineEdit('status')">
-                                        <option value="todo" {{ $task->status == 'todo' ? 'selected' : '' }}>Cần làm</option>
-                                        <option value="in_progress" {{ $task->status == 'in_progress' ? 'selected' : '' }}>Đang thực hiện</option>
-                                        <option value="done" {{ $task->status == 'done' ? 'selected' : '' }}>Hoàn thành</option>
+                                        @foreach($wfStatuses as $st)
+                                            <option value="{{ $st['key'] }}" {{ $task->status == $st['key'] ? 'selected' : '' }}>
+                                                {{ $st['name'] }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                     @endif
                                 </div>
@@ -405,6 +439,8 @@
 
             <!-- Sidebar Column (~30%) -->
             <div class="edit-col">
+
+
                 <div class="edit-card">
                     <div class="edit-card-header d-flex justify-content-between align-items-center">
                         <h2 class="edit-card-title">
@@ -821,12 +857,17 @@
             },
             body: JSON.stringify(Object.assign({ _method: 'PUT' }, payload))
         })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-            if (data.success) {
+        .then(function(res) { 
+            return res.json().then(function(data) {
+                return { ok: res.ok, data: data };
+            });
+        })
+        .then(function(result) {
+            if (result.ok && result.data.success) {
                 window.location.reload();
             } else {
-                alert('Có lỗi xảy ra khi cập nhật.');
+                alert(result.data.message || 'Có lỗi xảy ra khi cập nhật.');
+                window.location.reload();
             }
         })
         .catch(function(err) {
