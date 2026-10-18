@@ -332,6 +332,28 @@
 
 .tp-btn-primary:active { transform: translateY(0); }
 
+.tp-btn-demo {
+    background: #f8fafc;
+    color: #4f46e5;
+    border: 1.5px dashed #818cf8;
+    width: 100%;
+    margin-top: 10px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.tp-btn-demo:hover {
+    background: #eef2ff;
+    border-color: #4f46e5;
+    color: #3730a3;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+}
+
+.tp-btn-demo:active {
+    transform: translateY(0);
+}
+
 .tp-login-divider {
     display: flex;
     align-items: center;

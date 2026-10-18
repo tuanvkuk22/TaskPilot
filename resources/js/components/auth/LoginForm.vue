@@ -25,7 +25,7 @@
         <button type="button" class="tp-alert-close" aria-label="Đóng thông báo" @click="errorDismissed = true">&times;</button>
       </div>
 
-      <form class="tp-login-form" method="POST" :action="loginUrl || '/login'">
+      <form class="tp-login-form" method="POST" :action="loginUrl || '/login'" ref="loginForm">
         <input type="hidden" name="_token" :value="csrfToken">
 
         <div class="tp-form-row">
@@ -36,7 +36,7 @@
             class="tp-form-control"
             :class="{ 'tp-form-control-error': errorMap.email }"
             name="email"
-            :value="oldEmail"
+            v-model="emailValue"
             required
             autocomplete="email"
             autofocus
@@ -55,6 +55,7 @@
               class="tp-form-control"
               :class="{ 'tp-form-control-error': errorMap.password }"
               name="password"
+              v-model="passwordValue"
               required
               autocomplete="current-password"
               ref="passwordInput"
@@ -82,6 +83,16 @@
 
         <button type="submit" class="tp-btn tp-btn-primary tp-btn-login">
           <span>Đăng nhập</span>
+        </button>
+
+        <button
+          type="button"
+          class="tp-btn tp-btn-demo"
+          title="Tự động điền tài khoản demo và đăng nhập"
+          @click="loginWithDemo"
+        >
+          <i class="fa fa-user-circle"></i>
+          <span>Tài khoản demo</span>
         </button>
       </form>
 
@@ -118,7 +129,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
 
 const props = defineProps({
   csrfToken: { type: String, default: '' },
@@ -130,6 +141,20 @@ const props = defineProps({
   registerUrl: { type: String, default: '' },
   statusMessage: { type: String, default: '' },
 });
+
+const emailValue = ref(props.old?.email || '');
+const passwordValue = ref('');
+const loginForm = ref(null);
+
+function loginWithDemo() {
+  emailValue.value = 'trannguyentuan1807@gmail.com';
+  passwordValue.value = '123456';
+  nextTick(() => {
+    if (loginForm.value) {
+      loginForm.value.submit();
+    }
+  });
+}
 
 const showPassword = ref(false);
 const passwordInput = ref(null);

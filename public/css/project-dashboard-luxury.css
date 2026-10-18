@@ -882,11 +882,36 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+.tp-kanban-scroll-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto !important;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+    padding-bottom: 14px;
+    margin-top: 16px;
+    margin-bottom: 24px;
+}
+
 .tp-kanban-board {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
-    align-items: start;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 16px;
+    align-items: stretch;
+    width: max-content !important;
+    min-width: 100%;
+    box-sizing: border-box;
+    padding: 2px 2px 10px 2px;
+}
+
+.tp-kanban-col-wrapper {
+    flex: 0 0 330px !important;
+    width: 330px !important;
+    min-width: 310px !important;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 .tp-kanban-column {
@@ -894,11 +919,15 @@
     border: 1px solid var(--pd-card-border);
     border-radius: 14px;
     padding: 16px;
-    min-height: 520px;
+    min-height: 540px;
     display: flex;
     flex-direction: column;
     gap: 12px;
     transition: all 0.2s ease;
+    width: 100%;
+    flex: 1 1 auto;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .tp-kanban-column.is-drop-target {
@@ -913,6 +942,7 @@
     justify-content: space-between;
     padding-bottom: 12px;
     border-bottom: 2px solid #e2e8f0;
+    min-width: 0;
 }
 
 .tp-kanban-title {
@@ -923,6 +953,14 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.tp-kanban-title span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .tp-kanban-count {
@@ -930,6 +968,7 @@
     font-weight: 700;
     padding: 2px 8px;
     border-radius: var(--pd-radius-pill);
+    flex-shrink: 0;
 }
 
 .tp-kanban-cards-container {
@@ -937,6 +976,7 @@
     flex-direction: column;
     gap: 12px;
     min-height: 440px;
+    min-width: 0;
 }
 
 .tp-kanban-card {
@@ -948,6 +988,12 @@
     cursor: grab;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     user-select: none;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .tp-kanban-card:hover {
@@ -965,6 +1011,84 @@
     transform: scale(0.98);
     border: 2px dashed #2563eb;
     background: #eff6ff;
+}
+
+.tp-kanban-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 8px;
+    min-width: 0;
+}
+
+.task-key-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    background: #f1f5f9;
+    border-radius: 4px;
+    padding: 1px 6px;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.tp-kanban-card-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 10px 0;
+    line-height: 1.45;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow: hidden;
+}
+
+.kanban-card-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 10px;
+    max-width: 100%;
+}
+
+.tag-item {
+    font-size: 11px;
+    color: #2563eb;
+    background: #eff6ff;
+    padding: 1px 6px;
+    border-radius: 4px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: break-all;
+}
+
+.tp-kanban-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid #f1f5f9;
+    min-width: 0;
+    gap: 6px;
+}
+
+.project-name-text {
+    font-size: 12px;
+    color: #64748b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
+    display: inline-block;
+    flex-shrink: 1;
 }
 
 /* ==========================================================================

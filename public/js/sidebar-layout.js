@@ -228,5 +228,30 @@
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
         }
+
+        // 5. Horizontal Screen Scroll: Keep topbar, project header, tabs, and filter controls stationary on screen
+        var scrollTicking = false;
+        function updateHorizontalSticky() {
+            var scrollX = window.scrollX || window.pageXOffset || 0;
+            var panels = document.querySelectorAll('.tp-screen-sticky-panel, .tp-topbar');
+            for (var i = 0; i < panels.length; i++) {
+                panels[i].style.transform = scrollX > 0 ? 'translateX(' + scrollX + 'px)' : '';
+            }
+            scrollTicking = false;
+        }
+
+        window.addEventListener('scroll', function() {
+            if (!scrollTicking) {
+                window.requestAnimationFrame(updateHorizontalSticky);
+                scrollTicking = true;
+            }
+        }, { passive: true });
+
+        window.addEventListener('resize', function() {
+            updateHorizontalSticky();
+        }, { passive: true });
+
+        // Initial check in case page loaded with non-zero scroll
+        updateHorizontalSticky();
     });
 })();

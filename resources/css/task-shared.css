@@ -742,31 +742,43 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
 
 .tp-view-toggle {
     display: inline-flex;
+    align-items: center;
     background: #f1f5f9;
-    padding: 2px;
-    border-radius: 8px;
-    gap: 2px;
+    padding: 3px;
+    border-radius: 9px;
+    border: 1px solid #cbd5e1;
+    gap: 3px;
+    height: 38px;
+    box-sizing: border-box;
 }
 
 .tp-view-btn {
     border: none;
     background: transparent;
-    padding: 5.5px 12px;
+    padding: 0 16px;
+    height: 30px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: 13.5px;
     font-weight: 600;
-    color: #64748b;
+    color: #475569;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 7px;
     transition: all 0.15s ease;
+    white-space: nowrap;
+    line-height: 30px;
+}
+
+.tp-view-btn:hover {
+    color: #0f172a;
 }
 
 .tp-view-btn.active {
     background: #ffffff;
-    color: #0f172a;
+    color: #2563eb;
     box-shadow: var(--tp-shadow-sm);
+    font-weight: 700;
 }
 
 /* Data Table */
@@ -1567,51 +1579,74 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     margin-bottom: 10px !important;
 }
 
-/* Modern Drag & Drop Kanban Board Styles with Configurable Workflow Columns */
-.tp-kanban-board {
-    display: flex;
-    gap: 20px;
-    align-items: stretch;
+/* Screen Sticky Controls: Stays stationary when screen horizontal scroll moves */
+.tp-screen-sticky-panel {
+    position: relative;
+    width: calc(100vw - var(--tp-sidebar-width, 256px) - 48px);
+    max-width: calc(100vw - var(--tp-sidebar-width, 256px) - 48px);
+    box-sizing: border-box;
+    z-index: 50;
+    will-change: transform;
+    transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tp-app-wrapper.tp-sidebar-collapsed .tp-screen-sticky-panel {
+    width: calc(100vw - var(--tp-sidebar-collapsed-width, 68px) - 48px);
+    max-width: calc(100vw - var(--tp-sidebar-collapsed-width, 68px) - 48px);
+}
+
+@media (max-width: 991px) {
+    .tp-screen-sticky-panel {
+        width: calc(100vw - 32px) !important;
+        max-width: calc(100vw - 32px) !important;
+    }
+}
+
+/* Modern Drag & Drop Kanban Board Styles with Configurable Workflow Columns & Screen Horizontal Scroll */
+.tp-kanban-scroll-wrap {
     width: 100%;
-    overflow-x: auto;
+    overflow: visible !important;
+    box-sizing: border-box;
     padding-bottom: 24px;
     margin-top: 16px;
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 #f8fafc;
-    -webkit-overflow-scrolling: touch;
+    margin-bottom: 24px;
 }
 
-.tp-kanban-board::-webkit-scrollbar {
-    height: 8px;
+.tp-kanban-board {
+    display: flex !important;
+    gap: 16px;
+    align-items: stretch;
+    width: max-content !important;
+    min-width: 100%;
+    flex-wrap: nowrap !important;
+    padding-bottom: 12px;
+    margin-top: 4px;
+    box-sizing: border-box;
 }
 
-.tp-kanban-board::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 4px;
-}
-
-.tp-kanban-board::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
-}
-
-.tp-kanban-board::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+.tp-kanban-col-wrapper {
+    flex: 0 0 330px !important;
+    width: 330px !important;
+    min-width: 310px !important;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 .tp-kanban-column {
-    flex: 1 1 0;
-    min-width: 0;
-    width: calc((100% - 40px) / 3);
+    flex: 1 1 auto;
+    width: 100%;
     background: #f8fafc;
-    border: 2px dashed #cbd5e1;
+    border: 1px solid #e2e8f0;
     border-radius: 14px;
     padding: 16px;
-    min-height: 520px;
+    min-height: 540px;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    box-sizing: border-box;
     transition: all 0.2s ease;
+    overflow: hidden;
 }
 
 .tp-kanban-column.is-drop-target {
@@ -1626,6 +1661,7 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     justify-content: space-between;
     padding-bottom: 10px;
     border-bottom: 1px solid #e2e8f0;
+    min-width: 0;
 }
 
 .tp-kanban-title {
@@ -1636,6 +1672,14 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.tp-kanban-title span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .tp-kanban-count {
@@ -1643,6 +1687,7 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     font-weight: 700;
     padding: 2px 8px;
     border-radius: 12px;
+    flex-shrink: 0;
 }
 
 .kanban-add-btn {
@@ -1658,6 +1703,7 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     font-size: 11px;
     text-decoration: none;
     transition: all 0.15s ease;
+    flex-shrink: 0;
 }
 
 .kanban-add-btn:hover {
@@ -1671,6 +1717,7 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     flex-direction: column;
     gap: 12px;
     min-height: 440px;
+    min-width: 0;
 }
 
 .tp-kanban-card {
@@ -1682,6 +1729,12 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     cursor: grab;
     transition: all 0.2s ease;
     user-select: none;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .tp-kanban-card:hover {
@@ -1704,7 +1757,9 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 6px;
     margin-bottom: 8px;
+    min-width: 0;
 }
 
 .task-key-tag {
@@ -1714,6 +1769,11 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     background: #f1f5f9;
     padding: 1px 5px;
     border-radius: 4px;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .tp-kanban-card-title {
@@ -1721,7 +1781,12 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     font-weight: 600;
     color: #0f172a;
     margin: 0 0 10px 0;
-    line-height: 1.4;
+    line-height: 1.45;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow: hidden;
 }
 
 .kanban-card-labels {
@@ -1729,6 +1794,20 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     gap: 4px;
     flex-wrap: wrap;
     margin-bottom: 10px;
+    max-width: 100%;
+}
+
+.tag-item {
+    font-size: 11px;
+    color: #2563eb;
+    background: #eff6ff;
+    padding: 1px 6px;
+    border-radius: 4px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: break-all;
 }
 
 .tp-kanban-card-footer {
@@ -1737,12 +1816,20 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     justify-content: space-between;
     padding-top: 8px;
     border-top: 1px solid #f1f5f9;
+    min-width: 0;
+    gap: 6px;
 }
 
 .project-name-text {
     font-size: 11px;
     color: #64748b;
     font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
+    display: inline-block;
+    flex-shrink: 1;
 }
 
 .tp-kanban-empty {

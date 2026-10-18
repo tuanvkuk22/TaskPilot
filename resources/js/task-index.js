@@ -15,6 +15,7 @@ const app = createApp(TaskList, {
     successMessage: d.success_message || '',
     effectiveWorkflow: d.effective_workflow || null,
     projectWorkflows: d.project_workflows || {},
+    csrfToken: d.csrf_token || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
 });
 
 app.mount('#task-index-app');

@@ -1,192 +1,195 @@
 <template>
     <div class="project-dashboard-vue">
-        <!-- 1. LUXURY HERO BANNER -->
-        <div class="pd-hero-banner mb-4">
-            <div class="pd-hero-content">
-                <div class="pd-hero-left">
-                    <!-- Project Avatar / Monogram -->
-                    <div class="pd-project-avatar" :title="project.name">
-                        {{ projectInitials }}
-                    </div>
-
-                    <div class="pd-hero-details">
-                        <!-- Breadcrumb -->
-                        <div class="pd-breadcrumb-modern">
-                            <a href="/projects"><i class="fa fa-folder-o me-1"></i>Dự án</a>
-                            <span class="pd-breadcrumb-sep">/</span>
-                            <span>{{ project.name }}</span>
+        <!-- Sticky Top Controls: Hero banner, project nav, and stats stay stationary on horizontal screen scroll -->
+        <div class="tp-screen-sticky-panel">
+            <!-- 1. LUXURY HERO BANNER -->
+            <div class="pd-hero-banner mb-4">
+                <div class="pd-hero-content">
+                    <div class="pd-hero-left">
+                        <!-- Project Avatar / Monogram -->
+                        <div class="pd-project-avatar" :title="project.name">
+                            {{ projectInitials }}
                         </div>
 
-                        <!-- Title Row -->
-                        <div class="pd-hero-title-row">
-                            <h1 class="pd-hero-title">{{ project.name }}</h1>
-                            <span class="pd-code-badge">{{ project.project_code || 'PROJ' }}</span>
-                            <span class="pd-status-pill" :class="'status-' + (project.status || 'active').toLowerCase()">
-                                <span class="pd-pulse-dot" :class="project.status === 'completed' ? 'dot-done' : (project.status === 'archived' ? 'dot-paused' : '')"></span>
-                                {{ project.status || 'ACTIVE' }}
-                            </span>
-                            <a :href="`/projects/${project.id}/edit`" class="pd-hero-settings-link" title="Cài đặt dự án">
-                                <i class="fa fa-cog"></i>
-                            </a>
-                        </div>
+                        <div class="pd-hero-details">
+                            <!-- Breadcrumb -->
+                            <div class="pd-breadcrumb-modern">
+                                <a href="/projects"><i class="fa fa-folder-o me-1"></i>Dự án</a>
+                                <span class="pd-breadcrumb-sep">/</span>
+                                <span>{{ project.name }}</span>
+                            </div>
 
-                        <!-- Meta Chips -->
-                        <div class="pd-hero-chips">
-                            <span class="pd-hero-chip chip-timeline" :title="`Thời gian: ${formatDate(project.start_date)} - ${formatDate(project.end_date)}`">
-                                <i class="fa fa-calendar-check-o"></i>
-                                <span>{{ formatDate(project.start_date) }} - {{ formatDate(project.end_date) }}</span>
-                                <span v-if="daysRemainingInfo" class="pd-days-badge" :class="{ 'is-urgent': daysRemainingInfo.urgent }">
-                                    {{ daysRemainingInfo.label }}
+                            <!-- Title Row -->
+                            <div class="pd-hero-title-row">
+                                <h1 class="pd-hero-title">{{ project.name }}</h1>
+                                <span class="pd-code-badge">{{ project.project_code || 'PROJ' }}</span>
+                                <span class="pd-status-pill" :class="'status-' + (project.status || 'active').toLowerCase()">
+                                    <span class="pd-pulse-dot" :class="project.status === 'completed' ? 'dot-done' : (project.status === 'archived' ? 'dot-paused' : '')"></span>
+                                    {{ project.status || 'ACTIVE' }}
                                 </span>
-                            </span>
+                                <a :href="`/projects/${project.id}/edit`" class="pd-hero-settings-link" title="Cài đặt dự án">
+                                    <i class="fa fa-cog"></i>
+                                </a>
+                            </div>
 
-                            <span class="pd-hero-chip chip-priority">
-                                <i class="fa fa-bolt"></i>
-                                <span>Ưu tiên: <strong>{{ priorityLabel(project.priority) }}</strong></span>
-                            </span>
+                            <!-- Meta Chips -->
+                            <div class="pd-hero-chips">
+                                <span class="pd-hero-chip chip-timeline" :title="`Thời gian: ${formatDate(project.start_date)} - ${formatDate(project.end_date)}`">
+                                    <i class="fa fa-calendar-check-o"></i>
+                                    <span>{{ formatDate(project.start_date) }} - {{ formatDate(project.end_date) }}</span>
+                                    <span v-if="daysRemainingInfo" class="pd-days-badge" :class="{ 'is-urgent': daysRemainingInfo.urgent }">
+                                        {{ daysRemainingInfo.label }}
+                                    </span>
+                                </span>
 
-                            <span class="pd-hero-chip chip-budget">
-                                <i class="fa fa-credit-card"></i>
-                                <span>{{ project.budget ? formatNumber(project.budget) + ' VND' : 'Ngân sách: Chưa đặt' }}</span>
-                            </span>
+                                <span class="pd-hero-chip chip-priority">
+                                    <i class="fa fa-bolt"></i>
+                                    <span>Ưu tiên: <strong>{{ priorityLabel(project.priority) }}</strong></span>
+                                </span>
 
-                            <span class="pd-hero-chip chip-team">
-                                <i class="fa fa-users"></i>
-                                <span>{{ teamCount }} thành viên</span>
-                            </span>
+                                <span class="pd-hero-chip chip-budget">
+                                    <i class="fa fa-credit-card"></i>
+                                    <span>{{ project.budget ? formatNumber(project.budget) + ' VND' : 'Ngân sách: Chưa đặt' }}</span>
+                                </span>
+
+                                <span class="pd-hero-chip chip-team">
+                                    <i class="fa fa-users"></i>
+                                    <span>{{ teamCount }} thành viên</span>
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Hero Right Actions -->
-                <div class="pd-hero-actions">
-                    <AiBatchSuggest :tasks="unassignedOpenTasks" :project-id="project.id" @applied="applyBatchResults" @reset="applyAiTestReset" />
-                    <a :href="`/tasks/create?project_id=${project.id}`" class="pd-hero-btn-primary">
-                        <i class="fa fa-plus-circle"></i>
-                        <span>Tạo công việc mới</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- 2. MODERN PILL NAVIGATION -->
-        <div class="pd-project-nav mb-4">
-            <a href="/projects" class="pd-nav-item">
-                <i class="fa fa-folder-open-o"></i>
-                <span>Tất cả dự án</span>
-            </a>
-            <a :href="`/projects/${project.id}`" class="pd-nav-item" :class="{ active: currentTab === 'overview' }" @click.prevent="currentTab = 'overview'">
-                <i class="fa fa-th-large"></i>
-                <span>Tổng quan</span>
-            </a>
-            <a :href="`/projects/${project.id}/board`" class="pd-nav-item" :class="{ active: currentTab === 'board' }" @click.prevent="currentTab = 'board'">
-                <i class="fa fa-trello"></i>
-                <span>Bảng (Board)</span>
-            </a>
-            <a :href="`#workflow`" class="pd-nav-item" :class="{ active: currentTab === 'workflow' }" @click.prevent="currentTab = 'workflow'">
-                <i class="fa fa-sitemap"></i>
-                <span>Quy trình</span>
-            </a>
-            <a :href="`/projects/${project.id}/sprints`" class="pd-nav-item">
-                <i class="fa fa-cubes"></i>
-                <span>Backlog / Sprint</span>
-            </a>
-            <a :href="`/projects/${project.id}/members`" class="pd-nav-item">
-                <i class="fa fa-users"></i>
-                <span>Thành viên</span>
-            </a>
-            <a :href="`/projects/${project.id}/roles`" class="pd-nav-item">
-                <i class="fa fa-shield"></i>
-                <span>Vai trò &amp; Quyền</span>
-            </a>
-            <a :href="`/projects/${project.id}/timeline`" class="pd-nav-item">
-                <i class="fa fa-calendar"></i>
-                <span>Timeline</span>
-            </a>
-            <a :href="`/projects/${project.id}/roadmap`" class="pd-nav-item">
-                <i class="fa fa-calendar"></i>
-                <span>Lịch biểu</span>
-            </a>
-            <a :href="`#activity`" class="pd-nav-item" :class="{ active: currentTab === 'activity' }" @click.prevent="currentTab = 'activity'">
-                <i class="fa fa-history"></i>
-                <span>Nhật ký hoạt động</span>
-            </a>
-        </div>
-
-        <!-- 3. REAL-TIME REACTIVE KPI STATS ROW -->
-        <div class="pd-stats mb-4">
-            <!-- Total Tasks -->
-            <div class="pd-stat-card pd-stat-total">
-                <div class="pd-stat-header">
-                    <div class="pd-stat-label">Tổng công việc</div>
-                    <div class="pd-stat-icon-wrap total">
-                        <i class="fa fa-list-alt"></i>
+                    <!-- Hero Right Actions -->
+                    <div class="pd-hero-actions">
+                        <AiBatchSuggest :tasks="unassignedOpenTasks" :project-id="project.id" @applied="applyBatchResults" @reset="applyAiTestReset" />
+                        <a :href="`/tasks/create?project_id=${project.id}`" class="pd-hero-btn-primary">
+                            <i class="fa fa-plus-circle"></i>
+                            <span>Tạo công việc mới</span>
+                        </a>
                     </div>
-                </div>
-                <div class="pd-stat-main">
-                    <div class="pd-stat-value">{{ stats.total }}</div>
-                    <div class="pd-stat-tag">Toàn bộ Scope</div>
-                </div>
-                <div class="pd-stat-footer">
-                    <span class="pd-stat-hint">Khối lượng công việc dự án</span>
                 </div>
             </div>
 
-            <!-- Done Tasks -->
-            <div class="pd-stat-card pd-stat-done">
-                <div class="pd-stat-header">
-                    <div class="pd-stat-label">Hoàn thành</div>
-                    <div class="pd-stat-icon-wrap done">
-                        <i class="fa fa-check-circle"></i>
-                    </div>
-                </div>
-                <div class="pd-stat-main">
-                    <div class="pd-stat-value text-emerald">{{ stats.done }}</div>
-                    <div class="pd-stat-badge badge-success">{{ stats.total ? Math.round(stats.done / stats.total * 100) : 0 }}%</div>
-                </div>
-                <div class="pd-stat-progress-bar">
-                    <div class="pd-stat-progress-fill fill-done" :style="{ width: (stats.total ? Math.round(stats.done / stats.total * 100) : 0) + '%' }"></div>
-                </div>
+            <!-- 2. MODERN PILL NAVIGATION -->
+            <div class="pd-project-nav mb-4">
+                <a href="/projects" class="pd-nav-item">
+                    <i class="fa fa-folder-open-o"></i>
+                    <span>Tất cả dự án</span>
+                </a>
+                <a :href="`/projects/${project.id}`" class="pd-nav-item" :class="{ active: currentTab === 'overview' }" @click.prevent="currentTab = 'overview'">
+                    <i class="fa fa-th-large"></i>
+                    <span>Tổng quan</span>
+                </a>
+                <a :href="`/projects/${project.id}/board`" class="pd-nav-item" :class="{ active: currentTab === 'board' }" @click.prevent="currentTab = 'board'">
+                    <i class="fa fa-trello"></i>
+                    <span>Bảng (Board)</span>
+                </a>
+                <a :href="`#workflow`" class="pd-nav-item" :class="{ active: currentTab === 'workflow' }" @click.prevent="currentTab = 'workflow'">
+                    <i class="fa fa-sitemap"></i>
+                    <span>Quy trình</span>
+                </a>
+                <a :href="`/projects/${project.id}/sprints`" class="pd-nav-item">
+                    <i class="fa fa-cubes"></i>
+                    <span>Backlog / Sprint</span>
+                </a>
+                <a :href="`/projects/${project.id}/members`" class="pd-nav-item">
+                    <i class="fa fa-users"></i>
+                    <span>Thành viên</span>
+                </a>
+                <a :href="`/projects/${project.id}/roles`" class="pd-nav-item">
+                    <i class="fa fa-shield"></i>
+                    <span>Vai trò &amp; Quyền</span>
+                </a>
+                <a :href="`/projects/${project.id}/timeline`" class="pd-nav-item">
+                    <i class="fa fa-calendar"></i>
+                    <span>Timeline</span>
+                </a>
+                <a :href="`/projects/${project.id}/roadmap`" class="pd-nav-item">
+                    <i class="fa fa-calendar"></i>
+                    <span>Lịch biểu</span>
+                </a>
+                <a :href="`#activity`" class="pd-nav-item" :class="{ active: currentTab === 'activity' }" @click.prevent="currentTab = 'activity'">
+                    <i class="fa fa-history"></i>
+                    <span>Nhật ký hoạt động</span>
+                </a>
             </div>
 
-            <!-- In Progress -->
-            <div class="pd-stat-card pd-stat-progress">
-                <div class="pd-stat-header">
-                    <div class="pd-stat-label">Đang thực hiện</div>
-                    <div class="pd-stat-icon-wrap progress">
-                        <i class="fa fa-spinner fa-spin-hover"></i>
+            <!-- 3. REAL-TIME REACTIVE KPI STATS ROW -->
+            <div class="pd-stats mb-4">
+                <!-- Total Tasks -->
+                <div class="pd-stat-card pd-stat-total">
+                    <div class="pd-stat-header">
+                        <div class="pd-stat-label">Tổng công việc</div>
+                        <div class="pd-stat-icon-wrap total">
+                            <i class="fa fa-list-alt"></i>
+                        </div>
+                    </div>
+                    <div class="pd-stat-main">
+                        <div class="pd-stat-value">{{ stats.total }}</div>
+                        <div class="pd-stat-tag">Toàn bộ Scope</div>
+                    </div>
+                    <div class="pd-stat-footer">
+                        <span class="pd-stat-hint">Khối lượng công việc dự án</span>
                     </div>
                 </div>
-                <div class="pd-stat-main">
-                    <div class="pd-stat-value text-indigo">{{ stats.inProgress }}</div>
-                    <div class="pd-stat-badge badge-info">{{ stats.total ? Math.round(stats.inProgress / stats.total * 100) : 0 }}%</div>
-                </div>
-                <div class="pd-stat-progress-bar">
-                    <div class="pd-stat-progress-fill fill-progress" :style="{ width: (stats.total ? Math.round(stats.inProgress / stats.total * 100) : 0) + '%' }"></div>
-                </div>
-            </div>
 
-            <!-- Overdue / High Priority -->
-            <div class="pd-stat-card pd-stat-overdue">
-                <div class="pd-stat-header">
-                    <div class="pd-stat-label">Ưu tiên cao / Quá hạn</div>
-                    <div class="pd-stat-icon-wrap overdue">
-                        <i class="fa fa-exclamation-triangle"></i>
+                <!-- Done Tasks -->
+                <div class="pd-stat-card pd-stat-done">
+                    <div class="pd-stat-header">
+                        <div class="pd-stat-label">Hoàn thành</div>
+                        <div class="pd-stat-icon-wrap done">
+                            <i class="fa fa-check-circle"></i>
+                        </div>
+                    </div>
+                    <div class="pd-stat-main">
+                        <div class="pd-stat-value text-emerald">{{ stats.done }}</div>
+                        <div class="pd-stat-badge badge-success">{{ stats.total ? Math.round(stats.done / stats.total * 100) : 0 }}%</div>
+                    </div>
+                    <div class="pd-stat-progress-bar">
+                        <div class="pd-stat-progress-fill fill-done" :style="{ width: (stats.total ? Math.round(stats.done / stats.total * 100) : 0) + '%' }"></div>
                     </div>
                 </div>
-                <div class="pd-stat-main">
-                    <div class="pd-stat-value text-rose">{{ stats.highOrOverdue }}</div>
-                    <div class="pd-stat-badge" :class="stats.highOrOverdue > 0 ? 'badge-danger' : 'badge-neutral'">
-                        {{ stats.highOrOverdue > 0 ? 'Cần xử lý' : 'An toàn' }}
+
+                <!-- In Progress -->
+                <div class="pd-stat-card pd-stat-progress">
+                    <div class="pd-stat-header">
+                        <div class="pd-stat-label">Đang thực hiện</div>
+                        <div class="pd-stat-icon-wrap progress">
+                            <i class="fa fa-spinner fa-spin-hover"></i>
+                        </div>
+                    </div>
+                    <div class="pd-stat-main">
+                        <div class="pd-stat-value text-indigo">{{ stats.inProgress }}</div>
+                        <div class="pd-stat-badge badge-info">{{ stats.total ? Math.round(stats.inProgress / stats.total * 100) : 0 }}%</div>
+                    </div>
+                    <div class="pd-stat-progress-bar">
+                        <div class="pd-stat-progress-fill fill-progress" :style="{ width: (stats.total ? Math.round(stats.inProgress / stats.total * 100) : 0) + '%' }"></div>
                     </div>
                 </div>
-                <div class="pd-stat-footer">
-                    <span v-if="stats.highOrOverdue > 0" class="pd-stat-alert-text">
-                        <i class="fa fa-circle text-danger me-1"></i>Có việc cần chú ý giải quyết
-                    </span>
-                    <span v-else class="pd-stat-safe-text">
-                        <i class="fa fa-check text-success me-1"></i>Tiến độ an toàn, không có rủi ro
-                    </span>
+
+                <!-- Overdue / High Priority -->
+                <div class="pd-stat-card pd-stat-overdue">
+                    <div class="pd-stat-header">
+                        <div class="pd-stat-label">Ưu tiên cao / Quá hạn</div>
+                        <div class="pd-stat-icon-wrap overdue">
+                            <i class="fa fa-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                    <div class="pd-stat-main">
+                        <div class="pd-stat-value text-rose">{{ stats.highOrOverdue }}</div>
+                        <div class="pd-stat-badge" :class="stats.highOrOverdue > 0 ? 'badge-danger' : 'badge-neutral'">
+                            {{ stats.highOrOverdue > 0 ? 'Cần xử lý' : 'An toàn' }}
+                        </div>
+                    </div>
+                    <div class="pd-stat-footer">
+                        <span v-if="stats.highOrOverdue > 0" class="pd-stat-alert-text">
+                            <i class="fa fa-circle text-danger me-1"></i>Có việc cần chú ý giải quyết
+                        </span>
+                        <span v-else class="pd-stat-safe-text">
+                            <i class="fa fa-check text-success me-1"></i>Tiến độ an toàn, không có rủi ro
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -343,202 +346,221 @@
 
         <!-- 5. KANBAN BOARD SECTION (Only visible when 'Bảng (Board)' tab is selected) -->
         <div v-if="currentTab === 'board'" class="pd-kanban-section mt-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3 class="m-0 font-weight-bold font-size-18 text-dark">
-                    <i class="fa fa-columns text-primary me-2"></i>Bảng Công việc Kanban (Kéo thả trực tiếp)
-                </h3>
-                <span class="text-muted small">
-                    <i class="fa fa-info-circle me-1"></i>Kéo thả thẻ công việc giữa các cột để đổi trạng thái. Thống kê ở trên sẽ tự nảy số ngay lập tức!
-                </span>
-            </div>
-
-            <!-- Professional Multi-Filter Bar -->
-            <div class="tp-filter-bar d-flex flex-wrap gap-2 align-items-center mb-3">
-                <div class="tp-filter-inputs d-flex flex-wrap gap-2 align-items-center flex-grow-1">
-                    <!-- Search -->
-                    <div class="tp-search-box flex-grow-1" style="min-width: 220px;">
-                        <i class="fa fa-search"></i>
-                        <input
-                            type="text"
-                            v-model="searchQuery"
-                            class="edit-input"
-                            placeholder="Tìm theo tên, key, nhãn, người làm..."
-                        >
-                    </div>
-
-                    <!-- Assignee Filter -->
-                    <div class="edit-select-wrapper" style="min-width: 160px;">
-                        <select v-model="selectedAssigneeFilter" class="edit-select">
-                            <option value="">👤 Người làm: Tất cả</option>
-                            <option value="unassigned">-- Chưa phân công --</option>
-                            <option v-for="u in assigneesList" :key="u.id" :value="u.id">
-                                👤 {{ u.name }}
-                            </option>
-                        </select>
-                        <i class="fa fa-chevron-down edit-select-icon"></i>
-                    </div>
-
-                    <!-- Reporter Filter -->
-                    <div class="edit-select-wrapper" style="min-width: 160px;">
-                        <select v-model="selectedReporterFilter" class="edit-select">
-                            <option value="">📣 Người báo cáo: Tất cả</option>
-                            <option v-for="r in reportersList" :key="r.id" :value="r.id">
-                                📣 {{ r.name }}
-                            </option>
-                        </select>
-                        <i class="fa fa-chevron-down edit-select-icon"></i>
-                    </div>
-
-                    <!-- Issue Type Filter -->
-                    <div class="edit-select-wrapper" style="min-width: 140px;">
-                        <select v-model="selectedTypeFilter" class="edit-select">
-                            <option value="">⚡ Loại Issue: Tất cả</option>
-                            <option value="task">Task</option>
-                            <option value="bug">Bug</option>
-                            <option value="story">Story</option>
-                            <option value="epic">Epic</option>
-                            <option value="subtask">Sub-task</option>
-                        </select>
-                        <i class="fa fa-chevron-down edit-select-icon"></i>
-                    </div>
-
-                    <!-- Priority Filter -->
-                    <div class="edit-select-wrapper" style="min-width: 140px;">
-                        <select v-model="selectedPriorityFilter" class="edit-select">
-                            <option value="">🔥 Độ ưu tiên: Tất cả</option>
-                            <option value="high">Cao / Gấp</option>
-                            <option value="medium">Trung bình</option>
-                            <option value="low">Thấp</option>
-                        </select>
-                        <i class="fa fa-chevron-down edit-select-icon"></i>
-                    </div>
-
-                    <!-- Status Filter -->
-                    <div class="edit-select-wrapper" style="min-width: 140px;">
-                        <select v-model="selectedStatusFilter" class="edit-select">
-                            <option value="">📌 Trạng thái: Tất cả</option>
-                            <option value="todo">Cần làm</option>
-                            <option value="in_progress">Đang làm</option>
-                            <option value="done">Hoàn thành</option>
-                        </select>
-                        <i class="fa fa-chevron-down edit-select-icon"></i>
-                    </div>
-
-                    <!-- Reset Filter Button -->
-                    <button v-if="hasActiveFilters" class="tp-btn tp-btn-light btn-sm ms-1" @click="resetFilters" title="Xóa tất cả bộ lọc">
-                        <i class="fa fa-times text-danger"></i> Xóa lọc
-                    </button>
+            <div class="tp-screen-sticky-panel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="m-0 font-weight-bold font-size-18 text-dark">
+                        <i class="fa fa-columns text-primary me-2"></i>Bảng Công việc Kanban (Kéo thả trực tiếp)
+                    </h3>
+                    <span class="text-muted small">
+                        <i class="fa fa-info-circle me-1"></i>Kéo thả thẻ công việc giữa các cột để đổi trạng thái. Thống kê ở trên sẽ tự nảy số ngay lập tức!
+                    </span>
                 </div>
 
-                <!-- View Toggle Buttons -->
-                <div class="tp-view-toggle ms-auto" style="display: flex; align-items: center; gap: 8px;">
-                    <AiBatchSuggest :tasks="unassignedOpenTasks" :project-id="project.id" @applied="applyBatchResults" @reset="applyAiTestReset" />
-                    <button
-                        class="tp-view-btn"
-                        :class="{ active: viewMode === 'kanban' }"
-                        @click="viewMode = 'kanban'"
-                    >
-                        <i class="fa fa-columns"></i>
-                        <span>Bảng Kanban</span>
-                    </button>
-                    <button
-                        class="tp-view-btn"
-                        :class="{ active: viewMode === 'table' }"
-                        @click="viewMode = 'table'"
-                    >
-                        <i class="fa fa-th-list"></i>
-                        <span>Danh sách</span>
-                    </button>
-                </div>
-            </div>
+                <!-- Professional Multi-Filter Bar -->
+                <div class="tp-filter-bar d-flex flex-wrap gap-2 align-items-center mb-3">
+                    <div class="tp-filter-inputs d-flex flex-wrap gap-2 align-items-center flex-grow-1">
+                        <!-- Search -->
+                        <div class="tp-search-box flex-grow-1" style="min-width: 220px;">
+                            <i class="fa fa-search"></i>
+                            <input
+                                type="text"
+                                v-model="searchQuery"
+                                class="edit-input"
+                                placeholder="Tìm theo tên, key, nhãn, người làm..."
+                            >
+                        </div>
 
-            <!-- KANBAN BOARD WITH HTML5 DRAG & DROP -->
-            <div v-if="viewMode === 'kanban'" class="tp-kanban-board">
-                <!-- Columns Definition -->
-                <div
-                    v-for="col in columns"
-                    :key="col.key"
-                    class="tp-kanban-column"
-                    :class="{ 'is-drop-target': activeDropColumn === col.key }"
-                    @dragover.prevent="handleDragOver($event, col.key)"
-                    @dragenter.prevent="handleDragEnter($event, col.key)"
-                    @dragleave="handleDragLeave($event, col.key)"
-                    @drop="handleDrop($event, col.key)"
-                >
-                    <!-- Column Header -->
-                    <div class="tp-kanban-header">
-                        <h3 class="tp-kanban-title">
-                            <i :class="col.icon" :style="{ color: col.iconColor }"></i>
-                            <span>{{ col.label }}</span>
-                        </h3>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="tp-kanban-count" :style="{ background: col.badgeBg, color: col.badgeColor }">
-                                {{ getTasksByStatus(col.key).length }}
-                            </span>
-                            <a :href="`/tasks/create?project_id=${project.id}&status=${col.key}`" class="kanban-add-btn" title="Tạo nhanh công việc">
-                                <i class="fa fa-plus"></i>
-                            </a>
+                        <!-- Assignee Filter -->
+                        <div class="edit-select-wrapper" style="min-width: 160px;">
+                            <select v-model="selectedAssigneeFilter" class="edit-select">
+                                <option value="">👤 Người làm: Tất cả</option>
+                                <option value="unassigned">-- Chưa phân công --</option>
+                                <option v-for="u in assigneesList" :key="u.id" :value="u.id">
+                                    👤 {{ u.name }}
+                                </option>
+                            </select>
+                            <i class="fa fa-chevron-down edit-select-icon"></i>
+                        </div>
+
+                        <!-- Reporter Filter -->
+                        <div class="edit-select-wrapper" style="min-width: 160px;">
+                            <select v-model="selectedReporterFilter" class="edit-select">
+                                <option value="">📣 Người báo cáo: Tất cả</option>
+                                <option v-for="r in reportersList" :key="r.id" :value="r.id">
+                                    📣 {{ r.name }}
+                                </option>
+                            </select>
+                            <i class="fa fa-chevron-down edit-select-icon"></i>
+                        </div>
+
+                        <!-- Issue Type Filter -->
+                        <div class="edit-select-wrapper" style="min-width: 140px;">
+                            <select v-model="selectedTypeFilter" class="edit-select">
+                                <option value="">⚡ Loại Issue: Tất cả</option>
+                                <option value="task">Task</option>
+                                <option value="bug">Bug</option>
+                                <option value="story">Story</option>
+                                <option value="epic">Epic</option>
+                                <option value="subtask">Sub-task</option>
+                            </select>
+                            <i class="fa fa-chevron-down edit-select-icon"></i>
+                        </div>
+
+                        <!-- Priority Filter -->
+                        <div class="edit-select-wrapper" style="min-width: 140px;">
+                            <select v-model="selectedPriorityFilter" class="edit-select">
+                                <option value="">🔥 Độ ưu tiên: Tất cả</option>
+                                <option value="high">Cao / Gấp</option>
+                                <option value="medium">Trung bình</option>
+                                <option value="low">Thấp</option>
+                            </select>
+                            <i class="fa fa-chevron-down edit-select-icon"></i>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div class="edit-select-wrapper" style="min-width: 140px;">
+                            <select v-model="selectedStatusFilter" class="edit-select">
+                                <option value="">📌 Trạng thái: Tất cả</option>
+                                <option v-for="col in columns" :key="col.key" :value="col.key">
+                                    {{ col.label }}
+                                </option>
+                            </select>
+                            <i class="fa fa-chevron-down edit-select-icon"></i>
+                        </div>
+
+                        <!-- Reset Filter Button -->
+                        <button v-if="hasActiveFilters" class="tp-btn tp-btn-light btn-sm ms-1" @click="resetFilters" title="Xóa tất cả bộ lọc">
+                            <i class="fa fa-times text-danger"></i> Xóa lọc
+                        </button>
+                    </div>
+
+                    <!-- View Toggle Buttons & AI Actions -->
+                    <div class="tp-toolbar-actions d-flex align-items-center gap-2 ms-auto">
+                        <AiBatchSuggest :tasks="unassignedOpenTasks" :project-id="project.id" @applied="applyBatchResults" @reset="applyAiTestReset" />
+                        <div class="tp-view-toggle">
+                            <button
+                                type="button"
+                                class="tp-view-btn"
+                                :class="{ active: viewMode === 'kanban' }"
+                                @click="viewMode = 'kanban'"
+                            >
+                                <i class="fa fa-columns"></i>
+                                <span>Bảng Kanban</span>
+                            </button>
+                            <button
+                                type="button"
+                                class="tp-view-btn"
+                                :class="{ active: viewMode === 'table' }"
+                                @click="viewMode = 'table'"
+                            >
+                                <i class="fa fa-th-list"></i>
+                                <span>Danh sách</span>
+                            </button>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Cards Drag & Drop Container -->
-                    <div class="tp-kanban-cards-container">
+            <!-- KANBAN BOARD WITH HTML5 DRAG & DROP & HORIZONTAL SCROLL -->
+            <div v-if="viewMode === 'kanban'" class="tp-kanban-scroll-wrap">
+                <div class="tp-kanban-board">
+                    <!-- Columns Definition -->
+                    <div
+                        v-for="col in columns"
+                        :key="col.key"
+                        class="tp-kanban-col-wrapper"
+                        @dragover.prevent="handleDragOver($event, col.key)"
+                        @dragenter.prevent="handleDragEnter($event, col.key)"
+                        @dragleave="handleDragLeave($event, col.key)"
+                        @drop.prevent="handleDrop($event, col.key)"
+                    >
                         <div
-                            v-for="task in getTasksByStatus(col.key)"
-                            :key="task.id"
-                            class="tp-kanban-card"
-                            :class="{ 'is-dragging': draggedTaskId === task.id }"
-                            draggable="true"
-                            @dragstart="handleDragStart($event, task)"
-                            @dragend="handleDragEnd"
-                            @click="goToTask(task.id)"
+                            class="tp-kanban-column"
+                            :class="{ 'is-drop-target': activeDropColumn === col.key }"
+                            @dragover.prevent="handleDragOver($event, col.key)"
+                            @dragenter.prevent="handleDragEnter($event, col.key)"
+                            @drop.prevent="handleDrop($event, col.key)"
                         >
-                            <div class="tp-kanban-card-meta">
-                                <div class="d-flex align-items-center gap-1">
-                                    <IssueTypeBadge :type="task.issue_type" />
-                                    <span class="task-key-tag">{{ project.project_code || 'TP' }}-{{ task.id }}</span>
-                                </div>
-                                <PriorityBadge :priority="task.priority" />
-                            </div>
-
-                            <h4 class="tp-kanban-card-title" :style="col.key === 'done' ? 'text-decoration: line-through; color: #94a3b8;' : ''">
-                                {{ task.name }}
-                            </h4>
-
-                            <!-- Labels Pills -->
-                            <div v-if="task.labels" class="kanban-card-labels">
-                                <span v-for="tag in task.labels.split(',')" :key="tag" class="tag-item">
-                                    #{{ tag.trim() }}
-                                </span>
-                            </div>
-
-                            <!-- Card Footer -->
-                            <div class="tp-kanban-card-footer">
-                                <span class="project-name-text">
-                                    <i class="fa fa-folder-o text-muted me-1"></i>
-                                    {{ project.name }}
-                                </span>
-
+                            <!-- Column Header -->
+                            <div class="tp-kanban-header">
+                                <h3 class="tp-kanban-title">
+                                    <i :class="col.icon" :style="{ color: col.iconColor }"></i>
+                                    <span>{{ col.label }}</span>
+                                </h3>
                                 <div class="d-flex align-items-center gap-2">
-                                    <span v-if="task.story_points" class="points-badge" style="font-size: 11px; padding: 1px 6px;">
-                                        {{ task.story_points }}pts
+                                    <span class="tp-kanban-count" :style="{ background: col.badgeBg, color: col.badgeColor }">
+                                        {{ getTasksByStatus(col.key).length }}
                                     </span>
-                                    <AiAssigneeSuggest
-                                        v-if="!task.assignee_id && !task.assignee"
-                                        :task="task"
-                                        compact
-                                        auto-save
-                                        @applied="(payload) => patchTaskAssignee(task, payload.candidate)"
-                                    />
-                                    <UserAvatarPill :name="task.assignee ? (task.assignee.full_name || task.assignee.name) : ''" />
+                                    <a :href="`/tasks/create?project_id=${project.id}&status=${col.key}`" class="kanban-add-btn" title="Tạo nhanh công việc">
+                                        <i class="fa fa-plus"></i>
+                                    </a>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Column Empty Indicator -->
-                        <div v-if="getTasksByStatus(col.key).length === 0" class="tp-kanban-empty">
-                            <i class="fa fa-hand-o-down text-muted font-size-18 mb-1"></i>
-                            <span>Kéo thả công việc vào đây</span>
+                            <!-- Cards Drag & Drop Container -->
+                            <div
+                                class="tp-kanban-cards-container"
+                                @dragover.prevent="handleDragOver($event, col.key)"
+                                @drop.prevent="handleDrop($event, col.key)"
+                            >
+                                <div
+                                    v-for="task in getTasksByStatus(col.key)"
+                                    :key="task.id"
+                                    class="tp-kanban-card"
+                                    :class="{ 'is-dragging': draggedTaskId === task.id }"
+                                    draggable="true"
+                                    @dragstart="handleDragStart($event, task)"
+                                    @dragend="handleDragEnd"
+                                    @click="goToTask(task.id)"
+                                >
+                                    <div class="tp-kanban-card-meta">
+                                        <div class="d-flex align-items-center gap-1">
+                                            <IssueTypeBadge :type="task.issue_type" />
+                                            <span class="task-key-tag">{{ project.project_code || 'TP' }}-{{ task.id }}</span>
+                                        </div>
+                                        <PriorityBadge :priority="task.priority" />
+                                    </div>
+
+                                    <h4 class="tp-kanban-card-title" :style="col.key === 'done' ? 'text-decoration: line-through; color: #94a3b8;' : ''">
+                                        {{ task.name }}
+                                    </h4>
+
+                                    <!-- Labels Pills -->
+                                    <div v-if="task.labels" class="kanban-card-labels">
+                                        <span v-for="tag in task.labels.split(',')" :key="tag" class="tag-item">
+                                            #{{ tag.trim() }}
+                                        </span>
+                                    </div>
+
+                                    <!-- Card Footer -->
+                                    <div class="tp-kanban-card-footer">
+                                        <span class="project-name-text">
+                                            <i class="fa fa-folder-o text-muted me-1"></i>
+                                            {{ project.name }}
+                                        </span>
+
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span v-if="task.story_points" class="points-badge" style="font-size: 11px; padding: 1px 6px;">
+                                                {{ task.story_points }}pts
+                                            </span>
+                                            <AiAssigneeSuggest
+                                                v-if="!task.assignee_id && !task.assignee"
+                                                :task="task"
+                                                compact
+                                                auto-save
+                                                @applied="(payload) => patchTaskAssignee(task, payload.candidate)"
+                                            />
+                                            <UserAvatarPill :name="task.assignee ? (task.assignee.full_name || task.assignee.name) : ''" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Column Empty Indicator -->
+                                <div v-if="getTasksByStatus(col.key).length === 0" class="tp-kanban-empty">
+                                    <i class="fa fa-hand-o-down text-muted font-size-18 mb-1"></i>
+                                    <span>Kéo thả công việc vào đây</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1665,6 +1687,14 @@ const columns = computed(() => {
     ];
 });
 
+const kanbanColBootstrapClass = computed(() => {
+    const count = (columns.value || []).length;
+    if (count === 1) return 'col-xs-12 col-sm-12 col-md-12';
+    if (count === 2) return 'col-xs-6 col-sm-6 col-md-6';
+    if (count === 4) return 'col-xs-3 col-sm-3 col-md-3';
+    return 'col-xs-4 col-sm-4 col-md-4';
+});
+
 const filteredTasks = computed(() => {
     return taskList.value.filter(task => {
         // 1. Text Search (Matches task name, ID key, labels, assignee name, reporter name)
@@ -1711,9 +1741,17 @@ const filteredTasks = computed(() => {
         // 6. Status Filter
         if (selectedStatusFilter.value) {
             const s = selectedStatusFilter.value;
-            if (s === 'todo' && !['todo', 'backlog', 'open', 'new'].includes(task.status)) return false;
-            if (s === 'in_progress' && !['in_progress', 'doing', 'review'].includes(task.status)) return false;
-            if (s === 'done' && !['done', 'completed', 'resolved'].includes(task.status)) return false;
+            if (task.status !== s) {
+                if (s === 'todo' && ['backlog', 'open', 'new'].includes(task.status)) {
+                    // match
+                } else if (s === 'in_progress' && ['doing'].includes(task.status)) {
+                    // match
+                } else if (s === 'done' && ['completed', 'resolved', 'closed'].includes(task.status)) {
+                    // match
+                } else {
+                    return false;
+                }
+            }
         }
 
         return true;
@@ -1721,16 +1759,28 @@ const filteredTasks = computed(() => {
 });
 
 function getTasksByStatus(group) {
+    const col = columns.value.find(c => c.key === group);
+    const isInitialCol = col?.is_initial || (columns.value[0]?.key === group);
+
     return filteredTasks.value.filter(task => {
-        if (group === 'todo') return ['todo', 'backlog', 'open', 'new'].includes(task.status) || !task.status;
-        if (group === 'in_progress') return ['in_progress', 'doing', 'review'].includes(task.status);
-        if (group === 'done') return ['done', 'completed', 'resolved'].includes(task.status);
+        if (task.status === group) return true;
+        if (group === 'todo' && ['backlog', 'open', 'new'].includes(task.status)) return true;
+        if (group === 'in_progress' && ['doing'].includes(task.status)) return true;
+        if (group === 'done' && ['completed', 'resolved', 'closed'].includes(task.status)) return true;
+
+        if (!task.status && isInitialCol) return true;
+        const statusExistsInCols = columns.value.some(c => c.key === task.status);
+        if (!statusExistsInCols && isInitialCol) return true;
+
         return false;
     });
 }
 
 // Drag & Drop Handlers
+let isDraggingCard = false;
+
 function handleDragStart(event, task) {
+    isDraggingCard = true;
     draggedTask.value = task;
     draggedTaskId.value = task.id;
     if (event.dataTransfer) {
@@ -1740,9 +1790,12 @@ function handleDragStart(event, task) {
 }
 
 function handleDragEnd() {
-    draggedTask.value = null;
     draggedTaskId.value = null;
     activeDropColumn.value = null;
+    setTimeout(() => {
+        isDraggingCard = false;
+        draggedTask.value = null;
+    }, 150);
 }
 
 function handleDragOver(event, colKey) {
@@ -1759,20 +1812,28 @@ function handleDragEnter(event, colKey) {
 }
 
 function handleDragLeave(event, colKey) {
-    if (activeDropColumn.value === colKey) {
-        activeDropColumn.value = null;
+    if (event.currentTarget && !event.currentTarget.contains(event.relatedTarget)) {
+        if (activeDropColumn.value === colKey) {
+            activeDropColumn.value = null;
+        }
     }
 }
 
 async function handleDrop(event, colKey) {
     event.preventDefault();
+    event.stopPropagation();
     activeDropColumn.value = null;
 
-    if (!draggedTask.value) return;
+    let task = draggedTask.value;
+    if (!task) {
+        const rawId = event.dataTransfer?.getData('text/plain');
+        if (rawId) {
+            task = taskList.value.find(t => String(t.id) === String(rawId));
+        }
+    }
+    if (!task) return;
 
-    const task = draggedTask.value;
     const newStatus = colKey;
-
     if (task.status === newStatus) return;
 
     const oldStatus = task.status;
@@ -1780,7 +1841,7 @@ async function handleDrop(event, colKey) {
     task.status = newStatus;
 
     try {
-        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const token = props.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         const res = await fetch(`/tasks/${task.id}/move`, {
             method: 'POST',
             headers: {
@@ -1793,13 +1854,19 @@ async function handleDrop(event, colKey) {
         });
 
         const data = await res.json();
-        if (!data.success) {
+        if (!res.ok || !data.success) {
             task.status = oldStatus;
-            alert('Không thể chuyển trạng thái công việc.');
+            alert(data.message || 'Không thể chuyển trạng thái công việc.');
+        } else if (data.task) {
+            const idx = taskList.value.findIndex(t => t.id === task.id);
+            if (idx !== -1) {
+                taskList.value[idx] = { ...taskList.value[idx], ...data.task };
+            }
         }
     } catch (err) {
         console.error('Error moving task:', err);
         task.status = oldStatus;
+        alert('Lỗi kết nối khi cập nhật trạng thái công việc.');
     }
 }
 
@@ -1813,6 +1880,7 @@ function resetFilters() {
 }
 
 function goToTask(id) {
+    if (isDraggingCard) return;
     window.location.href = `/tasks/${id}`;
 }
 
@@ -2197,6 +2265,332 @@ function formatRelativeTime(dateStr) {
 
 .tp-mode-btn {
     transition: all 0.15s ease;
+}
+
+/* Toolbar Buttons Enhancement */
+.tp-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+:deep(.ai-suggest-btn) {
+    height: 38px;
+    padding: 8px 18px;
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+:deep(.ai-suggest-btn .ai-magic-icon) {
+    font-size: 14px;
+}
+
+:deep(.ai-reset-btn) {
+    height: 38px;
+    padding: 8px 14px;
+    font-size: 13px;
+    border-radius: 8px;
+}
+
+.tp-view-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 9px;
+    border: 1px solid #cbd5e1;
+    gap: 3px;
+    height: 38px;
+    box-sizing: border-box;
+}
+
+.tp-view-btn {
+    border: none;
+    background: transparent;
+    padding: 0 16px;
+    height: 30px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    line-height: 30px;
+}
+
+.tp-view-btn i {
+    font-size: 14px;
+}
+
+.tp-view-btn:hover {
+    color: #0f172a;
+}
+
+.tp-view-btn.active {
+    background: #ffffff;
+    color: #2563eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    font-weight: 700;
+}
+
+/* Page layout stability: ensure navbar, header, stats and filter bar NEVER shift horizontally */
+.project-dashboard-vue {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+/* Screen Sticky Controls: Stays stationary when screen horizontal scroll moves */
+.tp-screen-sticky-panel {
+    position: relative;
+    width: calc(100vw - var(--tp-sidebar-width, 256px) - 48px);
+    max-width: calc(100vw - var(--tp-sidebar-width, 256px) - 48px);
+    box-sizing: border-box;
+    z-index: 50;
+    will-change: transform;
+    transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tp-app-wrapper.tp-sidebar-collapsed .tp-screen-sticky-panel {
+    width: calc(100vw - var(--tp-sidebar-collapsed-width, 68px) - 48px);
+    max-width: calc(100vw - var(--tp-sidebar-collapsed-width, 68px) - 48px);
+}
+
+@media (max-width: 991px) {
+    .tp-screen-sticky-panel {
+        width: calc(100vw - 32px) !important;
+        max-width: calc(100vw - 32px) !important;
+    }
+}
+
+.pd-hero-banner,
+.pd-project-nav,
+.pd-stats,
+.tp-filter-bar {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Kanban Board Container: Screen Horizontal Scroll */
+.tp-kanban-scroll-wrap {
+    width: 100%;
+    overflow: visible !important;
+    box-sizing: border-box;
+    padding-bottom: 24px;
+    margin-top: 16px;
+    margin-bottom: 24px;
+}
+
+.tp-kanban-board {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 16px;
+    align-items: stretch;
+    width: max-content;
+    min-width: 100%;
+    box-sizing: border-box;
+    padding: 2px 2px 10px 2px;
+}
+
+.tp-kanban-col-wrapper {
+    flex: 0 0 330px;
+    width: 330px;
+    min-width: 310px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.tp-kanban-column {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 560px;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+    background: #f8fafc;
+    border: 1px solid var(--pd-card-border, #e2e8f0);
+    border-radius: 14px;
+    padding: 16px;
+    gap: 12px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.tp-kanban-column.is-drop-target {
+    background: #eff6ff !important;
+    border: 2px dashed #2563eb !important;
+    box-shadow: 0 0 16px rgba(37, 99, 235, 0.2) !important;
+}
+
+.tp-kanban-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e2e8f0;
+    min-width: 0;
+}
+
+.tp-kanban-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.tp-kanban-title span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tp-kanban-count {
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.tp-kanban-cards-container {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 440px;
+    min-width: 0;
+}
+
+.tp-kanban-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    cursor: grab;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    user-select: none;
+    -webkit-user-drag: element;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.tp-kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    border-color: #cbd5e1;
+}
+
+.tp-kanban-card:active {
+    cursor: grabbing;
+}
+
+.tp-kanban-card.is-dragging {
+    opacity: 0.4;
+    transform: scale(0.98);
+    border: 2px dashed #2563eb;
+    background: #eff6ff;
+}
+
+.tp-kanban-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 8px;
+    min-width: 0;
+}
+
+.task-key-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    background: #f1f5f9;
+    border-radius: 4px;
+    padding: 1px 6px;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.tp-kanban-card-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 10px 0;
+    line-height: 1.45;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow: hidden;
+}
+
+.kanban-card-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 10px;
+    max-width: 100%;
+}
+
+.tag-item {
+    font-size: 11px;
+    color: #2563eb;
+    background: #eff6ff;
+    padding: 1px 6px;
+    border-radius: 4px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: break-all;
+}
+
+.tp-kanban-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid #f1f5f9;
+    min-width: 0;
+    gap: 6px;
+}
+
+.project-name-text {
+    font-size: 12px;
+    color: #64748b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
+    display: inline-block;
+    flex-shrink: 1;
 }
 </style>
 
