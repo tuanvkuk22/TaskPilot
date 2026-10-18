@@ -83,7 +83,7 @@
                                         <div class="tp-type-icon text-primary"><i class="fa fa-code"></i></div>
                                         <div class="tp-type-info">
                                             <strong>Phát triển Phần mềm (Software)</strong>
-                                            <p>Open ➔ In Dev ➔ Code Review ➔ QA Testing ➔ UAT ➔ Done</p>
+                                            <p>Cần làm ➔ Đang thực hiện ➔ Hoàn thành</p>
                                         </div>
                                         <i v-if="form.project_type === 'software'" class="fa fa-check-circle tp-type-check"></i>
                                     </div>
@@ -96,7 +96,7 @@
                                         <div class="tp-type-icon text-success"><i class="fa fa-bullhorn"></i></div>
                                         <div class="tp-type-info">
                                             <strong>Chiến dịch Marketing (Marketing)</strong>
-                                            <p>Draft ➔ Content ➔ Design ➔ Client Approval ➔ Published ➔ Done</p>
+                                            <p>Lên ý tưởng ➔ Đang thực hiện ➔ Hoàn thành</p>
                                         </div>
                                         <i v-if="form.project_type === 'marketing'" class="fa fa-check-circle tp-type-check"></i>
                                     </div>
@@ -109,7 +109,7 @@
                                         <div class="tp-type-icon text-warning"><i class="fa fa-users"></i></div>
                                         <div class="tp-type-info">
                                             <strong>Quản trị Nhân sự (HR)</strong>
-                                            <p>Application ➔ Screening ➔ Interview ➔ Offer ➔ Onboarding ➔ Done</p>
+                                            <p>Tiếp nhận hồ sơ ➔ Đang xử lý ➔ Hoàn tất</p>
                                         </div>
                                         <i v-if="form.project_type === 'hr'" class="fa fa-check-circle tp-type-check"></i>
                                     </div>
@@ -832,12 +832,9 @@ const form = reactive({
 const initialWorkflow = props.effectiveWorkflow || props.defaultWorkflows?.software || {
     project_type: 'software',
     statuses: [
-        { key: 'open', name: 'Open', color: '#64748b', category: 'todo', is_initial: true, icon: 'fa-circle-o' },
-        { key: 'in_development', name: 'In Development', color: '#3b82f6', category: 'in_progress', icon: 'fa-code' },
-        { key: 'code_review', name: 'Code Review', color: '#8b5cf6', category: 'review', icon: 'fa-eye' },
-        { key: 'qa_testing', name: 'QA Testing', color: '#f59e0b', category: 'testing', icon: 'fa-bug' },
-        { key: 'uat', name: 'UAT', color: '#06b6d4', category: 'review', icon: 'fa-check-square' },
-        { key: 'done', name: 'Done', color: '#10b981', category: 'done', is_final: true, icon: 'fa-check-circle' },
+        { key: 'todo', name: 'Cần làm', color: '#64748b', category: 'todo', is_initial: true, icon: 'fa-circle-o' },
+        { key: 'in_progress', name: 'Đang thực hiện', color: '#3b82f6', category: 'in_progress', icon: 'fa-spinner' },
+        { key: 'done', name: 'Hoàn thành', color: '#10b981', category: 'done', is_final: true, icon: 'fa-check-circle' },
     ],
     approval_gates: {
         require_tech_lead: true,

@@ -26,6 +26,21 @@ class TaskWorkflowTest extends TestCase
         $this->assertEquals(['todo', 'qa', 'done'], array_column($active, 'key'));
     }
 
+    public function test_default_workflow_for_type_has_exactly_three_statuses(): void
+    {
+        $software = Project::defaultWorkflowForType('software');
+        $this->assertCount(3, $software['statuses']);
+        $this->assertEquals(['todo', 'in_progress', 'done'], array_column($software['statuses'], 'key'));
+
+        $marketing = Project::defaultWorkflowForType('marketing');
+        $this->assertCount(3, $marketing['statuses']);
+        $this->assertEquals(['todo', 'in_progress', 'done'], array_column($marketing['statuses'], 'key'));
+
+        $hr = Project::defaultWorkflowForType('hr');
+        $this->assertCount(3, $hr['statuses']);
+        $this->assertEquals(['todo', 'in_progress', 'done'], array_column($hr['statuses'], 'key'));
+    }
+
     public function test_can_transition_when_no_rules_configured_except_active(): void
     {
         $user = new User();

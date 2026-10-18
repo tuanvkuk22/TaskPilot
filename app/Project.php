@@ -33,12 +33,9 @@ class Project extends Model
             return [
                 'project_type' => 'marketing',
                 'statuses' => [
-                    ['key' => 'draft', 'name' => 'Draft / Lên ý tưởng', 'color' => '#64748b', 'category' => 'todo', 'is_initial' => true, 'icon' => 'fa-lightbulb-o'],
-                    ['key' => 'content_creation', 'name' => 'Sản xuất nội dung', 'color' => '#3b82f6', 'category' => 'in_progress', 'icon' => 'fa-pencil'],
-                    ['key' => 'design_review', 'name' => 'Thiết kế & Review', 'color' => '#ec4899', 'category' => 'review', 'icon' => 'fa-paint-brush'],
-                    ['key' => 'approval', 'name' => 'Duyệt chiến dịch', 'color' => '#8b5cf6', 'category' => 'review', 'icon' => 'fa-handshake-o'],
-                    ['key' => 'published', 'name' => 'Xuất bản / Chạy ads', 'color' => '#06b6d4', 'category' => 'testing', 'icon' => 'fa-rocket'],
-                    ['key' => 'done', 'name' => 'Hoàn thành (Done)', 'color' => '#10b981', 'category' => 'done', 'is_final' => true, 'icon' => 'fa-check-circle'],
+                    ['key' => 'todo', 'name' => 'Lên ý tưởng / Chuẩn bị', 'color' => '#64748b', 'category' => 'todo', 'is_initial' => true, 'icon' => 'fa-lightbulb-o'],
+                    ['key' => 'in_progress', 'name' => 'Đang thực hiện', 'color' => '#3b82f6', 'category' => 'in_progress', 'icon' => 'fa-pencil'],
+                    ['key' => 'done', 'name' => 'Hoàn thành', 'color' => '#10b981', 'category' => 'done', 'is_final' => true, 'icon' => 'fa-check-circle'],
                 ],
                 'approval_gates' => [
                     'require_tech_lead' => false,
@@ -57,12 +54,9 @@ class Project extends Model
             return [
                 'project_type' => 'hr',
                 'statuses' => [
-                    ['key' => 'application', 'name' => 'Tiếp nhận hồ sơ', 'color' => '#64748b', 'category' => 'todo', 'is_initial' => true, 'icon' => 'fa-file-text-o'],
-                    ['key' => 'screening', 'name' => 'Sàng lọc ứng viên', 'color' => '#3b82f6', 'category' => 'in_progress', 'icon' => 'fa-search'],
-                    ['key' => 'interview', 'name' => 'Phỏng vấn', 'color' => '#8b5cf6', 'category' => 'review', 'icon' => 'fa-users'],
-                    ['key' => 'offer', 'name' => 'Đề nghị tuyển dụng (Offer)', 'color' => '#f59e0b', 'category' => 'review', 'icon' => 'fa-gift'],
-                    ['key' => 'onboarding', 'name' => 'Onboarding thử việc', 'color' => '#06b6d4', 'category' => 'testing', 'icon' => 'fa-id-card-o'],
-                    ['key' => 'done', 'name' => 'Hoàn tất tuyển dụng', 'color' => '#10b981', 'category' => 'done', 'is_final' => true, 'icon' => 'fa-check-circle'],
+                    ['key' => 'todo', 'name' => 'Tiếp nhận / Cần xử lý', 'color' => '#64748b', 'category' => 'todo', 'is_initial' => true, 'icon' => 'fa-file-text-o'],
+                    ['key' => 'in_progress', 'name' => 'Đang xử lý', 'color' => '#3b82f6', 'category' => 'in_progress', 'icon' => 'fa-users'],
+                    ['key' => 'done', 'name' => 'Hoàn tất', 'color' => '#10b981', 'category' => 'done', 'is_final' => true, 'icon' => 'fa-check-circle'],
                 ],
                 'approval_gates' => [
                     'require_tech_lead' => false,
@@ -81,12 +75,9 @@ class Project extends Model
         return [
             'project_type' => 'software',
             'statuses' => [
-                ['key' => 'open', 'name' => 'Open', 'color' => '#64748b', 'category' => 'todo', 'is_initial' => true, 'icon' => 'fa-circle-o'],
-                ['key' => 'in_development', 'name' => 'In Development', 'color' => '#3b82f6', 'category' => 'in_progress', 'icon' => 'fa-code'],
-                ['key' => 'code_review', 'name' => 'Code Review', 'color' => '#8b5cf6', 'category' => 'review', 'icon' => 'fa-eye'],
-                ['key' => 'qa_testing', 'name' => 'QA Testing', 'color' => '#f59e0b', 'category' => 'testing', 'icon' => 'fa-bug'],
-                ['key' => 'uat', 'name' => 'UAT', 'color' => '#06b6d4', 'category' => 'review', 'icon' => 'fa-check-square'],
-                ['key' => 'done', 'name' => 'Done', 'color' => '#10b981', 'category' => 'done', 'is_final' => true, 'icon' => 'fa-check-circle'],
+                ['key' => 'todo', 'name' => 'Cần làm', 'color' => '#64748b', 'category' => 'todo', 'is_initial' => true, 'icon' => 'fa-circle-o'],
+                ['key' => 'in_progress', 'name' => 'Đang thực hiện', 'color' => '#3b82f6', 'category' => 'in_progress', 'icon' => 'fa-spinner'],
+                ['key' => 'done', 'name' => 'Hoàn thành', 'color' => '#10b981', 'category' => 'done', 'is_final' => true, 'icon' => 'fa-check-circle'],
             ],
             'approval_gates' => [
                 'require_tech_lead' => true,
