@@ -83,6 +83,10 @@
                 <i class="fa fa-trello"></i>
                 <span>Bảng (Board)</span>
             </a>
+            <a :href="`#workflow`" class="pd-nav-item" :class="{ active: currentTab === 'workflow' }" @click.prevent="currentTab = 'workflow'">
+                <i class="fa fa-sitemap"></i>
+                <span>Quy trình</span>
+            </a>
             <a :href="`/projects/${project.id}/sprints`" class="pd-nav-item">
                 <i class="fa fa-cubes"></i>
                 <span>Backlog / Sprint</span>
@@ -653,11 +657,420 @@
                 </div>
             </div>
         </div>
+
+        <!-- 7. PROJECT WORKFLOW & STATE MACHINE SECTION -->
+        <div v-if="currentTab === 'workflow'" class="pd-workflow-section mt-4">
+            <!-- Toast notification -->
+            <div
+                v-if="workflowToast.message"
+                class="tp-workflow-toast"
+                :class="workflowToast.type"
+                role="alert"
+                aria-live="assertive"
+            >
+                <i :class="workflowToast.type === 'success' ? 'fa fa-check-circle' : (workflowToast.type === 'warning' ? 'fa fa-exclamation-circle' : 'fa fa-times-circle')"></i>
+                <span class="tp-workflow-toast-text">{{ workflowToast.message }}</span>
+                <button type="button" class="tp-workflow-toast-close" @click="workflowToast.message = ''" aria-label="Đóng">&times;</button>
+            </div>
+
+            <!-- Header Card -->
+            <div class="tp-header-banner mb-4">
+                <div class="tp-header-content">
+                    <div class="tp-eyebrow">
+                        <i class="fa fa-sitemap"></i>
+                        <span>QUY TRÌNH &amp; VÒNG ĐỜI CÔNG VIỆC</span>
+                    </div>
+                    <h1 class="m-0" style="font-size: 22px; font-weight: 700; color: #ffffff;">
+                        Quy trình dự án: {{ project.name }}
+                    </h1>
+                    <p class="m-0 text-muted small mt-1" style="color: #cbd5e1 !important;">
+                        Cấu hình trạng thái linh hoạt và ma trận chuyển trạng thái (Transition Rules) cho dự án này.
+                    </p>
+                </div>
+                <div class="tp-header-actions d-flex align-items-center gap-2">
+                    <button type="button" class="tp-btn tp-btn-secondary" @click="saveWorkflowAjax" :disabled="isSavingWorkflow">
+                        <i class="fa" :class="isSavingWorkflow ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                        <span>{{ isSavingWorkflow ? 'Đang lưu...' : 'Lưu quy trình' }}</span>
+                    </button>
+                    <a :href="editUrl || `/projects/${project.id}/edit`" class="tp-btn tp-btn-light">
+                        <i class="fa fa-cog"></i>
+                        <span>Cài đặt dự án</span>
+                    </a>
+                    <a href="/workflows" class="tp-btn tp-btn-light">
+                        <i class="fa fa-sitemap"></i>
+                        <span>Tất cả quy trình</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Unified Card: Luồng trạng thái -->
+            <div class="pd-jira-card mb-4">
+                <div class="pd-jira-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <h3 class="pd-jira-card-title m-0">
+                            <i class="fa fa-sitemap text-primary me-2"></i>Luồng trạng thái
+                        </h3>
+                        <span class="badge"
+                            style="padding: 4px 10px; background-color: #fff !important; color: #000 !important; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 11px; font-weight: 700;">
+                            {{ (workflowConfig.statuses || []).length }} bước
+                        </span>
+                    </div>
+
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <!-- Switcher: Sơ đồ / Danh sách -->
+                        <div class="tp-view-mode-toggle d-inline-flex align-items-center p-1 bg-light rounded" style="border: 1px solid #e2e8f0;">
+                            <button
+                                type="button"
+                                class="btn btn-xs tp-mode-btn"
+                                :class="workflowViewMode === 'diagram' ? 'btn-primary font-weight-bold shadow-sm' : 'btn-light text-muted'"
+                                style="border-radius: 5px; font-size: 12px; padding: 4px 12px;"
+                                @click="workflowViewMode = 'diagram'"
+                            >
+                                <i class="fa fa-sitemap me-1"></i> Sơ đồ
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-xs tp-mode-btn"
+                                :class="workflowViewMode === 'list' ? 'btn-primary font-weight-bold shadow-sm' : 'btn-light text-muted'"
+                                style="border-radius: 5px; font-size: 12px; padding: 4px 12px;"
+                                @click="workflowViewMode = 'list'"
+                            >
+                                <i class="fa fa-list-ol me-1"></i> Danh sách
+                            </button>
+                        </div>
+
+                        <button type="button" class="tp-btn tp-btn-light btn-sm" @click="openAddStatusModal">
+                            <i class="fa fa-plus me-1"></i> Thêm trạng thái
+                        </button>
+                        <button type="button" class="tp-btn tp-btn-primary btn-sm" @click="saveWorkflowAjax" :disabled="isSavingWorkflow">
+                            <i class="fa" :class="isSavingWorkflow ? 'fa-spinner fa-spin' : 'fa-save me-1'"></i>
+                            <span>{{ isSavingWorkflow ? 'Đang lưu...' : 'Lưu quy trình' }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pd-jira-card-body p-0">
+                    <!-- VIEW 1: SƠ ĐỒ (DIAGRAM) -->
+                    <div v-if="workflowViewMode === 'diagram'" class="p-3">
+                        <div class="tp-diagram-hint text-muted small mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div>
+                                <i class="fa fa-info-circle text-primary me-1"></i>
+                                <strong>Chỉnh sửa trực tiếp trên sơ đồ:</strong> Bấm vào thẻ để sửa, dùng nút mũi tên để di chuyển thứ tự, hoặc thêm bước mới ở cuối luồng.
+                            </div>
+                            <div class="text-muted" style="font-size: 11px;">
+                                <i class="fa fa-arrows-h me-1"></i>Cuộn ngang để xem toàn bộ sơ đồ
+                            </div>
+                        </div>
+
+                        <div class="tp-pipeline-scroll-wrap">
+                            <div class="tp-pipeline-flow">
+                                <div
+                                    v-for="(st, idx) in workflowConfig.statuses"
+                                    :key="st.key"
+                                    class="tp-pipeline-step-wrap"
+                                >
+                                    <div
+                                        class="tp-pipeline-node"
+                                        :style="{
+                                            borderTopColor: st.color || '#3b82f6',
+                                            opacity: st.is_active === false ? '0.65' : '1',
+                                            background: st.is_active === false ? '#fef2f2' : '#ffffff'
+                                        }"
+                                        @click="openEditStatusModal(idx)"
+                                        title="Bấm để chỉnh sửa trạng thái này"
+                                    >
+                                        <div class="tp-node-header">
+                                            <span class="tp-node-dot" :style="{ backgroundColor: st.color || '#3b82f6' }"></span>
+                                            <span class="tp-node-num">#{{ idx + 1 }}</span>
+                                            <span v-if="idx === 0" class="badge bg-info text-white" style="font-size: 9px; padding: 2px 5px; margin-left: auto;">Bắt đầu</span>
+                                            <span v-else-if="idx === (workflowConfig.statuses || []).length - 1" class="badge bg-success text-white" style="font-size: 9px; padding: 2px 5px; margin-left: auto;">Đóng task</span>
+                                            <span v-if="st.is_active === false" class="badge bg-danger text-white" style="font-size: 9px; padding: 2px 5px; margin-left: auto;">Tắt</span>
+                                        </div>
+                                        <div class="tp-node-title">
+                                            <i :class="`fa ${st.icon || 'fa-circle-o'}`" :style="{ color: st.color || '#3b82f6' }"></i>
+                                            <strong>{{ st.name }}</strong>
+                                        </div>
+                                        <div class="tp-node-key">
+                                            <code>{{ st.key }}</code>
+                                        </div>
+
+                                        <!-- Quick actions toolbar inside the diagram card -->
+                                        <div class="tp-node-actions" @click.stop>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    class="tp-node-action-btn"
+                                                    :disabled="idx === 0"
+                                                    title="Di chuyển sang trái (lên trước)"
+                                                    @click="moveStatus(idx, -1)"
+                                                >
+                                                    <i class="fa fa-arrow-left"></i>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="tp-node-action-btn"
+                                                    :disabled="idx === (workflowConfig.statuses || []).length - 1"
+                                                    title="Di chuyển sang phải (xuống sau)"
+                                                    @click="moveStatus(idx, 1)"
+                                                >
+                                                    <i class="fa fa-arrow-right"></i>
+                                                </button>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    class="tp-node-action-btn"
+                                                    :class="st.is_active !== false ? 'text-success' : 'text-danger'"
+                                                    :title="st.is_active !== false ? 'Đang bật (bấm để tắt)' : 'Đang tắt (bấm để bật)'"
+                                                    @click="toggleStatusActive(idx)"
+                                                >
+                                                    <i class="fa" :class="st.is_active !== false ? 'fa-check' : 'fa-ban'"></i>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="tp-node-action-btn text-primary"
+                                                    title="Chỉnh sửa trạng thái"
+                                                    @click="openEditStatusModal(idx)"
+                                                >
+                                                    <i class="fa fa-pencil"></i>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="tp-node-action-btn text-danger"
+                                                    :disabled="(workflowConfig.statuses || []).length <= 2"
+                                                    title="Xóa trạng thái"
+                                                    @click="deleteStatus(idx)"
+                                                >
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Elongated arrow with inline '+' button to insert status between -->
+                                    <div v-if="idx < (workflowConfig.statuses || []).length - 1" class="tp-pipeline-arrow-wrap">
+                                        <div class="tp-pipeline-arrow-track">
+                                            <span class="tp-arrow-stem"></span>
+                                            <i class="fa fa-caret-right tp-arrow-head"></i>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            class="tp-arrow-add-btn"
+                                            title="Thêm trạng thái vào giữa hai bước này"
+                                            @click.stop="openAddStatusBetween(idx)"
+                                        >
+                                            <i class="fa fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Add Status Step Node at the end of diagram -->
+                                <div class="tp-pipeline-step-wrap">
+                                    <div class="tp-pipeline-arrow-wrap">
+                                        <div class="tp-pipeline-arrow-track">
+                                            <span class="tp-arrow-stem"></span>
+                                            <i class="fa fa-caret-right tp-arrow-head"></i>
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="tp-pipeline-add-node"
+                                        @click="openAddStatusAtEnd"
+                                        title="Thêm bước trạng thái mới vào cuối sơ đồ"
+                                    >
+                                        <i class="fa fa-plus-circle font-size-20 text-primary mb-1"></i>
+                                        <span style="font-size: 12px; font-weight: 600; color: #2563eb;">+ Thêm trạng thái</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIEW 2: DANH SÁCH (TABLE) -->
+                    <div v-else class="table-responsive">
+                        <table class="tp-table m-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th>Tên trạng thái</th>
+                                    <th style="width: 180px;">Mã định danh (Key)</th>
+                                    <th style="text-align: center; width: 80px;">Màu</th>
+                                    <th style="text-align: center; width: 100px;">Kích hoạt</th>
+                                    <th style="text-align: right; width: 160px;">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="(st, idx) in workflowConfig.statuses"
+                                    :key="st.key"
+                                    :style="st.is_active === false ? 'opacity: 0.65; background: #fdf2f2;' : ''"
+                                >
+                                    <td class="font-weight-bold text-muted">#{{ idx + 1 }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <i :class="`fa ${st.icon || 'fa-circle-o'}`" :style="{ color: st.color }"></i>
+                                            <strong style="color: #0f172a;">{{ st.name }}</strong>
+                                            <span v-if="idx === 0" class="badge bg-info text-white" style="font-size: 9.5px; padding: 2px 6px;">Bắt đầu</span>
+                                            <span v-else-if="idx === (workflowConfig.statuses || []).length - 1" class="badge bg-success text-white" style="font-size: 9.5px; padding: 2px 6px;">Đóng task</span>
+                                            <span v-if="st.is_active === false" class="badge bg-secondary text-white" style="font-size: 9.5px; padding: 2px 6px;">Tắt</span>
+                                        </div>
+                                    </td>
+                                    <td><code style="background: #f1f5f9; padding: 3px 8px; border-radius: 4px; font-size: 11px;">{{ st.key }}</code></td>
+                                    <td style="text-align: center;">
+                                        <span class="status-color-pill" :style="{ backgroundColor: st.color }"></span>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <button
+                                            type="button"
+                                            class="btn btn-xs d-inline-flex align-items-center gap-1"
+                                            :class="st.is_active !== false ? 'btn-outline-success' : 'btn-outline-danger'"
+                                            style="font-size: 11px; padding: 2px 8px; border-radius: 12px;"
+                                            @click="toggleStatusActive(idx)"
+                                            :title="st.is_active !== false ? 'Bấm để vô hiệu hóa trạng thái này' : 'Bấm để kích hoạt lại'"
+                                        >
+                                            <i :class="`fa ${st.is_active !== false ? 'fa-check text-success' : 'fa-ban text-danger'}`"></i>
+                                            <span>{{ st.is_active !== false ? 'Bật' : 'Tắt' }}</span>
+                                        </button>
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <div class="d-inline-flex gap-1">
+                                            <button
+                                                type="button"
+                                                class="tp-icon-btn"
+                                                :disabled="idx === 0"
+                                                @click="moveStatus(idx, -1)"
+                                                title="Di chuyển lên"
+                                            >
+                                                <i class="fa fa-arrow-up"></i>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="tp-icon-btn"
+                                                :disabled="idx === (workflowConfig.statuses || []).length - 1"
+                                                @click="moveStatus(idx, 1)"
+                                                title="Di chuyển xuống"
+                                            >
+                                                <i class="fa fa-arrow-down"></i>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="tp-icon-btn"
+                                                @click="openEditStatusModal(idx)"
+                                                title="Chỉnh sửa trạng thái"
+                                            >
+                                                <i class="fa fa-pencil text-primary"></i>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="tp-icon-btn text-danger"
+                                                :disabled="(workflowConfig.statuses || []).length <= 2"
+                                                @click="deleteStatus(idx)"
+                                                title="Xóa trạng thái"
+                                            >
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: ADD / EDIT STATUS -->
+        <div v-if="showStatusModal" class="edit-modal-overlay" @click.self="closeStatusModal">
+            <div class="edit-modal" style="max-width: 500px;">
+                <div class="edit-modal-header">
+                    <h3>{{ editingStatusIndex !== null ? 'Chỉnh sửa trạng thái' : 'Thêm trạng thái mới' }}</h3>
+                    <button type="button" class="edit-modal-close" @click="closeStatusModal">&times;</button>
+                </div>
+                <div class="edit-modal-body">
+                    <div class="edit-field mb-3">
+                        <label class="form-label font-weight-bold">Tên trạng thái <span class="text-danger">*</span></label>
+                        <input
+                            v-model="statusModalForm.name"
+                            type="text"
+                            class="edit-input"
+                            placeholder="Ví dụ: Code Review, QA Testing, UAT..."
+                            @input="autoGenerateKey"
+                        >
+                    </div>
+
+                    <div class="edit-field mb-3">
+                        <label class="form-label font-weight-bold">Mã định danh (Key) <span class="text-danger">*</span></label>
+                        <input
+                            v-model="statusModalForm.key"
+                            type="text"
+                            class="edit-input"
+                            placeholder="code_review, qa_testing..."
+                            :disabled="editingStatusIndex !== null && ['todo', 'in_progress', 'done'].includes(statusModalForm.key)"
+                        >
+                        <div class="edit-hint small text-muted mt-1">Chữ thường, không dấu, dùng dấu gạch dưới thay cho khoảng trắng</div>
+                    </div>
+
+                    <div class="edit-field mb-3">
+                        <label class="form-label font-weight-bold">Màu đại diện</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="color" v-model="statusModalForm.color" class="tp-color-input" style="width: 40px; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; padding: 2px;">
+                            <input type="text" v-model="statusModalForm.color" class="edit-input" style="flex: 1;">
+                        </div>
+                    </div>
+
+                    <!-- Trạng thái trước / sau: Chỉ hiện khi CHỈNH SỬA trạng thái -->
+                    <div v-if="editingStatusIndex !== null" class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label font-weight-bold">Trạng thái trước</label>
+                            <select v-model="statusModalForm.afterKey" class="edit-select" @change="onEditAfterKeyChange">
+                                <option value="">(Không có - Đặt ở đầu quy trình)</option>
+                                <option
+                                    v-for="st in availableStatusesForEdit"
+                                    :key="'prev-' + st.key"
+                                    :value="st.key"
+                                >
+                                    {{ st.name }} ({{ st.key }})
+                                </option>
+                            </select>
+                            <div class="edit-hint small text-muted mt-1">Đổi vị trí: Đứng liền sau trạng thái này</div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label font-weight-bold">Trạng thái sau</label>
+                            <select v-model="statusModalForm.beforeKey" class="edit-select" @change="onEditBeforeKeyChange">
+                                <option value="">(Không có - Đặt ở cuối quy trình)</option>
+                                <option
+                                    v-for="st in availableStatusesForEdit"
+                                    :key="'next-' + st.key"
+                                    :value="st.key"
+                                >
+                                    {{ st.name }} ({{ st.key }})
+                                </option>
+                            </select>
+                            <div class="edit-hint small text-muted mt-1">Đổi vị trí: Đứng liền trước trạng thái này</div>
+                        </div>
+                    </div>
+
+                    <div class="edit-field mt-3">
+                        <label class="d-flex align-items-center gap-2 cursor-pointer mb-0">
+                            <input type="checkbox" v-model="statusModalForm.is_active">
+                            <span class="font-weight-500">Kích hoạt trạng thái này (Cho phép sử dụng trong dự án)</span>
+                        </label>
+                    </div>
+
+                    <div v-if="statusModalError" class="text-danger small mt-2">{{ statusModalError }}</div>
+                </div>
+                <div class="edit-modal-footer">
+                    <button type="button" class="tp-btn tp-btn-light" @click="closeStatusModal">Hủy</button>
+                    <button type="button" class="tp-btn tp-btn-primary" @click="saveStatusModal">
+                        {{ editingStatusIndex !== null ? 'Cập nhật' : 'Thêm trạng thái' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, reactive, computed, watch, onMounted } from 'vue';
 import StatusBadge from '../common/StatusBadge.vue';
 import PriorityBadge from '../common/PriorityBadge.vue';
 import IssueTypeBadge from '../common/IssueTypeBadge.vue';
@@ -672,9 +1085,390 @@ const props = defineProps({
     comments: { type: Array, default: () => [] },
     activities: { type: Array, default: () => [] },
     initialTab: { type: String, default: 'overview' },
+    effectiveWorkflow: { type: Object, default: () => null },
+    csrfToken: { type: String, default: '' },
+    updateUrl: { type: String, default: '' },
+    editUrl: { type: String, default: '' },
 });
 
 const currentTab = ref(props.initialTab || 'overview');
+
+onMounted(() => {
+    if (window.location.hash === '#workflow') {
+        currentTab.value = 'workflow';
+    } else if (window.location.hash === '#board') {
+        currentTab.value = 'board';
+    } else if (window.location.hash === '#activity') {
+        currentTab.value = 'activity';
+    }
+});
+
+// Workflow State & Methods
+const workflowViewMode = ref('diagram'); // 'diagram' | 'list'
+const workflowToast = ref({ message: '', type: 'success' });
+const isSavingWorkflow = ref(false);
+
+const initialWorkflow = props.effectiveWorkflow || props.project?.effective_workflow || props.project?.workflow_config || {
+    project_type: props.project?.project_type || 'software',
+    statuses: [
+        { key: 'todo', name: 'To Do', color: '#64748b', category: 'todo', is_initial: true, icon: 'fa-circle-o' },
+        { key: 'in_progress', name: 'In Progress', color: '#3b82f6', category: 'in_progress', icon: 'fa-spinner' },
+        { key: 'done', name: 'Done', color: '#10b981', category: 'done', is_final: true, icon: 'fa-check-circle' },
+    ],
+    transitions: {},
+};
+
+const workflowConfig = reactive(JSON.parse(JSON.stringify(initialWorkflow)));
+delete workflowConfig.approval_gates;
+delete workflowConfig.validation_rules;
+if (!workflowConfig.transitions) {
+    workflowConfig.transitions = {};
+}
+
+// Status Reordering
+async function moveStatus(index, direction) {
+    const target = index + direction;
+    if (target < 0 || target >= workflowConfig.statuses.length) return;
+    const temp = workflowConfig.statuses[index];
+    workflowConfig.statuses[index] = workflowConfig.statuses[target];
+    workflowConfig.statuses[target] = temp;
+    updateInitialFinal();
+    await saveWorkflowAjax(true);
+    showWorkflowToast(`Đã thay đổi thứ tự trạng thái.`);
+}
+
+function updateInitialFinal() {
+    (workflowConfig.statuses || []).forEach((s, idx) => {
+        s.is_initial = idx === 0;
+        s.is_final = idx === workflowConfig.statuses.length - 1;
+    });
+}
+
+async function deleteStatus(index) {
+    if ((workflowConfig.statuses || []).length <= 2) {
+        alert('Quy trình phải có tối thiểu 2 trạng thái.');
+        return;
+    }
+    const statusToDelete = workflowConfig.statuses[index];
+    if (confirm(`Bạn có chắc muốn xóa trạng thái "${statusToDelete.name}" (${statusToDelete.key})?`)) {
+        workflowConfig.statuses.splice(index, 1);
+        updateInitialFinal();
+
+        if (workflowConfig.transitions) {
+            delete workflowConfig.transitions[statusToDelete.key];
+            Object.keys(workflowConfig.transitions).forEach(k => {
+                workflowConfig.transitions[k] = (workflowConfig.transitions[k] || []).filter(toKey => toKey !== statusToDelete.key);
+            });
+        }
+        await saveWorkflowAjax(true);
+        showWorkflowToast(`Đã xóa trạng thái "${statusToDelete.name}".`);
+    }
+}
+
+async function toggleStatusActive(index) {
+    const s = workflowConfig.statuses[index];
+    s.is_active = (s.is_active === false) ? true : false;
+    await saveWorkflowAjax(true);
+    const actionText = s.is_active ? 'kích hoạt' : 'tạm dừng';
+    const toastType = s.is_active ? 'success' : 'warning';
+    showWorkflowToast(`Trạng thái "${s.name}" đã được ${actionText}.`, toastType);
+}
+
+function resolveDefaultIcon(name, key) {
+    const lower = `${name} ${key}`.toLowerCase();
+    if (lower.includes('todo') || lower.includes('cần làm') || lower.includes('backlog') || lower.includes('open')) return 'fa-circle-o';
+    if (lower.includes('review') || lower.includes('duyệt') || lower.includes('đánh giá')) return 'fa-eye';
+    if (lower.includes('test') || lower.includes('qa') || lower.includes('qc') || lower.includes('kiểm thử') || lower.includes('bug')) return 'fa-bug';
+    if (lower.includes('uat') || lower.includes('nghiệm thu')) return 'fa-check-square';
+    if (lower.includes('done') || lower.includes('hoàn thành') || lower.includes('đóng') || lower.includes('kết thúc') || lower.includes('finish')) return 'fa-check-circle';
+    if (lower.includes('code') || lower.includes('dev') || lower.includes('phát triển')) return 'fa-code';
+    if (lower.includes('design') || lower.includes('thiết kế')) return 'fa-paint-brush';
+    if (lower.includes('deploy') || lower.includes('release') || lower.includes('triển khai') || lower.includes('launch')) return 'fa-rocket';
+    if (lower.includes('progress') || lower.includes('doing') || lower.includes('đang làm') || lower.includes('thực hiện')) return 'fa-spinner';
+    return 'fa-circle-o';
+}
+
+// Status Modal (Add / Edit)
+const showStatusModal = ref(false);
+const editingStatusIndex = ref(null);
+const insertTargetIndex = ref(null);
+const statusModalError = ref('');
+const statusModalForm = reactive({
+    name: '',
+    key: '',
+    category: 'in_progress',
+    color: '#3b82f6',
+    icon: 'fa-circle-o',
+    afterKey: '',
+    beforeKey: '',
+    is_active: true,
+});
+
+function openAddStatusBetween(idx) {
+    insertTargetIndex.value = idx + 1;
+    openAddStatusModal();
+}
+
+function openAddStatusAtEnd() {
+    insertTargetIndex.value = (workflowConfig.statuses || []).length;
+    openAddStatusModal();
+}
+
+function openAddStatusModal() {
+    editingStatusIndex.value = null;
+    statusModalForm.name = '';
+    statusModalForm.key = '';
+    statusModalForm.category = 'in_progress';
+    statusModalForm.color = '#3b82f6';
+    statusModalForm.icon = 'fa-circle-o';
+    statusModalForm.afterKey = '';
+    statusModalForm.beforeKey = '';
+    statusModalForm.is_active = true;
+    statusModalError.value = '';
+    showStatusModal.value = true;
+}
+
+const availableStatusesForEdit = computed(() => {
+    if (editingStatusIndex.value === null) return [];
+    const currentKey = workflowConfig.statuses[editingStatusIndex.value]?.key;
+    return (workflowConfig.statuses || []).filter(s => s.key !== currentKey);
+});
+
+function openEditStatusModal(index) {
+    editingStatusIndex.value = index;
+    insertTargetIndex.value = null;
+    const s = workflowConfig.statuses[index];
+    statusModalForm.name = s.name;
+    statusModalForm.key = s.key;
+    statusModalForm.category = s.category || 'in_progress';
+    statusModalForm.color = s.color || '#3b82f6';
+    statusModalForm.icon = s.icon || 'fa-circle-o';
+    statusModalForm.is_active = s.is_active !== false;
+
+    // Set initial before/after keys based on current position
+    const list = workflowConfig.statuses || [];
+    statusModalForm.afterKey = index > 0 ? list[index - 1].key : '';
+    statusModalForm.beforeKey = index < list.length - 1 ? list[index + 1].key : '';
+
+    statusModalError.value = '';
+    showStatusModal.value = true;
+}
+
+function onEditAfterKeyChange() {
+    const list = availableStatusesForEdit.value;
+    if (!statusModalForm.afterKey) {
+        statusModalForm.beforeKey = list.length > 0 ? list[0].key : '';
+        return;
+    }
+    const fullList = workflowConfig.statuses || [];
+    const idx = fullList.findIndex(s => s.key === statusModalForm.afterKey);
+    const nextSt = fullList.slice(idx + 1).find((s, i) => (idx + 1 + i) !== editingStatusIndex.value);
+    statusModalForm.beforeKey = nextSt ? nextSt.key : '';
+}
+
+function onEditBeforeKeyChange() {
+    const list = availableStatusesForEdit.value;
+    if (!statusModalForm.beforeKey) {
+        statusModalForm.afterKey = list.length > 0 ? list[list.length - 1].key : '';
+        return;
+    }
+    const fullList = workflowConfig.statuses || [];
+    const idx = fullList.findIndex(s => s.key === statusModalForm.beforeKey);
+    const prevSt = fullList.slice(0, idx).reverse().find(s => s.key !== workflowConfig.statuses[editingStatusIndex.value]?.key);
+    statusModalForm.afterKey = prevSt ? prevSt.key : '';
+}
+
+function closeStatusModal() {
+    showStatusModal.value = false;
+    insertTargetIndex.value = null;
+}
+
+function autoGenerateKey() {
+    if (editingStatusIndex.value === null) {
+        statusModalForm.key = statusModalForm.name
+            .toLowerCase()
+            .trim()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/[\s-]+/g, '_');
+    }
+}
+
+async function saveStatusModal() {
+    if (!statusModalForm.name.trim()) {
+        statusModalError.value = 'Vui lòng nhập tên trạng thái.';
+        return;
+    }
+    if (!statusModalForm.key.trim()) {
+        statusModalError.value = 'Vui lòng nhập mã key của trạng thái.';
+        return;
+    }
+
+    const key = statusModalForm.key.trim().toLowerCase();
+    const exists = (workflowConfig.statuses || []).some((s, idx) => s.key === key && idx !== editingStatusIndex.value);
+    if (exists) {
+        statusModalError.value = 'Mã key này đã tồn tại trong quy trình.';
+        return;
+    }
+
+    const autoIcon = resolveDefaultIcon(statusModalForm.name, key);
+
+    if (editingStatusIndex.value !== null) {
+        const item = workflowConfig.statuses[editingStatusIndex.value];
+        const oldKey = item.key;
+        item.name = statusModalForm.name.trim();
+        item.key = key;
+        item.category = statusModalForm.category || 'in_progress';
+        item.color = statusModalForm.color;
+        item.icon = item.icon || autoIcon;
+        item.is_active = statusModalForm.is_active !== false;
+
+        // Position repositioning if changed via afterKey / beforeKey
+        const currentIdx = editingStatusIndex.value;
+        let newTargetIdx = currentIdx;
+
+        if (statusModalForm.afterKey) {
+            const prevIdx = workflowConfig.statuses.findIndex(s => s.key === statusModalForm.afterKey);
+            if (prevIdx !== -1) {
+                newTargetIdx = prevIdx > currentIdx ? prevIdx : prevIdx + 1;
+            }
+        } else if (statusModalForm.beforeKey) {
+            const nextIdx = workflowConfig.statuses.findIndex(s => s.key === statusModalForm.beforeKey);
+            if (nextIdx !== -1) {
+                newTargetIdx = nextIdx > currentIdx ? nextIdx - 1 : nextIdx;
+            }
+        } else if (statusModalForm.afterKey === '' && statusModalForm.beforeKey !== undefined) {
+            newTargetIdx = 0;
+        }
+
+        if (newTargetIdx !== currentIdx && newTargetIdx >= 0 && newTargetIdx < workflowConfig.statuses.length) {
+            const [movedItem] = workflowConfig.statuses.splice(currentIdx, 1);
+            workflowConfig.statuses.splice(newTargetIdx, 0, movedItem);
+        }
+
+        if (oldKey !== key && workflowConfig.transitions) {
+            if (workflowConfig.transitions[oldKey]) {
+                workflowConfig.transitions[key] = workflowConfig.transitions[oldKey];
+                delete workflowConfig.transitions[oldKey];
+            }
+            Object.keys(workflowConfig.transitions).forEach(k => {
+                workflowConfig.transitions[k] = (workflowConfig.transitions[k] || []).map(t => t === oldKey ? key : t);
+            });
+        }
+        updateInitialFinal();
+        closeStatusModal();
+        await saveWorkflowAjax(true);
+        showWorkflowToast(`Đã cập nhật và lưu trạng thái "${item.name}".`);
+    } else {
+        const newItem = {
+            name: statusModalForm.name.trim(),
+            key: key,
+            category: 'in_progress',
+            color: statusModalForm.color,
+            icon: autoIcon,
+            is_active: statusModalForm.is_active !== false,
+        };
+        if (!workflowConfig.statuses) workflowConfig.statuses = [];
+
+        let insertIndex = workflowConfig.statuses.length;
+        if (insertTargetIndex.value !== null && insertTargetIndex.value >= 0 && insertTargetIndex.value <= workflowConfig.statuses.length) {
+            insertIndex = insertTargetIndex.value;
+        } else {
+            // Default before the last status if possible
+            if (workflowConfig.statuses.length > 1) {
+                insertIndex = workflowConfig.statuses.length - 1;
+            }
+        }
+
+        workflowConfig.statuses.splice(insertIndex, 0, newItem);
+        insertTargetIndex.value = null;
+        updateInitialFinal();
+        closeStatusModal();
+        await saveWorkflowAjax(true);
+        showWorkflowToast(`Đã thêm và lưu trạng thái mới "${newItem.name}".`);
+    }
+}
+
+function isFreeTransition(fromKey) {
+    return !workflowConfig.transitions || !workflowConfig.transitions[fromKey] || workflowConfig.transitions[fromKey].length === 0;
+}
+
+function setFreeTransition(fromKey, free) {
+    if (!workflowConfig.transitions) workflowConfig.transitions = {};
+    if (free) {
+        delete workflowConfig.transitions[fromKey];
+    } else {
+        const statuses = workflowConfig.statuses || [];
+        const idx = statuses.findIndex(s => s.key === fromKey);
+        const next = statuses[idx + 1];
+        workflowConfig.transitions[fromKey] = next ? [next.key] : [];
+    }
+}
+
+function isTransitionAllowed(fromKey, toKey) {
+    if (isFreeTransition(fromKey)) return true;
+    return (workflowConfig.transitions[fromKey] || []).includes(toKey);
+}
+
+function toggleTransition(fromKey, toKey) {
+    if (!workflowConfig.transitions) workflowConfig.transitions = {};
+    if (isFreeTransition(fromKey)) {
+        workflowConfig.transitions[fromKey] = (workflowConfig.statuses || []).map(s => s.key).filter(k => k !== toKey);
+        return;
+    }
+    const currentList = workflowConfig.transitions[fromKey] || [];
+    if (currentList.includes(toKey)) {
+        workflowConfig.transitions[fromKey] = currentList.filter(k => k !== toKey);
+    } else {
+        workflowConfig.transitions[fromKey] = [...currentList, toKey];
+    }
+}
+
+function resetAllTransitions() {
+    workflowConfig.transitions = {};
+    showWorkflowToast('Đã đặt lại quy tắc: Cho phép chuyển tự do tới mọi trạng thái.');
+}
+
+function showWorkflowToast(msg, type = 'success') {
+    workflowToast.value = { message: msg, type };
+    setTimeout(() => {
+        if (workflowToast.value.message === msg) {
+            workflowToast.value = { message: '', type: 'success' };
+        }
+    }, 4500);
+}
+
+async function saveWorkflowAjax(silent = false) {
+    isSavingWorkflow.value = true;
+    const url = props.updateUrl || `/projects/${props.project.id}`;
+    const token = props.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    try {
+        const res = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                workflow_config: JSON.stringify(workflowConfig),
+            }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+            if (!silent) {
+                showWorkflowToast('Quy trình dự án đã được cập nhật thành công!');
+            }
+        } else {
+            showWorkflowToast(data.message || 'Không thể lưu quy trình.', 'error');
+        }
+    } catch (err) {
+        showWorkflowToast('Đã xảy ra lỗi khi lưu quy trình: ' + err.message, 'error');
+    } finally {
+        isSavingWorkflow.value = false;
+    }
+}
 const activityFilter = ref('');
 const searchQuery = ref('');
 const selectedAssigneeFilter = ref('');
@@ -845,11 +1639,31 @@ const draggedTask = ref(null);
 const draggedTaskId = ref(null);
 const activeDropColumn = ref(null);
 
-const columns = [
-    { key: 'todo', label: 'Cần làm', icon: 'fa fa-circle-o', iconColor: '#64748b', badgeBg: '#f1f5f9', badgeColor: '#475569' },
-    { key: 'in_progress', label: 'Đang thực hiện', icon: 'fa fa-spinner', iconColor: '#2563eb', badgeBg: '#eff6ff', badgeColor: '#2563eb' },
-    { key: 'done', label: 'Hoàn thành', icon: 'fa fa-check-circle', iconColor: '#10b981', badgeBg: '#d1fae5', badgeColor: '#059669' },
-];
+const columns = computed(() => {
+    const list = workflowConfig.statuses || [];
+    if (list.length > 0) {
+        return list.filter(s => (s.is_active ?? true) !== false).map(s => {
+            let label = s.name;
+            if (s.key === 'todo' && (!label || label === 'Cần làm' || label === 'todo')) label = 'To Do';
+            else if (s.key === 'in_progress' && (!label || label === 'Đang thực hiện' || label === 'in_progress')) label = 'In Progress';
+            else if (s.key === 'done' && (!label || label === 'Hoàn thành' || label === 'done')) label = 'Done';
+
+            return {
+                key: s.key,
+                label: label,
+                icon: s.icon ? (s.icon.startsWith('fa') ? s.icon : `fa ${s.icon}`) : 'fa fa-circle-o',
+                iconColor: s.color || '#64748b',
+                badgeBg: s.color ? `${s.color}15` : '#f1f5f9',
+                badgeColor: s.color || '#475569',
+            };
+        });
+    }
+    return [
+        { key: 'todo', label: 'To Do', icon: 'fa fa-circle-o', iconColor: '#64748b', badgeBg: '#f1f5f9', badgeColor: '#475569' },
+        { key: 'in_progress', label: 'In Progress', icon: 'fa fa-spinner', iconColor: '#2563eb', badgeBg: '#eff6ff', badgeColor: '#2563eb' },
+        { key: 'done', label: 'Done', icon: 'fa fa-check-circle', iconColor: '#10b981', badgeBg: '#d1fae5', badgeColor: '#059669' },
+    ];
+});
 
 const filteredTasks = computed(() => {
     return taskList.value.filter(task => {
@@ -1099,3 +1913,290 @@ function formatRelativeTime(dateStr) {
     return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
 }
 </script>
+
+<style scoped>
+/* Pipeline / Flow Diagram Styles */
+.tp-pipeline-scroll-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.tp-pipeline-flow {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 14px;
+    min-width: 100%;
+}
+
+.tp-pipeline-step-wrap {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.tp-pipeline-node {
+    width: 215px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-top-width: 4px;
+    border-radius: 10px;
+    padding: 12px 14px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    box-sizing: border-box;
+}
+
+.tp-pipeline-node:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.09);
+    border-color: #94a3b8;
+}
+
+.tp-node-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.tp-node-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.tp-node-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: #000000 !important;
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1px 7px;
+    display: inline-block;
+}
+
+.tp-node-title {
+    font-size: 13.5px;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tp-node-key code {
+    font-size: 11px;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.tp-node-actions {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.tp-node-action-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.tp-node-action-btn:hover:not(:disabled) {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #0f172a;
+    transform: scale(1.1);
+}
+
+.tp-node-action-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.tp-pipeline-arrow-wrap {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative;
+    width: 84px;
+    height: 48px;
+    flex-shrink: 0;
+    margin: 0 4px;
+}
+
+.tp-pipeline-arrow-track {
+    width: 100%;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.tp-arrow-stem {
+    flex: 1;
+    height: 2px;
+    background: #cbd5e1;
+    border-radius: 1px;
+}
+
+.tp-arrow-head {
+    font-size: 18px;
+    color: #94a3b8;
+    margin-left: -4px;
+    line-height: 1;
+}
+
+.tp-arrow-add-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1.5px solid #2563eb;
+    color: #2563eb;
+    font-size: 11px;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    z-index: 5;
+    padding: 0;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tp-arrow-add-btn:hover {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #1d4ed8;
+    transform: translate(-50%, -50%) scale(1.22);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.tp-workflow-toast {
+    position: fixed !important;
+    top: 24px !important;
+    right: 24px !important;
+    z-index: 999999 !important;
+    padding: 12px 20px !important;
+    border-radius: 8px !important;
+    color: #ffffff !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25) !important;
+    animation: toastSlideIn 0.25s ease-out !important;
+    max-width: 480px !important;
+}
+
+.tp-workflow-toast.success {
+    background-color: #059669 !important;
+    border: 1px solid #10b981 !important;
+}
+
+.tp-workflow-toast.warning {
+    background-color: #d97706 !important;
+    border: 1px solid #f59e0b !important;
+    color: #ffffff !important;
+}
+
+.tp-workflow-toast.error {
+    background-color: #dc2626 !important;
+    border: 1px solid #ef4444 !important;
+}
+
+.tp-workflow-toast .tp-workflow-toast-close,
+.tp-workflow-toast button {
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    font-size: 20px !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+    margin-left: 10px !important;
+    opacity: 0.8 !important;
+    padding: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.tp-workflow-toast .tp-workflow-toast-close:hover,
+.tp-workflow-toast button:hover {
+    opacity: 1 !important;
+}
+
+.tp-pipeline-arrow {
+    color: #94a3b8;
+    font-size: 18px;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0;
+}
+
+.tp-pipeline-add-node {
+    width: 155px;
+    height: 110px;
+    background: #ffffff;
+    border: 2px dashed #93c5fd;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.tp-pipeline-add-node:hover {
+    background: #eff6ff;
+    border-color: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+}
+
+.tp-view-mode-toggle {
+    background: #f1f5f9;
+}
+
+.tp-mode-btn {
+    transition: all 0.15s ease;
+}
+</style>
+

@@ -1,9 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
-<link href="{{ asset('build/assets/edit-shared.css') }}?v={{ filemtime(public_path('build/assets/edit-shared.css')) }}" rel="stylesheet">
+<link href="{{ asset('build/assets/task-shared.css') }}?v={{ file_exists(public_path('build/assets/task-shared.css')) ? filemtime(public_path('build/assets/task-shared.css')) : time() }}" rel="stylesheet">
+<link href="{{ asset('build/assets/edit-shared.css') }}?v={{ file_exists(public_path('build/assets/edit-shared.css')) ? filemtime(public_path('build/assets/edit-shared.css')) : time() }}" rel="stylesheet">
+@if(file_exists(public_path('build/assets/project-edit.css')))
+<link href="{{ asset('build/assets/project-edit.css') }}?v={{ filemtime(public_path('build/assets/project-edit.css')) }}" rel="stylesheet">
+@endif
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
-<div id="project-edit-app" class="project-edit-form"></div>
+
+<div class="col-md-12 p-0">
+    <div id="project-edit-app" class="project-edit-form" style="width: 100%; max-width: 1240px; margin: 0 auto;"></div>
+</div>
 @endsection
 
 @section('jqueryScript')

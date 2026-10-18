@@ -1,18 +1,34 @@
 <template>
     <div class="project-edit-vue">
-        <section class="tp-page-head">
-            <div>
-                <span class="tp-eyebrow">PROJECT SETTINGS</span>
-                <h1>Chỉnh sửa dự án</h1>
-                <p>Cập nhật thông tin, phân loại và <strong>quy trình làm việc tùy biến (Workflow &amp; State Machine)</strong> cho dự án <strong>{{ project.name }}</strong></p>
+        <!-- Header Banner -->
+        <div class="tp-header-banner mb-4">
+            <div class="tp-header-content">
+                <div class="tp-eyebrow">
+                    <i class="fa fa-sliders"></i>
+                    <span>CÀI ĐẶT DỰ ÁN &amp; QUY TRÌNH</span>
+                </div>
+                <h1 class="m-0" style="font-size: 22px; font-weight: 700; color: #ffffff;">
+                    Chỉnh sửa dự án: {{ project.name }}
+                </h1>
+                <p class="m-0 text-muted small mt-1" style="color: #cbd5e1 !important;">
+                    Cập nhật thông tin cơ bản, thành viên và phân loại dự án.
+                </p>
             </div>
-            <div class="d-flex align-items-center gap-2">
-                <a :href="`/projects/${project.id}/roadmap`" class="btn btn-outline-primary" style="font-size: 13px;">
-                    <i class="fa fa-calendar me-1"></i> Xem Calendar Roadmap
+            <div class="tp-header-actions d-flex align-items-center gap-2">
+                <a :href="`/projects/${project.id}`" class="tp-btn tp-btn-secondary">
+                    <i class="fa fa-eye"></i>
+                    <span>Xem chi tiết</span>
                 </a>
-                <a :href="projectsIndexUrl" class="btn btn-default" style="font-size: 13px;">Quay lại danh sách</a>
+                <a :href="`/projects/${project.id}/roadmap`" class="tp-btn tp-btn-light">
+                    <i class="fa fa-calendar"></i>
+                    <span>Roadmap</span>
+                </a>
+                <a :href="projectsIndexUrl" class="tp-btn tp-btn-light">
+                    <i class="fa fa-arrow-left"></i>
+                    <span>Quay lại</span>
+                </a>
             </div>
-        </section>
+        </div>
 
         <!-- Notification Toast -->
         <div v-if="toastMessage" class="tp-workflow-toast" :class="toastType">
@@ -170,269 +186,26 @@
                         </div>
                     </div>
 
-                    <!-- CARD 2: MODULE 2 - VISUAL WORKFLOW ENGINE & STATE MACHINE -->
-                    <div class="edit-card tp-workflow-card" style="border: 2px solid #3b82f6;">
-                        <div class="edit-card-header" style="background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);">
-                            <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
+                    <!-- WORKFLOW BANNER: Directed to Project Dashboard #workflow -->
+                    <div class="edit-card p-4 mb-3" style="background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%); border: 1px solid #bfdbfe; border-radius: 12px;">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div class="d-flex align-items-start gap-3">
+                                <div style="width: 44px; height: 44px; border-radius: 10px; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; flex-shrink: 0; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.25);">
+                                    <i class="fa fa-sitemap"></i>
+                                </div>
                                 <div>
-                                    <span class="badge bg-primary text-white mb-1" style="font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase;">
-                                        <i class="fa fa-sliders"></i> Module 2: State Machine
-                                    </span>
-                                    <h2 class="edit-card-title m-0" style="font-size: 16px; font-weight: 700; color: #1e3a8a;">
-                                        Visual Workflow Engine &amp; Quy trình làm việc tùy biến
-                                    </h2>
-                                    <p class="edit-card-desc" style="color: #475569;">
-                                        Tự định nghĩa trạng thái task theo từng giai đoạn vòng đời dự án.
+                                    <h3 style="font-size: 16px; font-weight: 700; color: #1e3a8a; margin: 0 0 4px 0;">
+                                        Quy trình làm việc (Workflow Engine)
+                                    </h3>
+                                    <p class="m-0 text-muted small" style="color: #475569 !important; line-height: 1.5;">
+                                        Quy trình, danh sách trạng thái và ma trận chuyển tiếp được cấu hình và quản lý trực tiếp tại trang chi tiết dự án.
                                     </p>
                                 </div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" @click="resetToTemplate(form.project_type)" title="Khôi phục trạng thái chuẩn của loại dự án">
-                                        <i class="fa fa-refresh me-1"></i> Nạp lại mẫu chuẩn
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-primary" @click="saveWorkflowAjax" :disabled="isSavingWorkflow">
-                                        <i class="fa" :class="isSavingWorkflow ? 'fa-spinner fa-spin' : 'fa-save'"></i>
-                                        {{ isSavingWorkflow ? 'Đang lưu...' : 'Lưu quy trình' }}
-                                    </button>
-                                </div>
                             </div>
-                        </div>
-
-                        <div class="edit-card-body">
-                            <!-- 1. Visual Pipeline Graph Preview -->
-                            <div class="tp-workflow-visual-section mb-4">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="tp-section-subtitle">
-                                        <i class="fa fa-sitemap text-primary me-1"></i>
-                                        Sơ đồ luồng trạng thái (Visual Pipeline Preview)
-                                    </span>
-                                    <span class="text-muted small">{{ workflowConfig.statuses.length }} bước quy trình</span>
-                                </div>
-
-                                <div class="tp-pipeline-scroll-wrap">
-                                    <div class="tp-pipeline-flow">
-                                        <div
-                                            v-for="(st, idx) in workflowConfig.statuses"
-                                            :key="st.key"
-                                            class="tp-pipeline-step-wrap"
-                                        >
-                                            <div
-                                                class="tp-pipeline-node"
-                                                :style="{ borderColor: st.color, borderLeftColor: st.color }"
-                                            >
-                                                <div class="tp-node-header">
-                                                    <span class="tp-node-dot" :style="{ backgroundColor: st.color }"></span>
-                                                    <span class="tp-node-num">#{{ idx + 1 }}</span>
-                                                    <span class="tp-node-cat" :class="`cat-${st.category}`">{{ st.category }}</span>
-                                                </div>
-                                                <div class="tp-node-title">
-                                                    <i :class="`fa ${st.icon || 'fa-circle-o'}`" :style="{ color: st.color }"></i>
-                                                    <strong>{{ st.name }}</strong>
-                                                </div>
-                                                <div class="tp-node-key">
-                                                    <code>{{ st.key }}</code>
-                                                </div>
-                                            </div>
-
-                                            <!-- Connector Arrow -->
-                                            <div v-if="idx < workflowConfig.statuses.length - 1" class="tp-pipeline-arrow">
-                                                <i class="fa fa-long-arrow-right"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 2. Statuses List & Customizer Table -->
-                            <div class="tp-workflow-list-section mb-4">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="tp-section-subtitle">
-                                        <i class="fa fa-list-ol text-primary me-1"></i>
-                                        Danh sách trạng thái theo thứ tự chuyển đổi
-                                    </span>
-                                    <button type="button" class="btn btn-sm btn-outline-primary" @click="openAddStatusModal">
-                                        <i class="fa fa-plus me-1"></i> Thêm trạng thái mới
-                                    </button>
-                                </div>
-
-                                <div class="tp-status-table-wrap">
-                                    <table class="tp-status-table">
-                                        <thead>
-                                            <tr>
-                                                <th style="width: 50px;">Thứ tự</th>
-                                                <th>Tên trạng thái</th>
-                                                <th>Mã (Key)</th>
-                                                <th>Nhóm phân loại</th>
-                                                <th>Màu sắc</th>
-                                                <th>Icon</th>
-                                                <th style="width: 110px; text-align: center;">Trạng thái</th>
-                                                <th style="width: 140px; text-align: right;">Hành động</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr
-                                                v-for="(st, idx) in workflowConfig.statuses"
-                                                :key="st.key"
-                                                :style="st.is_active === false ? 'opacity: 0.65; background: #fdf2f2;' : ''"
-                                            >
-                                                <td>
-                                                    <span class="badge bg-light text-dark font-weight-bold">#{{ idx + 1 }}</span>
-                                                </td>
-                                                <td>
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        <span class="status-color-pill" :style="{ backgroundColor: st.color }"></span>
-                                                        <strong style="color: #0f172a;">{{ st.name }}</strong>
-                                                        <span v-if="st.is_initial" class="badge bg-secondary text-white" style="font-size: 10px;">Bắt đầu</span>
-                                                        <span v-if="st.is_final" class="badge bg-success text-white" style="font-size: 10px;">Đóng task</span>
-                                                        <span v-if="st.is_active === false" class="badge bg-danger text-white" style="font-size: 10px;">Vô hiệu hóa</span>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <code class="tp-code-badge">{{ st.key }}</code>
-                                                </td>
-                                                <td>
-                                                    <select v-model="st.category" class="form-select form-select-sm tp-compact-select">
-                                                        <option value="todo">Cần làm (Todo)</option>
-                                                        <option value="in_progress">Đang thực hiện (In Progress)</option>
-                                                        <option value="review">Kiểm duyệt (Review)</option>
-                                                        <option value="testing">Kiểm thử (QA/Testing)</option>
-                                                        <option value="done">Hoàn thành (Done)</option>
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <input type="color" v-model="st.color" class="tp-color-input" title="Chọn màu cho trạng thái">
-                                                </td>
-                                                <td>
-                                                    <div class="d-flex align-items-center gap-1">
-                                                        <i :class="`fa ${st.icon || 'fa-circle-o'}`" :style="{ color: st.color }"></i>
-                                                        <span class="text-muted small">{{ st.icon || 'fa-circle-o' }}</span>
-                                                    </div>
-                                                </td>
-                                                <td style="text-align: center;">
-                                                    <button
-                                                        type="button"
-                                                        class="btn btn-xs d-inline-flex align-items-center gap-1"
-                                                        :class="st.is_active !== false ? 'btn-outline-success' : 'btn-outline-danger'"
-                                                        @click="toggleStatusActive(idx)"
-                                                        :title="st.is_active !== false ? 'Bấm để vô hiệu hóa trạng thái này' : 'Bấm để kích hoạt lại'"
-                                                    >
-                                                        <i class="fa" :class="st.is_active !== false ? 'fa-check-circle text-success' : 'fa-ban text-danger'"></i>
-                                                        <span>{{ st.is_active !== false ? 'Hoạt động' : 'Tắt' }}</span>
-                                                    </button>
-                                                </td>
-                                                <td style="text-align: right;">
-                                                    <div class="d-inline-flex gap-1">
-                                                        <button
-                                                            type="button"
-                                                            class="tp-icon-btn"
-                                                            :disabled="idx === 0"
-                                                            @click="moveStatus(idx, -1)"
-                                                            title="Di chuyển lên"
-                                                        >
-                                                            <i class="fa fa-arrow-up"></i>
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            class="tp-icon-btn"
-                                                            :disabled="idx === workflowConfig.statuses.length - 1"
-                                                            @click="moveStatus(idx, 1)"
-                                                            title="Di chuyển xuống"
-                                                        >
-                                                            <i class="fa fa-arrow-down"></i>
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            class="tp-icon-btn"
-                                                            @click="editStatus(idx)"
-                                                            title="Chỉnh sửa"
-                                                        >
-                                                            <i class="fa fa-pencil"></i>
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            class="tp-icon-btn text-danger"
-                                                            :disabled="workflowConfig.statuses.length <= 2"
-                                                            @click="removeStatus(idx)"
-                                                            title="Xóa trạng thái"
-                                                        >
-                                                            <i class="fa fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <!-- 3. State Transition Rules Section -->
-                            <div class="tp-workflow-transitions-section mb-4 pt-3 border-top">
-                                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                                    <div>
-                                        <span class="tp-section-subtitle">
-                                            <i class="fa fa-exchange text-primary me-1"></i>
-                                            Quy tắc chuyển trạng thái (State Transition Rules)
-                                        </span>
-                                        <p class="text-muted small m-0">
-                                            Kiểm soát các bước chuyển trạng thái hợp lệ. Backend sẽ xác thực tính hợp lệ và quyền thực hiện khi người dùng di chuyển task.
-                                        </p>
-                                    </div>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" @click="resetAllTransitions">
-                                        <i class="fa fa-refresh me-1"></i> Cho phép chuyển tự do (Mặc định)
-                                    </button>
-                                </div>
-
-                                <div class="tp-transitions-card-list mt-3">
-                                    <div
-                                        v-for="fromSt in workflowConfig.statuses"
-                                        :key="'tr-' + fromSt.key"
-                                        class="tp-transition-box mb-2 p-3 rounded"
-                                        style="background: #f8fafc; border: 1px solid #e2e8f0;"
-                                    >
-                                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="status-color-pill" :style="{ backgroundColor: fromSt.color }"></span>
-                                                <strong style="color: #0f172a;">Từ: {{ fromSt.name }}</strong>
-                                                <code class="tp-code-badge">{{ fromSt.key }}</code>
-                                                <span v-if="fromSt.is_active === false" class="badge bg-secondary text-white" style="font-size: 10px;">Vô hiệu hóa</span>
-                                            </div>
-                                            <div>
-                                                <label class="small text-muted mb-0 d-flex align-items-center gap-1 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        :checked="isFreeTransition(fromSt.key)"
-                                                        @change="toggleFreeTransition(fromSt.key, $event.target.checked)"
-                                                    >
-                                                    <span>Chuyển tự do tới mọi trạng thái</span>
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <div v-if="!isFreeTransition(fromSt.key)" class="tp-allowed-targets ps-2 pt-2 border-top">
-                                            <span class="small text-muted d-block mb-2 font-weight-bold">
-                                                <i class="fa fa-arrow-circle-right text-primary me-1"></i>
-                                                Chỉ cho phép chuyển tới các trạng thái được chọn:
-                                            </span>
-                                            <div class="d-flex flex-wrap gap-2">
-                                                <label
-                                                    v-for="toSt in workflowConfig.statuses"
-                                                    :key="'to-' + fromSt.key + '-' + toSt.key"
-                                                    class="form-check form-check-inline small mb-0 px-2 py-1 rounded cursor-pointer"
-                                                    :style="isTransitionAllowed(fromSt.key, toSt.key) ? 'background: #eff6ff; border: 1px solid #93c5fd;' : 'background: #fff; border: 1px solid #e2e8f0;'"
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        class="form-check-input me-1"
-                                                        :checked="isTransitionAllowed(fromSt.key, toSt.key)"
-                                                        :disabled="fromSt.key === toSt.key"
-                                                        @change="toggleTransition(fromSt.key, toSt.key)"
-                                                    >
-                                                    <span :style="{ color: toSt.color }"><i :class="`fa ${toSt.icon || 'fa-circle-o'}`"></i></span>
-                                                    <span class="ms-1 font-weight-500">{{ toSt.name }}</span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div>
+                                <a :href="`/projects/${project.id}#workflow`" class="tp-btn tp-btn-primary btn-sm text-nowrap">
+                                    <i class="fa fa-sliders me-1"></i> Quản lý Quy trình &rarr;
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -616,93 +389,6 @@
             </div>
         </form>
 
-        <!-- MODAL: ADD / EDIT STATUS -->
-        <div v-if="showStatusModal" class="edit-modal-overlay" @click.self="closeStatusModal">
-            <div class="edit-modal" style="max-width: 500px;">
-                <div class="edit-modal-header">
-                    <h3>{{ editingStatusIndex !== null ? 'Chỉnh sửa trạng thái' : 'Thêm trạng thái mới' }}</h3>
-                    <button type="button" class="edit-modal-close" @click="closeStatusModal">&times;</button>
-                </div>
-                <div class="edit-modal-body">
-                    <div class="edit-field">
-                        <label>Tên trạng thái <span class="required">*</span></label>
-                        <input
-                            v-model="statusModalForm.name"
-                            type="text"
-                            class="edit-input"
-                            placeholder="Ví dụ: Code Review, QA Testing, UAT..."
-                            @input="autoGenerateKey"
-                        >
-                    </div>
-
-                    <div class="edit-field">
-                        <label>Mã định danh (Key) <span class="required">*</span></label>
-                        <input
-                            v-model="statusModalForm.key"
-                            type="text"
-                            class="edit-input"
-                            placeholder="code_review, qa_testing..."
-                        >
-                        <div class="edit-hint">Chữ thường, không dấu, dùng dấu gạch dưới thay cho khoảng trắng</div>
-                    </div>
-
-                    <div class="edit-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div class="edit-field">
-                            <label>Nhóm phân loại</label>
-                            <select v-model="statusModalForm.category" class="edit-select">
-                                <option value="todo">Cần làm (Todo)</option>
-                                <option value="in_progress">Đang thực hiện (In Progress)</option>
-                                <option value="review">Kiểm duyệt (Review)</option>
-                                <option value="testing">Kiểm thử (QA/Testing)</option>
-                                <option value="done">Hoàn thành (Done)</option>
-                            </select>
-                        </div>
-                        <div class="edit-field">
-                            <label>Màu đại diện</label>
-                            <div class="d-flex align-items-center gap-2">
-                                <input type="color" v-model="statusModalForm.color" class="tp-color-input">
-                                <input type="text" v-model="statusModalForm.color" class="edit-input" style="width: 100px;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="edit-field">
-                        <label>Biểu tượng (FontAwesome icon)</label>
-                        <div class="edit-select-wrapper">
-                            <select v-model="statusModalForm.icon" class="edit-select">
-                                <option value="fa-circle-o">fa-circle-o (Vòng tròn)</option>
-                                <option value="fa-code">fa-code (Code)</option>
-                                <option value="fa-eye">fa-eye (Review)</option>
-                                <option value="fa-bug">fa-bug (Testing/Bug)</option>
-                                <option value="fa-check-square">fa-check-square (UAT)</option>
-                                <option value="fa-check-circle">fa-check-circle (Done)</option>
-                                <option value="fa-lightbulb-o">fa-lightbulb-o (Idea)</option>
-                                <option value="fa-pencil">fa-pencil (Content)</option>
-                                <option value="fa-paint-brush">fa-paint-brush (Design)</option>
-                                <option value="fa-rocket">fa-rocket (Launch)</option>
-                                <option value="fa-users">fa-users (Interview)</option>
-                                <option value="fa-gift">fa-gift (Offer)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="edit-field mt-3">
-                        <label class="d-flex align-items-center gap-2 cursor-pointer mb-0">
-                            <input type="checkbox" v-model="statusModalForm.is_active">
-                            <span class="font-weight-500">Kích hoạt trạng thái này (Cho phép chọn và sử dụng trong dự án)</span>
-                        </label>
-                    </div>
-
-                    <div v-if="statusModalError" class="edit-error mt-2">{{ statusModalError }}</div>
-                </div>
-                <div class="edit-modal-footer">
-                    <button type="button" class="edit-btn edit-btn-secondary" @click="closeStatusModal">Hủy</button>
-                    <button type="button" class="edit-btn edit-btn-primary" @click="saveStatusModal">
-                        {{ editingStatusIndex !== null ? 'Cập nhật' : 'Thêm trạng thái' }}
-                    </button>
-                </div>
-            </div>
-        </div>
 
         <!-- Quick Category Modal -->
         <div v-if="showCategoryModal" class="edit-modal-overlay" @click.self="closeCategoryModal">
@@ -828,261 +514,14 @@ const form = reactive({
     budget: props.old.budget || props.project.budget || '',
 });
 
-// Workflow Configuration State
-const initialWorkflow = props.effectiveWorkflow || props.defaultWorkflows?.software || {
-    project_type: 'software',
-    statuses: [
-        { key: 'todo', name: 'Cần làm', color: '#64748b', category: 'todo', is_initial: true, icon: 'fa-circle-o' },
-        { key: 'in_progress', name: 'Đang thực hiện', color: '#3b82f6', category: 'in_progress', icon: 'fa-spinner' },
-        { key: 'done', name: 'Hoàn thành', color: '#10b981', category: 'done', is_final: true, icon: 'fa-check-circle' },
-    ],
-    approval_gates: {
-        require_tech_lead: true,
-        require_customer: false,
-    },
-    validation_rules: {
-        require_worklog: true,
-        require_test_result: true,
-    },
-};
-
-const workflowConfig = reactive(JSON.parse(JSON.stringify(initialWorkflow)));
-
-// Ensure nested objects exist
-if (!workflowConfig.approval_gates) {
-    workflowConfig.approval_gates = { require_tech_lead: true, require_customer: false };
-}
-if (!workflowConfig.validation_rules) {
-    workflowConfig.validation_rules = { require_worklog: true, require_test_result: true };
-}
-
+// Preserve existing workflow configuration when submitting project details
 const workflowJson = computed(() => {
-    return JSON.stringify(workflowConfig);
+    return JSON.stringify(props.effectiveWorkflow || props.project?.workflow_config || {});
 });
 
-// Switch project type preset
+// Switch project type
 function selectProjectType(type) {
     form.project_type = type;
-    workflowConfig.project_type = type;
-    resetToTemplate(type);
-}
-
-function resetToTemplate(type) {
-    const template = props.defaultWorkflows?.[type];
-    if (template) {
-        workflowConfig.statuses = JSON.parse(JSON.stringify(template.statuses));
-        workflowConfig.approval_gates = JSON.parse(JSON.stringify(template.approval_gates || {}));
-        workflowConfig.validation_rules = JSON.parse(JSON.stringify(template.validation_rules || {}));
-        showToast(`Đã nạp mẫu quy trình chuẩn cho: ${type.toUpperCase()}`);
-    }
-}
-
-// Status Reordering
-function moveStatus(index, direction) {
-    const target = index + direction;
-    if (target < 0 || target >= workflowConfig.statuses.length) return;
-    const temp = workflowConfig.statuses[index];
-    workflowConfig.statuses[index] = workflowConfig.statuses[target];
-    workflowConfig.statuses[target] = temp;
-    updateInitialFinal();
-}
-
-function updateInitialFinal() {
-    workflowConfig.statuses.forEach((s, idx) => {
-        s.is_initial = idx === 0;
-        s.is_final = idx === workflowConfig.statuses.length - 1;
-    });
-}
-
-function removeStatus(index) {
-    if (workflowConfig.statuses.length <= 2) {
-        alert('Quy trình phải có tối thiểu 2 trạng thái.');
-        return;
-    }
-    if (confirm(`Bạn có chắc muốn xóa trạng thái "${workflowConfig.statuses[index].name}"?`)) {
-        workflowConfig.statuses.splice(index, 1);
-        updateInitialFinal();
-    }
-}
-
-// Status Modal (Add / Edit)
-const showStatusModal = ref(false);
-const editingStatusIndex = ref(null);
-const statusModalError = ref('');
-const statusModalForm = reactive({
-    name: '',
-    key: '',
-    category: 'in_progress',
-    color: '#3b82f6',
-    icon: 'fa-circle-o',
-    is_active: true,
-});
-
-function openAddStatusModal() {
-    editingStatusIndex.value = null;
-    statusModalForm.name = '';
-    statusModalForm.key = '';
-    statusModalForm.category = 'in_progress';
-    statusModalForm.color = '#3b82f6';
-    statusModalForm.icon = 'fa-circle-o';
-    statusModalForm.is_active = true;
-    statusModalError.value = '';
-    showStatusModal.value = true;
-}
-
-function editStatus(index) {
-    editingStatusIndex.value = index;
-    const s = workflowConfig.statuses[index];
-    statusModalForm.name = s.name;
-    statusModalForm.key = s.key;
-    statusModalForm.category = s.category || 'in_progress';
-    statusModalForm.color = s.color || '#3b82f6';
-    statusModalForm.icon = s.icon || 'fa-circle-o';
-    statusModalForm.is_active = s.is_active !== false;
-    statusModalError.value = '';
-    showStatusModal.value = true;
-}
-
-function closeStatusModal() {
-    showStatusModal.value = false;
-}
-
-function autoGenerateKey() {
-    if (editingStatusIndex.value === null) {
-        statusModalForm.key = statusModalForm.name
-            .toLowerCase()
-            .trim()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/[\s-]+/g, '_');
-    }
-}
-
-function saveStatusModal() {
-    if (!statusModalForm.name.trim()) {
-        statusModalError.value = 'Vui lòng nhập tên trạng thái.';
-        return;
-    }
-    if (!statusModalForm.key.trim()) {
-        statusModalError.value = 'Vui lòng nhập mã key của trạng thái.';
-        return;
-    }
-
-    const key = statusModalForm.key.trim().toLowerCase();
-    // Check key duplicate
-    const exists = workflowConfig.statuses.some((s, idx) => s.key === key && idx !== editingStatusIndex.value);
-    if (exists) {
-        statusModalError.value = 'Mã key này đã tồn tại trong quy trình.';
-        return;
-    }
-
-    if (editingStatusIndex.value !== null) {
-        const item = workflowConfig.statuses[editingStatusIndex.value];
-        item.name = statusModalForm.name.trim();
-        item.key = key;
-        item.category = statusModalForm.category;
-        item.color = statusModalForm.color;
-        item.icon = statusModalForm.icon;
-        item.is_active = statusModalForm.is_active !== false;
-    } else {
-        // Insert before the last item (Done) if possible
-        const newItem = {
-            name: statusModalForm.name.trim(),
-            key: key,
-            category: statusModalForm.category,
-            color: statusModalForm.color,
-            icon: statusModalForm.icon,
-            is_active: statusModalForm.is_active !== false,
-        };
-        if (workflowConfig.statuses.length > 0) {
-            workflowConfig.statuses.splice(workflowConfig.statuses.length - 1, 0, newItem);
-        } else {
-            workflowConfig.statuses.push(newItem);
-        }
-        updateInitialFinal();
-    }
-
-    closeStatusModal();
-}
-
-function toggleStatusActive(index) {
-    const s = workflowConfig.statuses[index];
-    s.is_active = (s.is_active === false) ? true : false;
-    showToast(`Trạng thái "${s.name}" đã được ${s.is_active ? 'kích hoạt' : 'vô hiệu hóa'}.`);
-}
-
-function isFreeTransition(fromKey) {
-    return !workflowConfig.transitions || !workflowConfig.transitions[fromKey] || workflowConfig.transitions[fromKey].length === 0;
-}
-
-function toggleFreeTransition(fromKey, checked) {
-    if (!workflowConfig.transitions) workflowConfig.transitions = {};
-    if (checked) {
-        delete workflowConfig.transitions[fromKey];
-    } else {
-        const idx = workflowConfig.statuses.findIndex(s => s.key === fromKey);
-        const next = workflowConfig.statuses[idx + 1];
-        workflowConfig.transitions[fromKey] = next ? [next.key] : [];
-    }
-}
-
-function isTransitionAllowed(fromKey, toKey) {
-    if (fromKey === toKey) return true;
-    if (isFreeTransition(fromKey)) return true;
-    return (workflowConfig.transitions[fromKey] || []).includes(toKey);
-}
-
-function toggleTransition(fromKey, toKey) {
-    if (!workflowConfig.transitions) workflowConfig.transitions = {};
-    if (isFreeTransition(fromKey)) {
-        workflowConfig.transitions[fromKey] = workflowConfig.statuses.map(s => s.key).filter(k => k !== toKey);
-        return;
-    }
-    const list = [...(workflowConfig.transitions[fromKey] || [])];
-    const pos = list.indexOf(toKey);
-    if (pos > -1) {
-        list.splice(pos, 1);
-    } else {
-        list.push(toKey);
-    }
-    workflowConfig.transitions[fromKey] = list;
-}
-
-function resetAllTransitions() {
-    workflowConfig.transitions = {};
-    showToast('Đã đặt lại quy tắc: Cho phép chuyển tự do tới mọi trạng thái.');
-}
-
-// Quick AJAX Workflow Save
-const isSavingWorkflow = ref(false);
-async function saveWorkflowAjax() {
-    isSavingWorkflow.value = true;
-    try {
-        const res = await fetch(props.updateUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': props.csrfToken,
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-                _method: 'PUT',
-                project_type: form.project_type,
-                workflow_config: workflowConfig,
-            }),
-        });
-
-        const data = await res.json();
-        if (res.ok && data.success) {
-            showToast('Quy trình làm việc (Workflow Engine) đã được lưu thành công!');
-        } else {
-            showToast(data.message || 'Không thể lưu quy trình.', 'error');
-        }
-    } catch (e) {
-        console.error(e);
-        showToast('Lỗi khi gửi yêu cầu lưu quy trình.', 'error');
-    } finally {
-        isSavingWorkflow.value = false;
-    }
 }
 
 // Image handling

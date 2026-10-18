@@ -32,9 +32,9 @@
             </div>
         </div>
 
-        <!-- 3 Feature Highlight Cards -->
+        <!-- Feature Highlight Cards -->
         <div class="row g-3 mb-4">
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="edit-card h-100 p-3" style="border-left: 4px solid #3b82f6;">
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <div style="width: 32px; height: 32px; border-radius: 8px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 15px;">
@@ -43,35 +43,21 @@
                         <h4 class="m-0 font-weight-bold" style="font-size: 14px; color: #1e293b;">Trạng thái Linh hoạt</h4>
                     </div>
                     <p class="m-0 text-muted" style="font-size: 12.5px; line-height: 1.5;">
-                        Không giới hạn ở 3 trạng thái cố định. Dễ dàng thêm mới, đổi tên, chọn màu sắc, icon, kéo thả sắp xếp và bật/tắt kích hoạt trạng thái theo nhu cầu thực tế.
+                        Không giới hạn ở các trạng thái cố định. Dễ dàng thêm mới, sửa tên, chọn màu sắc, icon, sắp xếp thứ tự và bật/tắt kích hoạt trạng thái trực tiếp trong từng dự án.
                     </p>
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="edit-card h-100 p-3" style="border-left: 4px solid #8b5cf6;">
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <div style="width: 32px; height: 32px; border-radius: 8px; background: #f5f3ff; color: #7c3aed; display: flex; align-items: center; justify-content: center; font-size: 15px;">
                             <i class="fa fa-random"></i>
                         </div>
-                        <h4 class="m-0 font-weight-bold" style="font-size: 14px; color: #1e293b;">Quy tắc Chuyển trạng thái</h4>
+                        <h4 class="m-0 font-weight-bold" style="font-size: 14px; color: #1e293b;">Quy tắc Chuyển trạng thái (State Transition)</h4>
                     </div>
                     <p class="m-0 text-muted" style="font-size: 12.5px; line-height: 1.5;">
-                        Thiết lập ma trận chuyển đổi chặt chẽ: chỉ định rõ ràng từ trạng thái A được phép chuyển sang trạng thái nào (ví dụ: Cần làm &rarr; Đang làm &rarr; QA &rarr; Hoàn thành).
-                    </p>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="edit-card h-100 p-3" style="border-left: 4px solid #10b981;">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <div style="width: 32px; height: 32px; border-radius: 8px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 15px;">
-                            <i class="fa fa-shield"></i>
-                        </div>
-                        <h4 class="m-0 font-weight-bold" style="font-size: 14px; color: #1e293b;">Kiểm soát Cổng (Gates)</h4>
-                    </div>
-                    <p class="m-0 text-muted" style="font-size: 12.5px; line-height: 1.5;">
-                        Backend tự động thẩm tra điều kiện tiên quyết trước khi chuyển trạng thái (chữ ký phê duyệt của Tech Lead, ghi giờ làm việc worklog hoặc xác nhận kiểm thử).
+                        Thiết lập ma trận chuyển đổi: chỉ định rõ ràng từ trạng thái A được phép chuyển sang trạng thái nào (ví dụ: To Do &rarr; In Progress &rarr; Done).
                     </p>
                 </div>
             </div>
@@ -95,8 +81,7 @@
                                 <th style="width: 260px;">Dự án</th>
                                 <th style="width: 140px;">Loại quy trình</th>
                                 <th>Tiến trình trạng thái (Workflow Pipeline)</th>
-                                <th style="width: 170px;">Quy tắc chuyển đổi</th>
-                                <th style="width: 150px; text-align: right;">Hành động</th>
+                                <th style="width: 180px; text-align: right; white-space: nowrap;">Hành động</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -105,11 +90,6 @@
                                     $wf = $project->effective_workflow;
                                     $rawStatuses = $wf['statuses'] ?? [];
                                     $activeStatuses = collect($rawStatuses)->filter(fn($s) => ($s['is_active'] ?? true) !== false)->values();
-                                    $transitions = $wf['transitions'] ?? [];
-                                    $ruleCount = 0;
-                                    foreach ($transitions as $from => $toList) {
-                                        if (is_array($toList)) $ruleCount += count($toList);
-                                    }
                                 @endphp
                                 <tr>
                                     <td>
@@ -148,27 +128,16 @@
                                             @endforeach
                                         </div>
                                     </td>
-                                    <td>
-                                        @if($ruleCount > 0)
-                                            <span style="color: #7c3aed; font-weight: 600; font-size: 12px;">
-                                                <i class="fa fa-check-circle me-1"></i>{{ $ruleCount }} quy tắc chiều chuyển
-                                            </span>
-                                        @else
-                                            <span class="text-muted" style="font-size: 12px;">
-                                                <i class="fa fa-unlock me-1"></i>Chuyển đổi tự do
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td style="text-align: right;">
-                                        <a href="{{ route('projects.edit', $project->id) }}" class="tp-btn tp-btn-primary btn-sm" style="padding: 5px 12px; font-size: 12px;" title="Cấu hình trạng thái và ma trận chuyển đổi">
-                                            <i class="fa fa-sliders" style="color: #ffffff !important;"></i>
-                                            <span>Cấu hình quy trình</span>
+                                    <td style="text-align: right; white-space: nowrap;">
+                                        <a href="{{ route('projects.show', $project->id) }}#workflow" class="tp-btn tp-btn-primary btn-sm" style="padding: 6px 14px; font-size: 12px; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px;" title="Cấu hình quy trình">
+                                            <i class="fa fa-sitemap" style="color: #ffffff !important;"></i>
+                                            <span style="white-space: nowrap;">Quản lý quy trình</span>
                                         </a>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">
+                                    <td colspan="4" class="text-center py-4 text-muted">
                                         <i class="fa fa-inbox font-size-24 mb-2 d-block"></i>
                                         Bạn chưa tham gia dự án nào. Hãy tạo dự án mới để cấu hình quy trình.
                                     </td>

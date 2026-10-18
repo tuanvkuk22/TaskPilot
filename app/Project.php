@@ -37,16 +37,6 @@ class Project extends Model
                     ['key' => 'in_progress', 'name' => 'Đang thực hiện', 'color' => '#3b82f6', 'category' => 'in_progress', 'icon' => 'fa-pencil'],
                     ['key' => 'done', 'name' => 'Hoàn thành', 'color' => '#10b981', 'category' => 'done', 'is_final' => true, 'icon' => 'fa-check-circle'],
                 ],
-                'approval_gates' => [
-                    'require_tech_lead' => false,
-                    'require_customer' => true,
-                    'note' => 'Bắt buộc Khách hàng hoặc Lead phê duyệt trước khi hoàn thành.',
-                ],
-                'validation_rules' => [
-                    'require_worklog' => true,
-                    'require_test_result' => false,
-                    'note' => 'Bắt buộc nhập thời gian thực tế (worklog) trước khi đóng task.',
-                ],
             ];
         }
 
@@ -58,16 +48,6 @@ class Project extends Model
                     ['key' => 'in_progress', 'name' => 'Đang xử lý', 'color' => '#3b82f6', 'category' => 'in_progress', 'icon' => 'fa-users'],
                     ['key' => 'done', 'name' => 'Hoàn tất', 'color' => '#10b981', 'category' => 'done', 'is_final' => true, 'icon' => 'fa-check-circle'],
                 ],
-                'approval_gates' => [
-                    'require_tech_lead' => false,
-                    'require_customer' => true,
-                    'note' => 'Bắt buộc Trưởng bộ phận hoặc Khách hàng ký duyệt trước khi hoàn thành.',
-                ],
-                'validation_rules' => [
-                    'require_worklog' => true,
-                    'require_test_result' => false,
-                    'note' => 'Bắt buộc nhập thời gian thực tế (worklog) trước khi đóng task.',
-                ],
             ];
         }
 
@@ -78,16 +58,6 @@ class Project extends Model
                 ['key' => 'todo', 'name' => 'Cần làm', 'color' => '#64748b', 'category' => 'todo', 'is_initial' => true, 'icon' => 'fa-circle-o'],
                 ['key' => 'in_progress', 'name' => 'Đang thực hiện', 'color' => '#3b82f6', 'category' => 'in_progress', 'icon' => 'fa-spinner'],
                 ['key' => 'done', 'name' => 'Hoàn thành', 'color' => '#10b981', 'category' => 'done', 'is_final' => true, 'icon' => 'fa-check-circle'],
-            ],
-            'approval_gates' => [
-                'require_tech_lead' => true,
-                'require_customer' => false,
-                'note' => 'Bắt buộc phải có chữ ký duyệt của Tech Lead hoặc Khách hàng trước khi chuyển trạng thái sang Done.',
-            ],
-            'validation_rules' => [
-                'require_worklog' => true,
-                'require_test_result' => true,
-                'note' => 'Bắt buộc nhập thời gian thực tế (worklog) hoặc kết quả test trước khi đóng task.',
             ],
         ];
     }

@@ -444,23 +444,34 @@ const currentWorkflowStatuses = computed(() => {
         return statuses.filter(s => (s.is_active ?? true) !== false);
     }
     return [
-        { key: 'todo', name: 'Cần làm', icon: 'fa fa-circle-o', color: '#64748b', is_initial: true },
-        { key: 'in_progress', name: 'Đang thực hiện', icon: 'fa fa-spinner', color: '#2563eb' },
-        { key: 'done', name: 'Hoàn thành', icon: 'fa fa-check-circle', color: '#10b981' },
+        { key: 'todo', name: 'To Do', icon: 'fa fa-circle-o', color: '#64748b', is_initial: true },
+        { key: 'in_progress', name: 'In Progress', icon: 'fa fa-spinner', color: '#2563eb' },
+        { key: 'done', name: 'Done', icon: 'fa fa-check-circle', color: '#10b981' },
     ];
 });
 
 const columns = computed(() => {
-    return currentWorkflowStatuses.value.map(s => ({
-        key: s.key,
-        label: s.name,
-        icon: s.icon ? (s.icon.startsWith('fa') ? s.icon : `fa ${s.icon}`) : 'fa fa-circle-o',
-        iconColor: s.color || '#64748b',
-        badgeBg: s.color ? `${s.color}15` : '#f1f5f9',
-        badgeColor: s.color || '#475569',
-        category: s.category || 'in_progress',
-        is_initial: Boolean(s.is_initial),
-    }));
+    return currentWorkflowStatuses.value.map(s => {
+        let label = s.name;
+        if (s.key === 'todo' && (!label || label === 'Cần làm' || label === 'todo')) {
+            label = 'To Do';
+        } else if (s.key === 'in_progress' && (!label || label === 'Đang thực hiện' || label === 'in_progress')) {
+            label = 'In Progress';
+        } else if (s.key === 'done' && (!label || label === 'Hoàn thành' || label === 'done')) {
+            label = 'Done';
+        }
+
+        return {
+            key: s.key,
+            label: label,
+            icon: s.icon ? (s.icon.startsWith('fa') ? s.icon : `fa ${s.icon}`) : 'fa fa-circle-o',
+            iconColor: s.color || '#64748b',
+            badgeBg: s.color ? `${s.color}15` : '#f1f5f9',
+            badgeColor: s.color || '#475569',
+            category: s.category || 'in_progress',
+            is_initial: Boolean(s.is_initial),
+        };
+    });
 });
 
 function getWorkflowStatusesForTask(task) {
