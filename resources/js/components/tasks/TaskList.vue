@@ -102,12 +102,12 @@
                 </div>
 
                 <!-- Status Filter -->
-                <div class="edit-select-wrapper" style="min-width: 140px;">
+                <div class="edit-select-wrapper" style="min-width: 150px;">
                     <select v-model="selectedStatusFilter" class="edit-select">
                         <option value="">📌 Trạng thái: Tất cả</option>
-                        <option value="todo">Cần làm</option>
-                        <option value="in_progress">Đang làm</option>
-                        <option value="done">Hoàn thành</option>
+                        <option v-for="col in columns" :key="col.key" :value="col.key">
+                            {{ col.label }}
+                        </option>
                     </select>
                     <i class="fa fa-chevron-down edit-select-icon"></i>
                 </div>
@@ -119,8 +119,7 @@
             </div>
 
             <!-- View Toggle Buttons (Kanban / Table) -->
-            <div class="tp-view-toggle ms-auto" style="display: flex; align-items: center; gap: 8px;">
-                <AiBatchSuggest :tasks="unassignedOpenTasks" :project-id="selectedProjectFilter || null" @applied="applyBatchResults" @reset="applyAiTestReset" />
+            <div class="tp-view-toggle ms-auto">
                 <button
                     class="tp-view-btn"
                     :class="{ active: viewMode === 'kanban' }"
@@ -140,16 +139,43 @@
             </div>
         </div>
 
-        <div v-if="unassignedCount > 0" class="ai-unassigned-banner">
-            <span>
-                <i class="fa fa-magic" style="color: #8b5cf6; margin-right: 6px;"></i>
-                Có <strong>{{ unassignedCount }}</strong> công việc chưa phân công. Bấm
-                <strong>AI gợi ý tất cả</strong> để đề xuất người cho cả danh sách, hoặc nút
-                <strong>AI</strong> trên từng thẻ.
-            </span>
-            <button type="button" class="ai-suggest-btn ai-suggest-btn-compact" @click="selectedAssigneeFilter = 'unassigned'">
-                Lọc chưa phân công
-            </button>
+        <!-- Dedicated AI Smart Assignment Card & Action Bar -->
+        <div class="tp-ai-action-card mb-4">
+            <div class="tp-ai-action-header">
+                <div class="tp-ai-badge-icon">
+                    <i class="fa fa-magic"></i>
+                </div>
+                <div class="tp-ai-action-text">
+                    <h4 class="tp-ai-action-title">Trợ lý AI Phân công Thông minh</h4>
+                    <p class="tp-ai-action-desc">
+                        <template v-if="unassignedCount > 0">
+                            Phát hiện <strong>{{ unassignedCount }}</strong> công việc chưa có người thực hiện. Bấm <strong>AI gợi ý tất cả</strong> để tự động đề xuất phân bổ tối ưu theo kỹ năng, hoặc lọc danh sách.
+                        </template>
+                        <template v-else>
+                            Tất cả công việc đã có người phụ trách. Bạn có thể bấm <strong>Reset test AI</strong> nếu muốn thử nghiệm lại gợi ý.
+                        </template>
+                    </p>
+                </div>
+            </div>
+            <div class="tp-ai-action-buttons">
+                <button
+                    v-if="unassignedCount > 0"
+                    type="button"
+                    class="tp-ai-filter-toggle-btn"
+                    :class="{ 'is-active': selectedAssigneeFilter === 'unassigned' }"
+                    @click="selectedAssigneeFilter = selectedAssigneeFilter === 'unassigned' ? '' : 'unassigned'"
+                    title="Lọc nhanh danh sách chỉ hiển thị việc chưa phân công"
+                >
+                    <i class="fa fa-filter"></i>
+                    <span>{{ selectedAssigneeFilter === 'unassigned' ? 'Bỏ lọc chưa phân công' : 'Lọc việc chưa giao' }}</span>
+                </button>
+                <AiBatchSuggest
+                    :tasks="unassignedOpenTasks"
+                    :project-id="selectedProjectFilter || null"
+                    @applied="applyBatchResults"
+                    @reset="applyAiTestReset"
+                />
+            </div>
         </div>
 
         <!-- 1. KANBAN BOARD VIEW WITH HTML5 DRAG & DROP -->
@@ -296,7 +322,7 @@
                                 <PriorityBadge :priority="task.priority" />
                             </td>
                             <td>
-                                <StatusBadge :status="task.status" />
+                                <StatusBadge :status="task.status" :workflow-statuses="getWorkflowStatusesForTask(task)" />
                             </td>
                             <td>
                                 <span v-if="task.end_date || task.due_date" :style="isOverdue(task) ? 'color: #ef4444; font-weight: 600;' : 'color: #64748b;'">
@@ -362,6 +388,7 @@ const props = defineProps({
     selectedPriority: { type: String, default: '' },
     successMessage: { type: String, default: '' },
     effectiveWorkflow: { type: Object, default: () => null },
+    projectWorkflows: { type: Object, default: () => ({}) },
 });
 
 const successMessage = ref(props.successMessage);
@@ -403,6 +430,46 @@ const selectedStatusFilter = ref(props.selectedStatus || '');
 const selectedPriorityFilter = ref(props.selectedPriority || '');
 const viewMode = ref('kanban'); // Default to Kanban view
 
+// Dynamic workflow calculation based on selected project
+const currentWorkflow = computed(() => {
+    if (selectedProjectFilter.value && props.projectWorkflows && props.projectWorkflows[selectedProjectFilter.value]) {
+        return props.projectWorkflows[selectedProjectFilter.value];
+    }
+    return props.effectiveWorkflow || null;
+});
+
+const currentWorkflowStatuses = computed(() => {
+    const statuses = currentWorkflow.value?.statuses;
+    if (statuses && Array.isArray(statuses) && statuses.length > 0) {
+        return statuses.filter(s => (s.is_active ?? true) !== false);
+    }
+    return [
+        { key: 'todo', name: 'Cần làm', icon: 'fa fa-circle-o', color: '#64748b', is_initial: true },
+        { key: 'in_progress', name: 'Đang thực hiện', icon: 'fa fa-spinner', color: '#2563eb' },
+        { key: 'done', name: 'Hoàn thành', icon: 'fa fa-check-circle', color: '#10b981' },
+    ];
+});
+
+const columns = computed(() => {
+    return currentWorkflowStatuses.value.map(s => ({
+        key: s.key,
+        label: s.name,
+        icon: s.icon ? (s.icon.startsWith('fa') ? s.icon : `fa ${s.icon}`) : 'fa fa-circle-o',
+        iconColor: s.color || '#64748b',
+        badgeBg: s.color ? `${s.color}15` : '#f1f5f9',
+        badgeColor: s.color || '#475569',
+        category: s.category || 'in_progress',
+        is_initial: Boolean(s.is_initial),
+    }));
+});
+
+function getWorkflowStatusesForTask(task) {
+    if (task.project_id && props.projectWorkflows && props.projectWorkflows[task.project_id]?.statuses) {
+        return props.projectWorkflows[task.project_id].statuses.filter(s => (s.is_active ?? true) !== false);
+    }
+    return currentWorkflowStatuses.value;
+}
+
 // Dynamic options list for Assignees and Reporters
 const assigneesList = computed(() => {
     const map = new Map();
@@ -428,25 +495,6 @@ const reportersList = computed(() => {
 const draggedTask = ref(null);
 const draggedTaskId = ref(null);
 const activeDropColumn = ref(null);
-
-const columns = computed(() => {
-    if (props.effectiveWorkflow && props.effectiveWorkflow.statuses && props.effectiveWorkflow.statuses.length > 0) {
-        return props.effectiveWorkflow.statuses.map(s => ({
-            key: s.key,
-            label: s.name,
-            icon: s.icon ? `fa ${s.icon}` : 'fa fa-circle-o',
-            iconColor: s.color || '#64748b',
-            badgeBg: '#f1f5f9',
-            badgeColor: s.color || '#475569',
-            category: s.category || 'in_progress',
-        }));
-    }
-    return [
-        { key: 'todo', label: 'Cần làm', icon: 'fa fa-circle-o', iconColor: '#64748b', badgeBg: '#f1f5f9', badgeColor: '#475569' },
-        { key: 'in_progress', label: 'Đang thực hiện', icon: 'fa fa-spinner', iconColor: '#2563eb', badgeBg: '#eff6ff', badgeColor: '#2563eb' },
-        { key: 'done', label: 'Hoàn thành', icon: 'fa fa-check-circle', iconColor: '#10b981', badgeBg: '#d1fae5', badgeColor: '#059669' },
-    ];
-});
 
 const hasActiveFilters = computed(() => {
     return searchQuery.value !== '' ||
@@ -519,10 +567,10 @@ const filteredTasks = computed(() => {
 
         // 7. Status Filter
         if (selectedStatusFilter.value) {
-            const s = selectedStatusFilter.value;
-            if (s === 'todo' && !['todo', 'backlog', 'open', 'new'].includes(task.status)) return false;
-            if (s === 'in_progress' && !['in_progress', 'doing', 'review', 'in_review'].includes(task.status)) return false;
-            if (s === 'done' && !['done', 'completed', 'resolved', 'closed'].includes(task.status)) return false;
+            const isInitial = columns.value.find(c => c.key === selectedStatusFilter.value)?.is_initial || (columns.value[0]?.key === selectedStatusFilter.value);
+            if (task.status !== selectedStatusFilter.value) {
+                if (!isInitial || task.status) return false;
+            }
         }
 
         return true;
@@ -530,17 +578,16 @@ const filteredTasks = computed(() => {
 });
 
 function getTasksByStatus(group) {
+    const col = columns.value.find(c => c.key === group);
+    const isInitialCol = col?.is_initial || (columns.value[0]?.key === group);
+
     return filteredTasks.value.filter(task => {
         if (task.status === group) return true;
-        if (group === 'todo' || group === 'open' || group === 'draft' || group === 'application') {
-            return ['todo', 'backlog', 'open', 'new', 'draft', 'application'].includes(task.status) || !task.status;
-        }
-        if (group === 'in_progress' || group === 'in_development' || group === 'content_creation' || group === 'screening') {
-            return ['in_progress', 'doing', 'in_development', 'content_creation', 'screening'].includes(task.status);
-        }
-        if (group === 'done') {
-            return ['done', 'completed', 'resolved', 'closed'].includes(task.status);
-        }
+        // If task has no status, show in initial column
+        if (!task.status && isInitialCol) return true;
+        // If task has a status that is not present in the current columns, display it in initial column
+        const statusExistsInCols = columns.value.some(c => c.key === task.status);
+        if (!statusExistsInCols && isInitialCol) return true;
         return false;
     });
 }

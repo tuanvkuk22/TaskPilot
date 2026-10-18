@@ -372,7 +372,13 @@
     text-decoration: none;
 }
 
-.tp-btn-google svg { display: inline-block; }
+.tp-btn-google svg {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+}
 
 .tp-login-footer {
     text-align: center;

@@ -14,6 +14,7 @@ const app = createApp(TaskList, {
     selectedPriority: d.selected_priority || '',
     successMessage: d.success_message || '',
     effectiveWorkflow: d.effective_workflow || null,
+    projectWorkflows: d.project_workflows || {},
 });
 
 app.mount('#task-index-app');

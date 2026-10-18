@@ -69,9 +69,18 @@ class TasksController extends Controller
     {
         $data = $this->createTaskHandler->handle(Auth::id(), $request->query('project_id'));
         $status = $request->query('status');
-        $data['default_status'] = in_array($status, ['todo', 'in_progress', 'done'], true)
+        
+        $activeStatuses = collect($data['effective_workflow']['statuses'] ?? [])
+            ->filter(fn ($s) => ($s['is_active'] ?? true) !== false);
+        $validKeys = $activeStatuses->pluck('key')->toArray();
+
+        $defaultInitial = $activeStatuses->firstWhere('is_initial', true)['key']
+            ?? $activeStatuses->first()['key']
+            ?? 'todo';
+
+        $data['default_status'] = in_array($status, $validKeys, true)
             ? $status
-            : null;
+            : $defaultInitial;
 
         return view('tasks.create', $data);
     }
@@ -90,11 +99,17 @@ class TasksController extends Controller
 
         abort_unless($data['projects']->contains('id', $projectId), 404);
 
+        $activeStatuses = collect($data['effective_workflow']['statuses'] ?? [])
+            ->filter(fn ($s) => ($s['is_active'] ?? true) !== false)
+            ->values();
+
         return response()->json([
             'users' => $data['users']->values(),
             'reporters' => $data['reporters']->values(),
             'epics' => $data['epics']->values(),
             'sprints' => $data['sprints']->values(),
+            'effective_workflow' => $data['effective_workflow'] ?? null,
+            'statuses' => $activeStatuses,
         ]);
     }
 
@@ -111,6 +126,8 @@ class TasksController extends Controller
             'project_id' => ['required', 'integer', 'exists:projects,id'],
             'name' => ['required', 'string', 'max:255'],
             'issue_type' => ['required', 'in:task,bug,story,epic,subtask'],
+            'status' => ['nullable', 'string', 'max:100'],
+            'priority' => ['nullable', 'in:low,medium,high'],
             'assignee_id' => ['nullable', 'integer', 'exists:users,id'],
             'reporter_id' => ['nullable', 'integer', 'exists:users,id'],
             'due_date' => ['nullable', 'date'],
@@ -122,10 +139,30 @@ class TasksController extends Controller
             'parent_id' => ['nullable', 'integer', 'exists:tasks,id'],
         ]);
 
+        $project = \ProjectsManager\Project::find($request->project_id);
+        if ($project && $request->filled('status')) {
+            $activeStatusKeys = collect($project->getActiveStatuses())->pluck('key')->toArray();
+            if (!in_array($request->status, $activeStatusKeys, true)) {
+                $msg = 'Trạng thái được chọn không hợp lệ hoặc đã bị vô hiệu hóa trong quy trình của dự án.';
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $msg,
+                        'errors' => ['status' => [$msg]],
+                    ], 422);
+                }
+                return back()->withInput()->withErrors(['status' => $msg]);
+            }
+        }
+
         $task = $this->storeTaskHandler->handle(Auth::id(), $request->all());
 
         if ($request->wantsJson() || $request->ajax()) {
-            return response()->json(['success' => true, 'task' => $task->fresh(['project', 'assignee', 'reporter', 'parent'])]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã tạo công việc thành công.',
+                'task' => $task->fresh(['project', 'assignee', 'reporter', 'parent'])
+            ]);
         }
 
         return redirect()->route('tasks.index', ['project_id' => $task->project_id])
@@ -143,9 +180,13 @@ class TasksController extends Controller
     {
         $task = $this->showTaskHandler->handle($task);
         $formData = $this->createTaskHandler->handle(Auth::id(), $task->project_id);
+        $effectiveWorkflow = $task->project ? $task->project->effective_workflow : \ProjectsManager\Project::defaultWorkflowForType('software');
+        $activeStatuses = $task->project ? $task->project->getActiveStatuses() : ($effectiveWorkflow['statuses'] ?? []);
 
         return view('tasks.show', array_merge($formData, [
             'task' => $task,
+            'effective_workflow' => $effectiveWorkflow,
+            'active_statuses' => $activeStatuses,
             'worklogs' => $task->worklogs()->with(['user', 'assignee'])->latest('logged_at')->get(),
             'comments' => $task->comments()->with('user')->latest()->get(),
         ]));
@@ -220,12 +261,13 @@ class TasksController extends Controller
         if ($request->has('status') && $request->input('status') !== $task->status) {
             $gateError = $this->validateWorkflowGates($task, $request->input('status'), $request);
             if ($gateError) {
+                $statusCode = $gateError['status_code'] ?? 422;
                 if ($request->wantsJson() || $request->ajax()) {
                     return response()->json([
                         'success' => false,
                         'message' => $gateError['message'],
                         'gate_type' => $gateError['type'],
-                    ], 422);
+                    ], $statusCode);
                 }
                 return back()->withInput()->withErrors(['status' => $gateError['message']]);
             }
@@ -260,12 +302,13 @@ class TasksController extends Controller
         if ($data['status'] !== $task->status) {
             $gateError = $this->validateWorkflowGates($task, $data['status'], $request);
             if ($gateError) {
+                $statusCode = $gateError['status_code'] ?? 422;
                 return response()->json([
                     'success' => false,
                     'message' => $gateError['message'],
                     'gate_type' => $gateError['type'],
                     'required_action' => $gateError['required_action'],
-                ], 422);
+                ], $statusCode);
             }
         }
 
@@ -320,7 +363,18 @@ class TasksController extends Controller
 
     protected function validateWorkflowGates(Task $task, string $targetStatus, Request $request): ?array
     {
-        // Approval gates and validation rules removed per user request
+        if ($task->project) {
+            $check = $task->project->canTransitionTaskStatus($task, $targetStatus, $request->user());
+            if (!($check['allowed'] ?? false)) {
+                return [
+                    'message' => $check['message'] ?? 'Chuyển đổi trạng thái không hợp lệ theo quy trình dự án.',
+                    'type' => 'workflow_transition',
+                    'required_action' => 'select_valid_status',
+                    'status_code' => $check['status_code'] ?? 422,
+                ];
+            }
+        }
+
         return null;
     }
 

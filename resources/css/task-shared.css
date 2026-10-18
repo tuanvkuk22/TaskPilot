@@ -19,6 +19,8 @@
     --tp-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
 }
 
+.cursor-pointer { cursor: pointer !important; }
+
 /* Apply Inter font family */
 .task-create-vue,
 .task-index-vue,
@@ -836,12 +838,16 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
 
 /* Kanban Board View */
 .tp-kanban-board {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    display: flex;
+    gap: 18px;
+    align-items: stretch;
+    overflow-x: auto;
 }
 
 .tp-kanban-column {
+    flex: 1 0 300px;
+    min-width: 280px;
+    max-width: 380px;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
@@ -849,7 +855,7 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     display: flex;
     flex-direction: column;
     gap: 10px;
-    min-height: 380px;
+    min-height: 420px;
 }
 
 .tp-kanban-header {
@@ -1559,18 +1565,43 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
     margin-bottom: 10px !important;
 }
 
-/* Modern Drag & Drop Kanban Board Styles */
+/* Modern Drag & Drop Kanban Board Styles with Configurable Workflow Columns */
 .tp-kanban-board {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    align-items: start;
+    display: flex;
+    gap: 18px;
+    align-items: stretch;
+    overflow-x: auto;
+    padding-bottom: 20px;
     margin-top: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f8fafc;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tp-kanban-board::-webkit-scrollbar {
+    height: 8px;
+}
+
+.tp-kanban-board::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.tp-kanban-board::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.tp-kanban-board::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .tp-kanban-column {
+    flex: 1 0 300px;
+    min-width: 280px;
+    max-width: 380px;
     background: #f8fafc;
-    border: 2px dashed transparent;
+    border: 2px dashed #e2e8f0;
     border-radius: 14px;
     padding: 16px;
     min-height: 520px;
@@ -2179,3 +2210,195 @@ i.fa, i.fas, i.far, i.fab, .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* =====================================================================
+   Task Detail Redesign Styles (TP-66)
+   ===================================================================== */
+.tp-breadcrumb-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #64748b;
+    padding: 2px 0;
+}
+
+.breadcrumb-link {
+    color: #64748b;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s ease;
+}
+
+.breadcrumb-link:hover {
+    color: #2563eb;
+}
+
+.breadcrumb-sep {
+    color: #cbd5e1;
+    font-weight: 400;
+}
+
+.breadcrumb-current {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* Workflow Card & Stepper */
+.tp-workflow-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.tp-workflow-card-header {
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+}
+
+.tp-status-step-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.tp-status-step-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+.tp-workflow-stepper {
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    gap: 8px;
+    scrollbar-width: none;
+}
+
+.tp-workflow-stepper::-webkit-scrollbar {
+    display: none;
+}
+
+.tp-step-node {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.step-indicator {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    transition: all 0.2s ease;
+}
+
+.tp-step-node.is-active .step-indicator {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+.step-label-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.step-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.step-badge-current {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #2563eb;
+}
+
+.step-action-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: #6366f1;
+    cursor: pointer;
+    text-align: left;
+    text-decoration: underline;
+}
+
+.step-action-link:hover {
+    color: #4338ca;
+}
+
+.tp-step-connector {
+    flex: 1 1 30px;
+    min-width: 24px;
+    height: 2px;
+    background: #e2e8f0;
+    border-radius: 2px;
+}
+
+.tp-step-connector.connector-active {
+    background: #3b82f6;
+}
+
+/* Toast Notification */
+.tp-task-toast {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 12px 18px;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+    font-size: 13.5px;
+    font-weight: 600;
+    animation: toastSlideIn 0.25s ease-out;
+}
+
+.tp-task-toast i {
+    color: #10b981;
+    font-size: 16px;
+}
+
+@keyframes toastSlideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
