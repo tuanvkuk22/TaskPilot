@@ -32,12 +32,19 @@ class StoreTaskHandler
     {
         $project = $this->projectRepository->findById((int) $data['project_id']);
 
+        $activeStatuses = $project ? $project->getActiveStatuses() : [];
+        $defaultStatus = 'todo';
+        if (!empty($activeStatuses)) {
+            $initialStatus = collect($activeStatuses)->firstWhere('is_initial', true);
+            $defaultStatus = $initialStatus['key'] ?? $activeStatuses[0]['key'] ?? 'todo';
+        }
+
         $task = $this->repository->create([
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
             'project_id' => $project->id,
             'user_id' => $userId,
-            'status' => $data['status'] ?? 'todo',
+            'status' => filled($data['status'] ?? null) ? $data['status'] : $defaultStatus,
             'priority' => $data['priority'] ?? 'medium',
             'days' => $data['days'] ?? 0,
             'hours' => $data['hours'] ?? 0,

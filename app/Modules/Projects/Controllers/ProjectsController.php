@@ -54,6 +54,28 @@ class ProjectsController extends Controller
     ) {
     }
 
+    public function workflows(Request $request): View|RedirectResponse
+    {
+        if (! Auth::check()) {
+            return view('auth.login');
+        }
+
+        $userId = Auth::id();
+        $projects = $this->listProjectsHandler->handle($userId, 'active');
+
+        $projects->each(function ($project) use ($userId) {
+            $pivotRole = $project->users()
+                ->where('users.id', $userId)
+                ->value('role');
+
+            $project->user_role = $pivotRole ?: ($project->user_id === $userId ? 'owner' : null);
+        });
+
+        return view('workflows.index', [
+            'projects' => $projects,
+        ]);
+    }
+
     public function index(Request $request): View|RedirectResponse
     {
         if (! Auth::check()) {

@@ -53,6 +53,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('projects/role-permissions', [ProjectsController::class, 'availablePermissions'])->name('projects.role.permissions');
 
     Route::resource('projects', ProjectsController::class);
+    Route::get('workflows', [ProjectsController::class, 'workflows'])->name('workflows.index');
     Route::get('projects/create/{companyId?}', [ProjectsController::class, 'create'])->name('projects.create.for-company');
     Route::post('projects/adduser', [ProjectsController::class, 'adduser'])->name('projects.adduser')->middleware('can.project:manage_members');
     Route::post('projects/quick-category', [ProjectsController::class, 'storeQuickCategory'])->name('projects.categories.store');

@@ -2,7 +2,9 @@
 
 .project-edit-form,
 .project-create-form {
-    max-width: 1200px;
+    width: 100%;
+    max-width: 1240px;
+    margin: 0 auto;
     font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 

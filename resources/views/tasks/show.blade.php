@@ -8,6 +8,49 @@
 
 @php
     $canEdit = auth()->check();
+    $projectWorkflow = $task->project ? $task->project->effective_workflow : \ProjectsManager\Project::defaultWorkflowForType('software');
+    $rawStatuses = $active_statuses ?? $projectWorkflow['statuses'] ?? [
+        ['key' => 'todo', 'name' => 'Cần làm', 'color' => '#64748b', 'icon' => 'fa-circle-o', 'is_active' => true],
+        ['key' => 'in_progress', 'name' => 'Đang thực hiện', 'color' => '#3b82f6', 'icon' => 'fa-spinner', 'is_active' => true],
+        ['key' => 'done', 'name' => 'Hoàn thành', 'color' => '#10b981', 'icon' => 'fa-check-circle', 'is_active' => true],
+    ];
+    $wfStatuses = collect($rawStatuses)->filter(fn($s) => ($s['is_active'] ?? true) !== false)->values();
+    $currStatus = $wfStatuses->firstWhere('key', $task->status) ?? [
+        'key' => $task->status,
+        'name' => ucfirst($task->status ?? 'todo'),
+        'color' => '#64748b',
+        'icon' => 'fa-circle-o'
+    ];
+
+    $configuredTransitions = $projectWorkflow['transitions'][$task->status] ?? null;
+    if (is_array($configuredTransitions)) {
+        $allowedTargetKeys = $configuredTransitions;
+    } else {
+        $allowedTargetKeys = $wfStatuses->pluck('key')->filter(fn($k) => $k !== $task->status)->toArray();
+    }
+    $nextAllowedStatuses = $wfStatuses->filter(fn($s) => in_array($s['key'], $allowedTargetKeys, true) && $s['key'] !== $task->status)->values();
+
+    $typeIcons = [
+        'task' => 'fa-check-square-o',
+        'bug' => 'fa-bug',
+        'story' => 'fa-bookmark',
+        'epic' => 'fa-bolt',
+        'subtask' => 'fa-code-fork',
+    ];
+    $typeLabels = [
+        'task' => 'Task',
+        'bug' => 'Bug',
+        'story' => 'Story',
+        'epic' => 'Epic',
+        'subtask' => 'Sub-task',
+    ];
+
+    $priorityMap = [
+        'low' => ['label' => 'Thấp', 'class' => 'tp-badge-priority-low', 'icon' => 'fa-arrow-down', 'color' => '#10b981'],
+        'medium' => ['label' => 'Trung bình', 'class' => 'tp-badge-priority-medium', 'icon' => 'fa-minus', 'color' => '#f59e0b'],
+        'high' => ['label' => 'Cao / Gấp', 'class' => 'tp-badge-priority-high', 'icon' => 'fa-arrow-up', 'color' => '#ef4444'],
+    ];
+    $pInfo = $priorityMap[$task->priority] ?? $priorityMap['medium'];
 @endphp
 
 <div class="col-md-12 p-0">
@@ -15,27 +58,59 @@
         <!-- CSRF Token Meta -->
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
+        <!-- Toast Notification Container -->
+        <div id="tp-task-toast" class="tp-task-toast" style="display: none;" role="status">
+            <i class="fa fa-check-circle"></i>
+            <span id="tp-toast-message">Đã lưu thay đổi.</span>
+        </div>
+
+        <!-- Breadcrumb Navigation -->
+        <div class="tp-breadcrumb-bar mb-3">
+            <a href="{{ route('tasks.index') }}" class="breadcrumb-link">
+                <i class="fa fa-tasks me-1"></i>Công việc
+            </a>
+            <span class="breadcrumb-sep">/</span>
+            @if($task->project)
+                <a href="{{ route('projects.show', $task->project_id) }}" class="breadcrumb-link">
+                    📁 {{ $task->project->name }}
+                </a>
+                <span class="breadcrumb-sep">/</span>
+            @endif
+            <span class="breadcrumb-current">{{ $task->project->project_code ?? 'TASK' }}-{{ $task->id }}</span>
+        </div>
+
         <!-- Header Banner -->
         <div class="tp-header-banner">
             <div class="tp-header-content">
-                <div class="tp-eyebrow">
-                    <i class="fa fa-tasks"></i>
-                    <span>{{ $task->project->project_code ?? 'TASK' }}-{{ $task->id }}</span>
+                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                    <span class="tp-badge tp-badge-type-{{ $task->issue_type ?? 'task' }}">
+                        <i class="fa {{ $typeIcons[$task->issue_type] ?? 'fa-check-square-o' }}"></i>
+                        <span>{{ $typeLabels[$task->issue_type] ?? 'Task' }}</span>
+                    </span>
+                    <span class="task-key-tag font-weight-bold" style="font-size: 13px;">
+                        {{ $task->project->project_code ?? 'TASK' }}-{{ $task->id }}
+                    </span>
+                    <span class="tp-badge {{ $pInfo['class'] }}">
+                        <i class="fa {{ $pInfo['icon'] }}"></i>
+                        <span>{{ $pInfo['label'] }}</span>
+                    </span>
                 </div>
 
                 <!-- Jira-style Inline Editable Title -->
                 <div class="jira-title-container mt-1 mb-1">
                     <div id="jira-title-view" class="jira-editable-field {{ $canEdit ? 'clickable' : '' }}" @if($canEdit) onclick="toggleInlineEdit('title')" @endif title="{{ $canEdit ? 'Bấm để sửa tên công việc' : '' }}">
-                        <h1 id="task-name-text" class="m-0 d-inline">{{ $task->name }}</h1>
+                        <h1 id="task-name-text" class="m-0 d-inline" style="font-size: 22px; font-weight: 700; color: #0f172a; line-height: 1.3;">
+                            {{ $task->name }}
+                        </h1>
                         @if($canEdit)
-                            <i class="fa fa-pencil jira-hover-pencil ms-2"></i>
+                            <i class="fa fa-pencil jira-hover-pencil ms-2 text-muted" style="font-size: 14px;"></i>
                         @endif
                     </div>
 
                     @if($canEdit)
                     <div id="jira-title-edit" class="jira-inline-form" style="display: none;">
-                        <div class="d-flex align-items-center gap-2">
-                            <input type="text" id="input-task-name" class="edit-input font-size-18 font-weight-bold" value="{{ $task->name }}" style="max-width: 550px;">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <input type="text" id="input-task-name" class="edit-input font-size-18 font-weight-bold" value="{{ $task->name }}" style="max-width: 600px;">
                             <button type="button" class="tp-btn tp-btn-primary btn-sm" onclick="saveInlineField('name', document.getElementById('input-task-name').value)">
                                 <i class="fa fa-check text-white"></i> Lưu
                             </button>
@@ -47,7 +122,7 @@
                     @endif
                 </div>
 
-                <p class="m-0 text-muted small">Chi tiết tiến độ, phân công và nhật ký trao đổi của công việc</p>
+                <p class="m-0 text-muted small">Chi tiết tiến độ, quy trình workflow, phân công và trao đổi</p>
             </div>
 
             <div class="tp-header-actions">
@@ -55,7 +130,7 @@
                     <i class="fa fa-arrow-left" style="color: #ffffff !important;"></i>
                     <span>Danh sách</span>
                 </a>
-                <a href="{{ route('tasks.edit', $task->id) }}" class="tp-btn tp-btn-light" title="Trang sửa đầy đủ">
+                <a href="{{ route('tasks.edit', $task->id) }}" class="tp-btn tp-btn-light" title="Chỉnh sửa toàn bộ thông tin">
                     <i class="fa fa-external-link"></i>
                     <span>Sửa đầy đủ</span>
                 </a>
@@ -70,195 +145,111 @@
             </div>
         </div>
 
+        <!-- Modern Configurable Workflow Stepper Card -->
+        <div class="tp-workflow-card mb-4">
+            <div class="tp-workflow-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa fa-sitemap" style="color: #6366f1;"></i>
+                    <span class="font-weight-bold" style="color: #1e293b; font-size: 13.5px;">
+                        Quy trình dự án ({{ strtoupper($task->project->project_type ?? 'Software') }}):
+                    </span>
+                    <span class="tp-badge" style="background-color: {{ $currStatus['color'] ?? '#3b82f6' }}20; color: {{ $currStatus['color'] ?? '#3b82f6' }}; border: 1px solid {{ $currStatus['color'] ?? '#3b82f6' }}; font-weight: 700;">
+                        <i class="fa {{ $currStatus['icon'] ?? 'fa-circle-o' }}"></i>
+                        {{ $currStatus['name'] }}
+                    </span>
+                </div>
+
+                <!-- Next Status Quick Action Transition Controls -->
+                @if($canEdit && $nextAllowedStatuses->isNotEmpty())
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="text-muted small font-weight-bold">Chuyển trạng thái:</span>
+                        @foreach($nextAllowedStatuses as $nextSt)
+                            <button
+                                type="button"
+                                class="tp-status-step-btn"
+                                style="border-color: {{ $nextSt['color'] ?? '#3b82f6' }}; color: {{ $nextSt['color'] ?? '#3b82f6' }};"
+                                onclick="changeTaskStatus('{{ $nextSt['key'] }}')"
+                                title="Chuyển công việc sang trạng thái {{ $nextSt['name'] }}"
+                            >
+                                <i class="fa {{ $nextSt['icon'] ?? 'fa-arrow-right' }}"></i>
+                                <span>{{ $nextSt['name'] }}</span>
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+
+            <!-- Visual Workflow Progression Stepper -->
+            <div class="tp-workflow-stepper">
+                @foreach($wfStatuses as $idx => $st)
+                    @php
+                        $isActive = $st['key'] === $task->status;
+                        $isAllowedNext = in_array($st['key'], $allowedTargetKeys, true) && !$isActive;
+                    @endphp
+                    <div class="tp-step-node {{ $isActive ? 'is-active' : '' }} {{ $isAllowedNext ? 'is-allowed-next' : '' }}">
+                        <div class="step-indicator" style="{{ $isActive ? 'background-color: ' . ($st['color'] ?? '#3b82f6') . '; border-color: ' . ($st['color'] ?? '#3b82f6') . '; color: #fff;' : 'border-color: ' . ($st['color'] ?? '#cbd5e1') . ';' }}">
+                            @if($isActive)
+                                <i class="fa {{ $st['icon'] ?? 'fa-check' }}"></i>
+                            @else
+                                <span class="step-number">{{ $idx + 1 }}</span>
+                            @endif
+                        </div>
+                        <div class="step-label-wrap">
+                            <span class="step-title" style="{{ $isActive ? 'color: ' . ($st['color'] ?? '#1e293b') . '; font-weight: 700;' : '' }}">
+                                {{ $st['name'] }}
+                            </span>
+                            @if($isActive)
+                                <span class="step-badge-current">Hiện tại</span>
+                            @elseif($isAllowedNext)
+                                <button type="button" class="step-action-link" onclick="changeTaskStatus('{{ $st['key'] }}')">Chuyển ngay</button>
+                            @endif
+                        </div>
+                    </div>
+                    @if(!$loop->last)
+                        <div class="tp-step-connector {{ $isActive ? 'connector-active' : '' }}"></div>
+                    @endif
+                @endforeach
+            </div>
+        </div>
+
         <!-- 2-Column Grid Layout (70 / 30) -->
         <div class="edit-grid">
             <!-- Main Content (~70%) -->
             <div class="edit-col">
-                <!-- 1. Task Overview & Single Unified Description Card -->
-                <div class="edit-card">
+                <!-- 1. Task Description Card (Unified Local CKEditor 4.22.1) -->
+                <div class="edit-card mb-4">
                     <div class="edit-card-header d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center gap-2">
-                            <h2 class="edit-card-title">
-                                <i class="fa fa-file-text-o"></i>
-                                Chi tiết công việc
-                            </h2>
-                        </div>
-
-                        <!-- Jira-style Inline Badges for Issue Type & Priority -->
-                        <div class="d-flex align-items-center gap-2">
-                            <!-- Issue Type Inline Selector -->
-                            <div class="jira-inline-badge-wrap">
-                                @php
-                                    $typeIcons = [
-                                        'task' => 'fa-check-square-o',
-                                        'bug' => 'fa-bug',
-                                        'story' => 'fa-bookmark',
-                                        'epic' => 'fa-bolt',
-                                        'subtask' => 'fa-code-fork',
-                                    ];
-                                    $typeIcon = $typeIcons[$task->issue_type] ?? 'fa-check-square-o';
-                                @endphp
-                                <div id="type-badge-view" class="tp-badge tp-badge-type-{{ $task->issue_type ?? 'task' }} {{ $canEdit ? 'clickable' : '' }}" @if($canEdit) onclick="toggleInlineEdit('type')" @endif title="Bấm để đổi loại issue">
-                                    <i class="fa {{ $typeIcon }}" id="type-icon-el"></i>
-                                    <span id="type-text-el">{{ ucfirst($task->issue_type ?? 'Task') }}</span>
-                                    @if($canEdit)<i class="fa fa-caret-down ms-1"></i>@endif
-                                </div>
-                                @if($canEdit)
-                                <select id="type-select-el" class="edit-select jira-inline-select" style="display: none;" onchange="saveInlineField('issue_type', this.value)" onblur="cancelInlineEdit('type')">
-                                    <option value="task" {{ $task->issue_type == 'task' ? 'selected' : '' }}>Task</option>
-                                    <option value="bug" {{ $task->issue_type == 'bug' ? 'selected' : '' }}>Bug</option>
-                                    <option value="story" {{ $task->issue_type == 'story' ? 'selected' : '' }}>Story</option>
-                                    <option value="epic" {{ $task->issue_type == 'epic' ? 'selected' : '' }}>Epic</option>
-                                    <option value="subtask" {{ $task->issue_type == 'subtask' ? 'selected' : '' }}>Sub-task</option>
-                                </select>
-                                @endif
-                            </div>
-
-                            <!-- Priority Inline Selector -->
-                            <div class="jira-inline-badge-wrap">
-                                @php
-                                    $priorityMap = [
-                                        'low' => ['label' => 'Thấp', 'class' => 'tp-badge-priority-low', 'icon' => 'fa-arrow-down'],
-                                        'medium' => ['label' => 'Trung bình', 'class' => 'tp-badge-priority-medium', 'icon' => 'fa-minus'],
-                                        'high' => ['label' => 'Cao / Gấp', 'class' => 'tp-badge-priority-high', 'icon' => 'fa-arrow-up'],
-                                    ];
-                                    $pInfo = $priorityMap[$task->priority] ?? $priorityMap['medium'];
-                                @endphp
-                                <div id="priority-badge-view" class="tp-badge {{ $pInfo['class'] }} {{ $canEdit ? 'clickable' : '' }}" @if($canEdit) onclick="toggleInlineEdit('priority')" @endif title="Bấm để đổi độ ưu tiên">
-                                    <i class="fa {{ $pInfo['icon'] }}" id="priority-icon-el"></i>
-                                    <span id="priority-text-el">{{ $pInfo['label'] }}</span>
-                                    @if($canEdit)<i class="fa fa-caret-down ms-1"></i>@endif
-                                </div>
-                                @if($canEdit)
-                                <select id="priority-select-el" class="edit-select jira-inline-select" style="display: none;" onchange="saveInlineField('priority', this.value)" onblur="cancelInlineEdit('priority')">
-                                    <option value="low" {{ $task->priority == 'low' ? 'selected' : '' }}>Thấp</option>
-                                    <option value="medium" {{ $task->priority == 'medium' ? 'selected' : '' }}>Trung bình</option>
-                                    <option value="high" {{ $task->priority == 'high' ? 'selected' : '' }}>Cao / Gấp</option>
-                                </select>
-                                @endif
-                            </div>
-                        </div>
+                        <h2 class="edit-card-title">
+                            <i class="fa fa-align-left text-primary"></i>
+                            Mô tả công việc
+                        </h2>
+                        @if($canEdit)
+                            <button type="button" class="tp-btn tp-btn-primary btn-sm" onclick="saveDescriptionCKEditor()">
+                                <i class="fa fa-save" style="color: #ffffff !important;"></i>
+                                <span>Lưu mô tả</span>
+                            </button>
+                        @endif
                     </div>
 
                     <div class="edit-card-body">
-                        <!-- Status & Labels Banner -->
-                        @php
-                            $projectWorkflow = $task->project ? $task->project->effective_workflow : \ProjectsManager\Project::defaultWorkflowForType('software');
-                            $wfStatuses = $projectWorkflow['statuses'] ?? [
-                                ['key' => 'todo', 'name' => 'Cần làm', 'color' => '#64748b', 'icon' => 'fa-circle-o'],
-                                ['key' => 'in_progress', 'name' => 'Đang thực hiện', 'color' => '#3b82f6', 'icon' => 'fa-spinner'],
-                                ['key' => 'done', 'name' => 'Hoàn thành', 'color' => '#10b981', 'icon' => 'fa-check-circle'],
-                            ];
-                            $currStatus = collect($wfStatuses)->firstWhere('key', $task->status) ?? [
-                                'key' => $task->status,
-                                'name' => ucfirst($task->status ?? 'todo'),
-                                'color' => '#64748b',
-                                'icon' => 'fa-circle-o'
-                            ];
-                        @endphp
-
-                        <!-- Visual Workflow Progression Pipeline -->
-                        <div class="tp-task-workflow-strip mb-3 p-3 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="small font-weight-bold text-uppercase text-muted">
-                                    <i class="fa fa-sitemap text-primary me-1"></i>
-                                    Quy trình dự án: {{ strtoupper($task->project->project_type ?? 'software') }}
-                                </span>
-                                <span class="badge" style="background-color: {{ $currStatus['color'] ?? '#3b82f6' }}; color: #fff;">
-                                    {{ $currStatus['name'] }}
-                                </span>
-                            </div>
-
-                            <div class="tp-wf-mini-nodes d-flex align-items-center flex-wrap gap-1">
-                                @foreach($wfStatuses as $wIdx => $st)
-                                    <div class="tp-wf-node-item d-flex align-items-center gap-1 {{ $task->status === $st['key'] ? 'is-active' : '' }}" style="padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; {{ $task->status === $st['key'] ? 'background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;' : 'background: #fff; color: #475569; border: 1px solid #e2e8f0;' }}">
-                                        <span style="width: 7px; height: 7px; border-radius: 50%; background-color: {{ $st['color'] ?? '#64748b' }};"></span>
-                                        <span>{{ $st['name'] }}</span>
-                                    </div>
-                                    @if(!$loop->last)
-                                        <i class="fa fa-angle-right text-muted" style="font-size: 11px;"></i>
-                                    @endif
-                                @endforeach
-                            </div>
-                        </div>
-
-                        <div class="tp-status-banner mb-4">
-                            <!-- Status Inline Selector -->
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="status-label">Trạng thái:</span>
-                                <div class="jira-inline-badge-wrap">
-                                    <div id="status-badge-view" class="tp-badge font-size-13 px-3 py-1 {{ $canEdit ? 'clickable' : '' }}" style="background-color: {{ $currStatus['color'] ?? '#3b82f6' }}; color: #fff;" @if($canEdit) onclick="toggleInlineEdit('status')" @endif title="Bấm để đổi trạng thái">
-                                        <i class="fa {{ $currStatus['icon'] ?? 'fa-circle-o' }}" id="status-icon-el"></i>
-                                        <span id="status-text-el">{{ $currStatus['name'] }}</span>
-                                        @if($canEdit)<i class="fa fa-caret-down ms-1"></i>@endif
-                                    </div>
-                                    @if($canEdit)
-                                    <select id="status-select-el" class="edit-select jira-inline-select" style="display: none;" onchange="saveInlineField('status', this.value)" onblur="cancelInlineEdit('status')">
-                                        @foreach($wfStatuses as $st)
-                                            <option value="{{ $st['key'] }}" {{ $task->status == $st['key'] ? 'selected' : '' }}>
-                                                {{ $st['name'] }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @endif
+                        @if($canEdit)
+                            <div class="w-100">
+                                <textarea id="task-description-editor" name="description" class="edit-textarea w-100" rows="6" placeholder="Nhập mô tả chi tiết, tiêu chí hoàn thành, checklist...">{{ $task->description }}</textarea>
+                                <div class="mt-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <span class="text-muted small">
+                                        <i class="fa fa-info-circle me-1"></i>Hỗ trợ định dạng rich text, danh sách, bảng biểu và chèn ảnh minh họa.
+                                    </span>
                                 </div>
                             </div>
-
-                            <!-- Labels Inline Selector -->
-                            <div class="d-flex align-items-center gap-2 flex-wrap">
-                                <span class="text-muted small"><i class="fa fa-tags me-1"></i>Nhãn:</span>
-                                <div id="labels-view-wrap" class="d-flex align-items-center gap-1 flex-wrap {{ $canEdit ? 'clickable' : '' }}" @if($canEdit) onclick="toggleInlineEdit('labels')" @endif>
-                                    <div id="labels-badges-list" class="d-flex align-items-center gap-1 flex-wrap">
-                                        @if($task->labels)
-                                            @foreach(explode(',', $task->labels) as $label)
-                                                @if(trim($label))
-                                                    <span class="tag-item">#{{ trim($label) }}</span>
-                                                @endif
-                                            @endforeach
-                                        @else
-                                            <span class="text-muted small">Chưa gắn nhãn</span>
-                                        @endif
-                                    </div>
-                                    @if($canEdit)<i class="fa fa-pencil jira-hover-pencil text-muted small ms-1"></i>@endif
-                                </div>
-                                @if($canEdit)
-                                <div id="labels-edit-wrap" style="display: none;" class="d-flex align-items-center gap-1">
-                                    <input type="text" id="input-labels" class="edit-input input-sm" style="width: 200px;" value="{{ $task->labels }}" placeholder="Frontend, API...">
-                                    <button type="button" class="tp-btn tp-btn-primary btn-xs" onclick="saveInlineField('labels', document.getElementById('input-labels').value)"><i class="fa fa-check"></i></button>
-                                    <button type="button" class="tp-btn tp-btn-light btn-xs" onclick="cancelInlineEdit('labels')"><i class="fa fa-times"></i></button>
-                                </div>
-                                @endif
+                        @else
+                            <div class="tp-description-text ck-content-body w-100">
+                                {!! $task->description ? $task->description : '<span class="text-muted">Chưa có mô tả chi tiết cho công việc này.</span>' !!}
                             </div>
-                        </div>
-
-                        <!-- Single Unified Description Box with Local Open-Source CKEditor 4.22.1 -->
-                        <div class="tp-description-box w-100">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h4 class="tp-sub-title m-0">
-                                    <i class="fa fa-align-left text-muted me-1"></i>Mô tả công việc
-                                </h4>
-                            </div>
-
-                            @if($canEdit)
-                                <div class="w-100">
-                                    <textarea id="task-description-editor" name="description" class="edit-textarea w-100" rows="6" placeholder="Nhập mô tả chi tiết công việc...">{{ $task->description }}</textarea>
-                                    <div class="mt-2 d-flex justify-content-between align-items-center">
-                                        <span class="text-muted small"><i class="fa fa-info-circle me-1"></i>Hỗ trợ định dạng rich text & chèn ảnh minh họa.</span>
-                                        <button type="button" class="tp-btn tp-btn-primary btn-sm" onclick="saveDescriptionCKEditor()">
-                                            <i class="fa fa-save text-white"></i> Lưu mô tả
-                                        </button>
-                                    </div>
-                                </div>
-                            @else
-                                <div class="tp-description-text ck-content-body w-100">
-                                    {!! $task->description ? $task->description : '<span class="text-muted">Chưa có mô tả chi tiết.</span>' !!}
-                                </div>
-                            @endif
-                        </div>
+                        @endif
                     </div>
                 </div>
 
-                <!-- 2. Activity Section: Comments (Local Open-Source CKEditor 4.22.1) & Worklogs -->
+                <!-- 2. Activity Section: Comments & Worklogs -->
                 <div class="edit-card">
                     <div class="edit-card-header">
                         <ul class="nav nav-tabs tp-activity-tabs border-0" id="activityTab" role="tablist">
@@ -279,7 +270,7 @@
 
                     <div class="edit-card-body">
                         <div class="tab-content" id="activityTabContent">
-                            <!-- TAB 1: Comments with Local Open-Source CKEditor 4.22.1 -->
+                            <!-- TAB 1: Comments with CKEditor 4.22.1 -->
                             <div class="tab-pane fade in active" id="comments-panel" role="tabpanel">
                                 <!-- New Comment Form with CKEditor -->
                                 <form method="POST" action="{{ route('comments.store') }}" class="tp-comment-form mb-4 w-100" id="task-comment-form">
@@ -298,13 +289,13 @@
                                                 name="body"
                                                 class="edit-textarea comment-textarea w-100"
                                                 rows="5"
-                                                placeholder="Soạn bình luận, chèn ảnh, định dạng chữ..."
+                                                placeholder="Soạn bình luận, chèn ảnh, trao đổi tiến độ..."
                                                 required
                                             ></textarea>
 
-                                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
                                                 <span class="text-muted small">
-                                                    <i class="fa fa-file-image-o me-1"></i>Hỗ trợ định dạng văn bản phong phú, chèn ảnh, liên kết và tài liệu qua CKEditor.
+                                                    <i class="fa fa-paperclip me-1"></i>Hỗ trợ định dạng văn bản phong phú và hình ảnh qua CKEditor.
                                                 </span>
                                                 <button type="submit" class="tp-btn tp-btn-primary">
                                                     <i class="fa fa-paper-plane" style="color: #ffffff !important;"></i>
@@ -354,18 +345,18 @@
                                         <div class="col-md-3">
                                             <label class="small text-muted mb-1">Người thực hiện</label>
                                             @php
-                                            $memberOptions = collect();
-                                            if ($task->assignee) {
-                                                $memberOptions->push($task->assignee);
-                                            }
-                                            $memberOptions = $memberOptions->merge($task->project?->users ?? collect())->unique('id')->filter();
-                                        @endphp
-                                        <select name="assignee_id" class="edit-input">
-                                            <option value="">-- Mặc định (tôi) --</option>
-                                            @foreach($memberOptions as $member)
-                                                <option value="{{ $member->id }}">{{ $member->name }}</option>
-                                            @endforeach
-                                        </select>
+                                                $memberOptions = collect();
+                                                if ($task->assignee) {
+                                                    $memberOptions->push($task->assignee);
+                                                }
+                                                $memberOptions = $memberOptions->merge($task->project?->users ?? collect())->unique('id')->filter();
+                                            @endphp
+                                            <select name="assignee_id" class="edit-input">
+                                                <option value="">-- Mặc định (tôi) --</option>
+                                                @foreach($memberOptions as $member)
+                                                    <option value="{{ $member->id }}">{{ $member->name }}</option>
+                                                @endforeach
+                                            </select>
                                         </div>
                                         <div class="col-md-2">
                                             <label class="small text-muted mb-1">Bắt đầu</label>
@@ -379,7 +370,7 @@
                                             <label class="small text-muted mb-1">Số giờ</label>
                                             <input type="number" name="hours" class="edit-input" min="0.1" max="24" step="0.25" placeholder="Ví dụ: 2.5" required>
                                         </div>
-                                        <div class="col-md-2">
+                                        <div class="col-md-3">
                                             <label class="small text-muted mb-1">Ngày làm việc</label>
                                             <input type="date" name="logged_at" class="edit-input" value="{{ now()->format('Y-m-d') }}" required>
                                         </div>
@@ -439,38 +430,105 @@
 
             <!-- Sidebar Column (~30%) -->
             <div class="edit-col">
-
-
-                <div class="edit-card">
-                    <div class="edit-card-header d-flex justify-content-between align-items-center">
+                <!-- 1. Status & Properties Card -->
+                <div class="edit-card mb-4">
+                    <div class="edit-card-header">
                         <h2 class="edit-card-title">
-                            <i class="fa fa-info-circle"></i>
-                            Thông tin chi tiết
+                            <i class="fa fa-sliders"></i>
+                            Trạng thái & Phân loại
                         </h2>
                     </div>
                     <div class="edit-card-body">
                         <div class="sidebar-meta-group">
-
-                            <!-- 1. Project -->
+                            <!-- Status Selector -->
                             <div class="sidebar-meta-item">
-                                <span class="meta-label">Dự án</span>
+                                <span class="meta-label">Trạng thái</span>
                                 <div class="meta-value">
-                                    <a href="{{ route('projects.show', $task->project_id) }}" class="project-link">
-                                        <i class="fa fa-folder-o text-primary me-1"></i>
-                                        {{ $task->project->name ?? 'N/A' }}
-                                    </a>
+                                    <div class="jira-inline-badge-wrap">
+                                        <div id="status-badge-view" class="tp-badge font-size-13 px-3 py-1 {{ $canEdit ? 'clickable' : '' }}" style="background-color: {{ $currStatus['color'] ?? '#3b82f6' }}20; color: {{ $currStatus['color'] ?? '#3b82f6' }}; border: 1px solid {{ $currStatus['color'] ?? '#3b82f6' }};" @if($canEdit) onclick="toggleInlineEdit('status')" @endif title="Bấm để đổi trạng thái">
+                                            <i class="fa {{ $currStatus['icon'] ?? 'fa-circle-o' }}" id="status-icon-el"></i>
+                                            <span id="status-text-el">{{ $currStatus['name'] }}</span>
+                                            @if($canEdit)<i class="fa fa-caret-down ms-1"></i>@endif
+                                        </div>
+                                        @if($canEdit)
+                                        <select id="status-select-el" class="edit-select jira-inline-select" style="display: none;" onchange="changeTaskStatus(this.value)" onblur="cancelInlineEdit('status')">
+                                            @foreach($wfStatuses as $st)
+                                                <option value="{{ $st['key'] }}" {{ $task->status == $st['key'] ? 'selected' : '' }}>
+                                                    {{ $st['name'] }} {{ in_array($st['key'], $allowedTargetKeys, true) || $st['key'] === $task->status ? '' : '(Cần quy tắc)' }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- 2. Assignee (Inline User Select) -->
+                            <!-- Issue Type Selector -->
                             <div class="sidebar-meta-item">
-                                <span class="meta-label ai-inline-actions" style="justify-content: space-between; width: 100%;">
-                                    <span>Người thực hiện</span>
+                                <span class="meta-label">Loại Issue</span>
+                                <div class="meta-value">
+                                    <div class="jira-inline-badge-wrap">
+                                        <div id="type-badge-view" class="tp-badge tp-badge-type-{{ $task->issue_type ?? 'task' }} {{ $canEdit ? 'clickable' : '' }}" @if($canEdit) onclick="toggleInlineEdit('type')" @endif title="Bấm để đổi loại issue">
+                                            <i class="fa {{ $typeIcons[$task->issue_type] ?? 'fa-check-square-o' }}" id="type-icon-el"></i>
+                                            <span id="type-text-el">{{ $typeLabels[$task->issue_type] ?? 'Task' }}</span>
+                                            @if($canEdit)<i class="fa fa-caret-down ms-1"></i>@endif
+                                        </div>
+                                        @if($canEdit)
+                                        <select id="type-select-el" class="edit-select jira-inline-select" style="display: none;" onchange="saveInlineField('issue_type', this.value)" onblur="cancelInlineEdit('type')">
+                                            <option value="task" {{ $task->issue_type == 'task' ? 'selected' : '' }}>Task</option>
+                                            <option value="bug" {{ $task->issue_type == 'bug' ? 'selected' : '' }}>Bug</option>
+                                            <option value="story" {{ $task->issue_type == 'story' ? 'selected' : '' }}>Story</option>
+                                            <option value="epic" {{ $task->issue_type == 'epic' ? 'selected' : '' }}>Epic</option>
+                                            <option value="subtask" {{ $task->issue_type == 'subtask' ? 'selected' : '' }}>Sub-task</option>
+                                        </select>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Priority Selector -->
+                            <div class="sidebar-meta-item">
+                                <span class="meta-label">Độ ưu tiên</span>
+                                <div class="meta-value">
+                                    <div class="jira-inline-badge-wrap">
+                                        <div id="priority-badge-view" class="tp-badge {{ $pInfo['class'] }} {{ $canEdit ? 'clickable' : '' }}" @if($canEdit) onclick="toggleInlineEdit('priority')" @endif title="Bấm để đổi độ ưu tiên">
+                                            <i class="fa {{ $pInfo['icon'] }}" id="priority-icon-el"></i>
+                                            <span id="priority-text-el">{{ $pInfo['label'] }}</span>
+                                            @if($canEdit)<i class="fa fa-caret-down ms-1"></i>@endif
+                                        </div>
+                                        @if($canEdit)
+                                        <select id="priority-select-el" class="edit-select jira-inline-select" style="display: none;" onchange="saveInlineField('priority', this.value)" onblur="cancelInlineEdit('priority')">
+                                            <option value="low" {{ $task->priority == 'low' ? 'selected' : '' }}>Thấp</option>
+                                            <option value="medium" {{ $task->priority == 'medium' ? 'selected' : '' }}>Trung bình</option>
+                                            <option value="high" {{ $task->priority == 'high' ? 'selected' : '' }}>Cao / Gấp</option>
+                                        </select>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. People & Assignment Card -->
+                <div class="edit-card mb-4">
+                    <div class="edit-card-header">
+                        <h2 class="edit-card-title">
+                            <i class="fa fa-users"></i>
+                            Phân công & Thành viên
+                        </h2>
+                    </div>
+                    <div class="edit-card-body">
+                        <div class="sidebar-meta-group">
+                            <!-- Assignee -->
+                            <div class="sidebar-meta-item">
+                                <div class="d-flex justify-content-between align-items-center w-100 mb-1">
+                                    <span class="meta-label mb-0">Người thực hiện</span>
                                     @if($canEdit)
                                         @include('partials.ai_assignee_button', ['task' => $task, 'mode' => 'save', 'compact' => true])
                                     @endif
-                                </span>
-                                <div class="meta-value">
+                                </div>
+                                <div class="meta-value w-100">
                                     <div id="assignee-view-wrap" class="jira-editable-field {{ $canEdit ? 'clickable' : '' }}" @if($canEdit) onclick="toggleInlineEdit('assignee')" @endif title="Bấm để đổi người thực hiện">
                                         <div id="assignee-display">
                                             @if($task->assignee)
@@ -500,7 +558,7 @@
                                 </div>
                             </div>
 
-                            <!-- 3. Reporter (Inline User Select) -->
+                            <!-- Reporter -->
                             <div class="sidebar-meta-item">
                                 <span class="meta-label">Người báo cáo / Tạo</span>
                                 <div class="meta-value">
@@ -532,8 +590,32 @@
                                     @endif
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
 
-                            <!-- 4. Epic (Inline Epic Select) -->
+                <!-- 3. Planning & Agile Card -->
+                <div class="edit-card mb-4">
+                    <div class="edit-card-header">
+                        <h2 class="edit-card-title">
+                            <i class="fa fa-compass"></i>
+                            Kế hoạch & Agile
+                        </h2>
+                    </div>
+                    <div class="edit-card-body">
+                        <div class="sidebar-meta-group">
+                            <!-- Project -->
+                            <div class="sidebar-meta-item">
+                                <span class="meta-label">Dự án</span>
+                                <div class="meta-value">
+                                    <a href="{{ route('projects.show', $task->project_id) }}" class="project-link font-weight-bold" style="color: #2563eb; text-decoration: none;">
+                                        <i class="fa fa-folder-o me-1"></i>
+                                        {{ $task->project->name ?? 'N/A' }}
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Epic -->
                             <div class="sidebar-meta-item">
                                 <span class="meta-label">Epic chứa</span>
                                 <div class="meta-value">
@@ -563,7 +645,7 @@
                                 </div>
                             </div>
 
-                            <!-- 5. Sprint (Inline Sprint Select) -->
+                            <!-- Sprint -->
                             <div class="sidebar-meta-item">
                                 <span class="meta-label">Sprint</span>
                                 <div class="meta-value">
@@ -597,7 +679,7 @@
                                 </div>
                             </div>
 
-                            <!-- 6. Story Points (Inline Number Input) -->
+                            <!-- Story Points -->
                             <div class="sidebar-meta-item">
                                 <span class="meta-label">Story Points</span>
                                 <div class="meta-value">
@@ -617,11 +699,24 @@
                                     @endif
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
 
-                            <!-- 7. Timeline Start Date -->
+                <!-- 4. Dates & Labels Card -->
+                <div class="edit-card mb-4">
+                    <div class="edit-card-header">
+                        <h2 class="edit-card-title">
+                            <i class="fa fa-calendar-check-o"></i>
+                            Thời gian & Nhãn
+                        </h2>
+                    </div>
+                    <div class="edit-card-body">
+                        <div class="sidebar-meta-group">
+                            <!-- Start Date -->
                             <div class="sidebar-meta-item">
                                 <span class="meta-label">Ngày bắt đầu</span>
-                                <div class="meta-value font-weight-600">
+                                <div class="meta-value">
                                     <div id="start-date-view-wrap" class="jira-editable-field {{ $canEdit ? 'clickable' : '' }}" @if($canEdit) onclick="toggleInlineEdit('start_date')" @endif title="Bấm để đổi ngày bắt đầu">
                                         <span id="start-date-display">
                                             <i class="fa fa-calendar-check-o text-muted me-1"></i>
@@ -636,16 +731,16 @@
                                 </div>
                             </div>
 
-                            <!-- 8. Timeline Due Date -->
+                            <!-- Due Date -->
                             <div class="sidebar-meta-item">
                                 <span class="meta-label">Hạn hoàn thành (Due date)</span>
-                                <div class="meta-value font-weight-600">
+                                <div class="meta-value">
                                     <div id="due-date-view-wrap" class="jira-editable-field {{ $canEdit ? 'clickable' : '' }}" @if($canEdit) onclick="toggleInlineEdit('due_date')" @endif title="Bấm để đổi hạn hoàn thành">
                                         <span id="due-date-display">
                                             @if($task->due_date || $task->end_date)
                                                 @php
                                                     $dueDate = $task->due_date ?? $task->end_date;
-                                                    $isOverdue = $dueDate->isPast() && $task->status !== 'done';
+                                                    $isOverdue = $dueDate->isPast() && !in_array($task->status, ['done', 'completed', 'resolved', 'closed'], true);
                                                 @endphp
                                                 <span class="{{ $isOverdue ? 'text-danger font-weight-bold' : '' }}">
                                                     <i class="fa fa-calendar-times-o me-1"></i>
@@ -666,6 +761,40 @@
                                     @endif
                                 </div>
                             </div>
+
+                            <!-- Labels -->
+                            <div class="sidebar-meta-item">
+                                <span class="meta-label">Nhãn (Labels)</span>
+                                <div class="meta-value">
+                                    <div id="labels-view-wrap" class="d-flex align-items-center gap-1 flex-wrap {{ $canEdit ? 'clickable' : '' }}" @if($canEdit) onclick="toggleInlineEdit('labels')" @endif title="Bấm để sửa nhãn">
+                                        <div id="labels-badges-list" class="d-flex align-items-center gap-1 flex-wrap">
+                                            @if($task->labels)
+                                                @foreach(explode(',', $task->labels) as $label)
+                                                    @if(trim($label))
+                                                        <span class="tag-item">#{{ trim($label) }}</span>
+                                                    @endif
+                                                @endforeach
+                                            @else
+                                                <span class="text-muted small">Chưa gắn nhãn</span>
+                                            @endif
+                                        </div>
+                                        @if($canEdit)<i class="fa fa-pencil jira-hover-pencil text-muted small ms-1"></i>@endif
+                                    </div>
+
+                                    @if($canEdit)
+                                    <div id="labels-edit-wrap" style="display: none;" class="d-flex align-items-center gap-1 mt-1">
+                                        <input type="text" id="input-labels" class="edit-input input-sm" style="width: 180px;" value="{{ $task->labels }}" placeholder="Frontend, API...">
+                                        <button type="button" class="tp-btn tp-btn-primary btn-xs" onclick="saveInlineField('labels', document.getElementById('input-labels').value)"><i class="fa fa-check"></i></button>
+                                        <button type="button" class="tp-btn tp-btn-light btn-xs" onclick="cancelInlineEdit('labels')"><i class="fa fa-times"></i></button>
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- Timestamps -->
+                            <div class="sidebar-meta-item pt-2 border-top">
+                                <span class="text-muted small">Tạo ngày: {{ $task->created_at ? $task->created_at->format('d/m/Y H:i') : '-' }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -675,12 +804,11 @@
 </div>
 
 <script>
-    // Initialize Local Open-Source CKEditor 4.22.1 for Description & Comment Boxes
+    // Initialize Local Open-Source CKEditor 4.22.1
     function initAllCKEditors() {
         if (typeof CKEDITOR !== 'undefined') {
             CKEDITOR.config.versionCheck = false;
 
-            // 1. Initialize CKEditor for Add Comment
             if (document.getElementById('comment-editor') && !CKEDITOR.instances['comment-editor']) {
                 CKEDITOR.replace('comment-editor', {
                     height: 140,
@@ -698,7 +826,6 @@
                 });
             }
 
-            // 2. Initialize CKEditor for Description Box
             if (document.getElementById('task-description-editor') && !CKEDITOR.instances['task-description-editor']) {
                 CKEDITOR.replace('task-description-editor', {
                     height: 200,
@@ -726,7 +853,6 @@
         initAllCKEditors();
     }
 
-    // Sync CKEditor data on comment form submit
     var commentForm = document.getElementById('task-comment-form');
     if (commentForm) {
         commentForm.addEventListener('submit', function() {
@@ -736,7 +862,6 @@
         });
     }
 
-    // Save Description from CKEditor 4.22.1
     function saveDescriptionCKEditor() {
         var descVal = '';
         if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances['task-description-editor']) {
@@ -747,7 +872,71 @@
         saveInlineField('description', descVal);
     }
 
-    // Toggle Inline Edit Elements for Header / Badges / Sidebar
+    function showToast(msg) {
+        var toast = document.getElementById('tp-task-toast');
+        var text = document.getElementById('tp-toast-message');
+        if (toast && text) {
+            text.textContent = msg;
+            toast.style.display = 'flex';
+            setTimeout(function() {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+    }
+
+    function changeTaskStatus(newStatus) {
+        moveTaskWithPayload(newStatus, {});
+    }
+
+    function moveTaskWithPayload(newStatus, payload) {
+        var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        fetch("/tasks/{{ $task->id }}/move", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(Object.assign({ status: newStatus }, payload))
+        })
+        .then(function(res) {
+            return res.json().then(function(data) {
+                return { ok: res.ok, data: data };
+            });
+        })
+        .then(function(result) {
+            if (result.ok && result.data.success) {
+                showToast(result.data.message || 'Đã chuyển trạng thái thành công.');
+                setTimeout(function() { window.location.reload(); }, 400);
+            } else {
+                var data = result.data || {};
+                if (data.gate_type === 'approval_gate') {
+                    var sig = prompt((data.message || 'Cần phê duyệt từ Tech Lead / Khách hàng') + '\n\nNhập chữ ký duyệt để tiếp tục:');
+                    if (sig && sig.trim()) {
+                        moveTaskWithPayload(newStatus, { approval_signature: sig.trim() });
+                    }
+                } else if (data.gate_type === 'validation_rule' && data.required_action === 'worklog') {
+                    var hours = prompt((data.message || 'Cần ghi nhận thời gian làm việc (Worklog)') + '\n\nNhập số giờ làm việc thực tế:', '1.0');
+                    if (hours && parseFloat(hours) > 0) {
+                        moveTaskWithPayload(newStatus, { worklog_hours: parseFloat(hours) });
+                    }
+                } else if (data.gate_type === 'validation_rule' && data.required_action === 'test_result') {
+                    var tr = prompt((data.message || 'Cần kết quả kiểm thử (Test Result)') + '\n\nGhi nhận kết quả kiểm thử (Passed / Result):', 'Passed');
+                    if (tr && tr.trim()) {
+                        moveTaskWithPayload(newStatus, { test_status: 'passed', test_result: tr.trim() });
+                    }
+                } else {
+                    alert(data.message || 'Không thể chuyển trạng thái công việc.');
+                }
+            }
+        })
+        .catch(function(err) {
+            console.error('Status transition error:', err);
+            alert('Có lỗi xảy ra khi kết nối máy chủ.');
+        });
+    }
+
     function toggleInlineEdit(field) {
         if (field === 'title') {
             document.getElementById('jira-title-view').style.display = 'none';
@@ -800,7 +989,6 @@
         }
     }
 
-    // Cancel Inline Edit
     function cancelInlineEdit(field) {
         if (field === 'title') {
             document.getElementById('jira-title-view').style.display = 'block';
@@ -841,7 +1029,6 @@
         }
     }
 
-    // Save Single Field via AJAX
     function saveInlineField(fieldName, fieldValue) {
         var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         var payload = {};
@@ -864,15 +1051,15 @@
         })
         .then(function(result) {
             if (result.ok && result.data.success) {
-                window.location.reload();
+                showToast('Đã lưu thay đổi.');
+                setTimeout(function() { window.location.reload(); }, 400);
             } else {
                 alert(result.data.message || 'Có lỗi xảy ra khi cập nhật.');
-                window.location.reload();
             }
         })
         .catch(function(err) {
             console.error(err);
-            window.location.reload();
+            alert('Có lỗi kết nối máy chủ.');
         });
     }
 </script>

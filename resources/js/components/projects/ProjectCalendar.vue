@@ -549,8 +549,6 @@ const workflow = computed(() => {
             { key: 'uat', name: 'UAT', color: '#06b6d4' },
             { key: 'done', name: 'Done', color: '#10b981', is_final: true },
         ],
-        approval_gates: { require_tech_lead: true, require_customer: false },
-        validation_rules: { require_worklog: true, require_test_result: true },
     };
 });
 

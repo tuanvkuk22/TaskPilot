@@ -18,6 +18,8 @@
         available_labels: @json($available_labels ?? []),
         project_id: @json($project_id ?? null),
         default_status: @json($default_status ?? null),
+        effective_workflow: @json($effective_workflow ?? null),
+        active_statuses: @json(collect($effective_workflow['statuses'] ?? [])->filter(fn($s) => ($s['is_active'] ?? true) !== false)->values()),
         old: @json(old()),
         errors: @json($errors ?? []),
         old_labels: @json(old('labels')),
