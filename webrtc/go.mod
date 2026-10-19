@@ -10,7 +10,7 @@ require (
 	github.com/elliotchance/orderedmap/v3 v3.1.1
 	github.com/florianl/go-tc v0.4.8
 	github.com/frostbyte73/core v0.1.1
-	github.com/gammazero/deque v1.2.1
+	github.com/gammazero/deque v1.2.2
 	github.com/gammazero/workerpool v1.2.1
 	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.7.0
