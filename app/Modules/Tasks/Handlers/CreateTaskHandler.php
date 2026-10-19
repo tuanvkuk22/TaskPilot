@@ -26,9 +26,15 @@ class CreateTaskHandler
      */
     public function handle(int $userId, mixed $projectId = null): array
     {
+        $projects = $this->repository->getAccessibleProjects($userId);
+        $selectedProject = $projectId ? $projects->firstWhere('id', (int) $projectId) : $projects->first();
+        $effectiveWorkflow = $selectedProject ? $selectedProject->effective_workflow : \ProjectsManager\Project::defaultWorkflowForType('software');
+
         return [
-            'projects' => $this->repository->getAccessibleProjects($userId),
+            'projects' => $projects,
             'project_id' => $projectId,
+            'selected_project' => $selectedProject,
+            'effective_workflow' => $effectiveWorkflow,
             'users' => $this->repository->getAssignableUsers($userId, $projectId),
             'reporters' => $this->repository->getAssignableUsers($userId, $projectId),
             'epics' => $this->repository->getEpics($projectId),

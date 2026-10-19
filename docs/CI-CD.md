@@ -21,7 +21,7 @@ Coverage hiện là báo cáo, chưa áp ngưỡng phần trăm tùy ý. Browser
 
 ## Runtime và dependency
 
-Ứng dụng khóa chính xác Laravel Framework **13.24.0**, dùng PHP 8.4+, Tinker 3 và PHPUnit 12.5. `scripts/ci/check-runtime.php` xác nhận phiên bản framework trong lockfile. Commit đồng thời `composer.json` và `composer.lock` khi thay đổi dependency; không dựa vào `vendor/` của máy phát triển.
+Ứng dụng khóa chính xác Laravel Framework **13.35.0**, dùng PHP 8.4+, Tinker 3 và PHPUnit 12.5. `scripts/ci/check-runtime.php` xác nhận phiên bản framework trong lockfile. Commit đồng thời `composer.json` và `composer.lock` khi thay đổi dependency; không dựa vào `vendor/` của máy phát triển.
 
 PHPUnit local dùng SQLite memory được cấu hình trong `phpunit.xml`; máy chạy test cần `pdo_sqlite`. CI sinh `phpunit.ci.xml` bằng `scripts/ci/configure-phpunit.php` để chọn SQLite/MySQL mà không sửa cấu hình local. CI tự cài extension này. Các giá trị mail/cache/queue trong test được cô lập, không dùng database từ `.env`.
 

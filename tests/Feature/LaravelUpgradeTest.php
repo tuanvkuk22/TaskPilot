@@ -16,7 +16,7 @@ class LaravelUpgradeTest extends TestCase
 
     public function test_framework_and_test_services_use_expected_runtime(): void
     {
-        $this->assertSame('13.24.0', app()->version());
+        $this->assertSame('13.35.0', app()->version());
         $database = getenv('CI_DATABASE') ?: 'sqlite';
         $this->assertSame($database, config('database.default'));
         $this->assertSame(

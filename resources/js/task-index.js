@@ -13,6 +13,9 @@ const app = createApp(TaskList, {
     selectedStatus: d.selected_status || '',
     selectedPriority: d.selected_priority || '',
     successMessage: d.success_message || '',
+    effectiveWorkflow: d.effective_workflow || null,
+    projectWorkflows: d.project_workflows || {},
+    csrfToken: d.csrf_token || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
 });
 
 app.mount('#task-index-app');

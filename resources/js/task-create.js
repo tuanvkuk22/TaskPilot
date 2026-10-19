@@ -22,6 +22,8 @@ const app = createApp(TaskCreate, {
     errors: d.errors || {},
     projectId: d.project_id || null,
     defaultStatus: d.default_status || null,
+    activeStatuses: d.active_statuses || [],
+    effectiveWorkflow: d.effective_workflow || null,
     task: d.task || null,
     isEditing: Boolean(d.is_edit),
 });

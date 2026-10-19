@@ -25,7 +25,7 @@
         <button type="button" class="tp-alert-close" aria-label="Đóng thông báo" @click="errorDismissed = true">&times;</button>
       </div>
 
-      <form class="tp-login-form" method="POST" :action="loginUrl || '/login'">
+      <form class="tp-login-form" method="POST" :action="loginUrl || '/login'" ref="loginForm">
         <input type="hidden" name="_token" :value="csrfToken">
 
         <div class="tp-form-row">
@@ -36,7 +36,7 @@
             class="tp-form-control"
             :class="{ 'tp-form-control-error': errorMap.email }"
             name="email"
-            :value="oldEmail"
+            v-model="emailValue"
             required
             autocomplete="email"
             autofocus
@@ -55,6 +55,7 @@
               class="tp-form-control"
               :class="{ 'tp-form-control-error': errorMap.password }"
               name="password"
+              v-model="passwordValue"
               required
               autocomplete="current-password"
               ref="passwordInput"
@@ -83,6 +84,16 @@
         <button type="submit" class="tp-btn tp-btn-primary tp-btn-login">
           <span>Đăng nhập</span>
         </button>
+
+        <button
+          type="button"
+          class="tp-btn tp-btn-demo"
+          title="Tự động điền tài khoản demo và đăng nhập"
+          @click="loginWithDemo"
+        >
+          <i class="fa fa-user-circle"></i>
+          <span>Tài khoản demo</span>
+        </button>
       </form>
 
       <div class="tp-login-divider">
@@ -94,10 +105,11 @@
         :href="googleRedirectUrl"
         class="tp-btn tp-btn-google tp-btn-full"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
-          <path fill="#EA4335" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
-          <path fill="#4285F4" d="M12 23c2.97 0 5.46-1 7.28-2.69l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC04" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" style="flex-shrink: 0;">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
         </svg>
         <span>Tiếp tục với Google</span>
       </a>
@@ -117,7 +129,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
 
 const props = defineProps({
   csrfToken: { type: String, default: '' },
@@ -129,6 +141,20 @@ const props = defineProps({
   registerUrl: { type: String, default: '' },
   statusMessage: { type: String, default: '' },
 });
+
+const emailValue = ref(props.old?.email || '');
+const passwordValue = ref('');
+const loginForm = ref(null);
+
+function loginWithDemo() {
+  emailValue.value = 'trannguyentuan1807@gmail.com';
+  passwordValue.value = '123456';
+  nextTick(() => {
+    if (loginForm.value) {
+      loginForm.value.submit();
+    }
+  });
+}
 
 const showPassword = ref(false);
 const passwordInput = ref(null);

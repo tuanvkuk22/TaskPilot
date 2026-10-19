@@ -36,6 +36,19 @@
             <input type="hidden" name="_token" :value="csrfToken">
             <input v-if="isEditing" type="hidden" name="_method" value="PUT">
 
+            <!-- Validation Error Summary Alert -->
+            <div v-if="hasErrors" class="alert alert-danger mb-4" style="border-radius: 10px; border-left: 4px solid #ef4444; background: #fef2f2; color: #991b1b; padding: 14px 18px;">
+                <div class="d-flex align-items-center gap-2 mb-1 font-weight-bold" style="font-size: 14px;">
+                    <i class="fa fa-exclamation-circle text-danger"></i>
+                    <span>Vui lòng kiểm tra lại các thông tin chưa hợp lệ:</span>
+                </div>
+                <ul class="m-0 ps-4" style="font-size: 13px;">
+                    <li v-for="(errList, field) in errors" :key="field">
+                        {{ Array.isArray(errList) ? errList[0] : errList }}
+                    </li>
+                </ul>
+            </div>
+
             <!-- 2-Column Responsive Layout (70 / 30) -->
             <div class="edit-grid">
                 <!-- Left Main Column (~70%) -->
@@ -171,25 +184,46 @@
                         <div class="edit-card-body">
                             <div class="edit-field" style="margin-bottom: 16px;">
                                 <label>Trạng thái ban đầu</label>
-                                <div class="status-selector">
+                                <div class="status-selector" style="display: flex; flex-wrap: wrap; gap: 8px;">
                                     <label
                                         v-for="status in statuses"
                                         :key="status.value"
                                         class="status-option"
+                                        style="cursor: pointer;"
                                     >
                                         <input
                                             type="radio"
                                             name="status"
                                             :value="status.value"
                                             v-model="form.status"
+                                            style="display: none;"
                                         >
-                                        <span :class="['status-card', `status-${status.value}`]">
-                                            <i :class="status.icon"></i>
+                                        <span
+                                            :class="['status-card', `status-${status.value}`]"
+                                            :style="{
+                                                borderColor: form.status === status.value ? (status.color || '#3b82f6') : '#cbd5e1',
+                                                backgroundColor: form.status === status.value ? (status.color ? status.color + '15' : '#eff6ff') : '#ffffff',
+                                                boxShadow: form.status === status.value ? `0 0 0 2px ${status.color ? status.color + '33' : '#3b82f633'}` : 'none',
+                                                color: form.status === status.value ? (status.color || '#0f172a') : '#475569',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                padding: '6px 14px',
+                                                borderRadius: '8px',
+                                                borderWidth: '1.5px',
+                                                borderStyle: 'solid',
+                                                fontSize: '13px',
+                                                fontWeight: '600',
+                                                transition: 'all 0.15s ease'
+                                            }"
+                                        >
+                                            <i :class="status.icon" :style="{ color: status.color || '#64748b' }"></i>
                                             <span>{{ status.label }}</span>
                                         </span>
                                     </label>
                                 </div>
                                 <input type="hidden" name="status" :value="form.status">
+                                <div v-if="errors.status" class="edit-error mt-1">{{ errors.status[0] }}</div>
                             </div>
 
                             <div class="edit-field">
@@ -476,11 +510,14 @@ const props = defineProps({
     errors: { type: Object, default: () => ({}) },
     projectId: { type: [Number, String], default: null },
     defaultStatus: { type: String, default: null },
+    activeStatuses: { type: Array, default: () => [] },
+    effectiveWorkflow: { type: Object, default: () => null },
     task: { type: Object, default: null },
     isEditing: { type: Boolean, default: false },
 });
 
 const initialTask = props.task || {};
+const hasErrors = computed(() => props.errors && Object.keys(props.errors).length > 0);
 
 const issueTypes = [
     { value: 'task', label: 'Task', icon: 'fa fa-check-square-o' },
@@ -490,11 +527,30 @@ const issueTypes = [
     { value: 'subtask', label: 'Công việc con', icon: 'fa fa-code-fork' },
 ];
 
-const statuses = [
-    { value: 'todo', label: 'Sẽ làm', icon: 'fa fa-clock-o' },
-    { value: 'in_progress', label: 'Đang làm', icon: 'fa fa-spinner' },
-    { value: 'done', label: 'Hoàn thành', icon: 'fa fa-check-circle' },
+const defaultStatuses = [
+    { value: 'todo', label: 'Sẽ làm', icon: 'fa fa-clock-o', color: '#64748b' },
+    { value: 'in_progress', label: 'Đang làm', icon: 'fa fa-spinner', color: '#2563eb' },
+    { value: 'done', label: 'Hoàn thành', icon: 'fa fa-check-circle', color: '#10b981' },
 ];
+
+function formatWorkflowStatuses(list) {
+    if (!list || !Array.isArray(list) || list.length === 0) return defaultStatuses;
+    return list
+        .filter(s => (s.is_active ?? true) !== false)
+        .map(s => ({
+            value: s.key || s.value,
+            label: s.name || s.label,
+            icon: s.icon ? (s.icon.startsWith('fa') ? s.icon : `fa ${s.icon}`) : 'fa fa-circle-o',
+            color: s.color || '#64748b',
+            is_initial: Boolean(s.is_initial)
+        }));
+}
+
+const statuses = ref(
+    props.activeStatuses && props.activeStatuses.length
+        ? formatWorkflowStatuses(props.activeStatuses)
+        : (props.effectiveWorkflow?.statuses ? formatWorkflowStatuses(props.effectiveWorkflow.statuses) : defaultStatuses)
+);
 
 const priorities = [
     { value: 'low', label: 'Thấp', icon: 'fa fa-arrow-down' },
@@ -508,7 +564,7 @@ const form = reactive({
     description: props.old.description || initialTask.description || '',
     issue_type: props.old.issue_type || initialTask.issue_type || 'task',
     parent_id: props.old.parent_id || initialTask.parent_id || '',
-    status: props.old.status || initialTask.status || props.defaultStatus || 'todo',
+    status: props.old.status || initialTask.status || props.defaultStatus || (statuses.value[0]?.value || 'todo'),
     priority: props.old.priority || initialTask.priority || 'medium',
     assignee_id: props.old.assignee_id || initialTask.assignee_id || '',
     reporter_id: props.old.reporter_id || initialTask.reporter_id || '',
@@ -563,6 +619,17 @@ watch(() => form.project_id, async (projectId) => {
         reporters.value = data.reporters || [];
         epics.value = data.epics || [];
         sprints.value = data.sprints || [];
+
+        if (data.statuses && data.statuses.length) {
+            statuses.value = formatWorkflowStatuses(data.statuses);
+            const validStatusKeys = statuses.value.map(s => s.value);
+            if (!validStatusKeys.includes(form.status)) {
+                const initialStatus = statuses.value.find(s => s.is_initial) || statuses.value[0];
+                if (initialStatus) {
+                    form.status = initialStatus.value;
+                }
+            }
+        }
 
         if (form.assignee_id && !containsId(users.value, form.assignee_id)) form.assignee_id = '';
         if (form.reporter_id && !containsId(reporters.value, form.reporter_id)) form.reporter_id = '';

@@ -40,6 +40,9 @@ class UpdateProjectHandler
             'category_id' => $data['category_id'] ?? $project->category_id,
             'team_id' => $data['team_id'] ?? $project->team_id,
             'objective' => $data['objective'] ?? $project->objective,
+            'project_type' => $data['project_type'] ?? $project->project_type,
+            'workflow_config' => array_key_exists('workflow_config', $data) ? (is_string($data['workflow_config']) ? json_decode($data['workflow_config'], true) : $data['workflow_config']) : $project->workflow_config,
         ]);
+
     }
 }

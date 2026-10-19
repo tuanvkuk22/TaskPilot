@@ -66,6 +66,10 @@
                             <i class="fa fa-tasks tp-link-icon"></i>
                             <span class="tp-link-text">Công việc</span>
                         </a>
+                        <a href="{{ route('workflows.index') }}" class="tp-sidebar-link {{ request()->routeIs('workflows.*') ? 'active' : '' }}" data-title="Quy trình">
+                            <i class="fa fa-sitemap tp-link-icon"></i>
+                            <span class="tp-link-text">Quy trình</span>
+                        </a>
                         <a href="{{ route('teams.index') }}" class="tp-sidebar-link {{ request()->routeIs('teams.*') ? 'active' : '' }}" data-title="Đội nhóm">
                             <i class="fa fa-users tp-link-icon"></i>
                             <span class="tp-link-text">Đội nhóm</span>

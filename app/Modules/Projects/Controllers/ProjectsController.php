@@ -54,6 +54,28 @@ class ProjectsController extends Controller
     ) {
     }
 
+    public function workflows(Request $request): View|RedirectResponse
+    {
+        if (! Auth::check()) {
+            return view('auth.login');
+        }
+
+        $userId = Auth::id();
+        $projects = $this->listProjectsHandler->handle($userId, 'active');
+
+        $projects->each(function ($project) use ($userId) {
+            $pivotRole = $project->users()
+                ->where('users.id', $userId)
+                ->value('role');
+
+            $project->user_role = $pivotRole ?: ($project->user_id === $userId ? 'owner' : null);
+        });
+
+        return view('workflows.index', [
+            'projects' => $projects,
+        ]);
+    }
+
     public function index(Request $request): View|RedirectResponse
     {
         if (! Auth::check()) {
@@ -104,7 +126,9 @@ class ProjectsController extends Controller
             'project' => $project,
             'tasks' => $tasks,
             'stats' => $stats,
+            'effective_workflow' => $project->effective_workflow,
         ]);
+
     }
 
     public function timeline(Project $project): View
@@ -128,9 +152,21 @@ class ProjectsController extends Controller
 
     public function roadmap(Project $project): View
     {
-        $project->load(['tasks.assignee']);
+        $project->load([
+            'tasks.assignee',
+            'tasks.reporter',
+            'tasks.project',
+            'tasks.worklogs.user',
+            'tasks.approver',
+            'sprints',
+            'users',
+            'company'
+        ]);
 
-        return view('projects.roadmap', ['project' => $project]);
+        return view('projects.roadmap', [
+            'project' => $project,
+            'effective_workflow' => $project->effective_workflow,
+        ]);
     }
 
     public function create(mixed $companyId = null): View
@@ -238,16 +274,24 @@ class ProjectsController extends Controller
     public function edit(Project $project): View
     {
         $formData = $this->formDataHandler->handle(Auth::id());
+        $effectiveWorkflow = $project->effective_workflow;
+        $project->workflow_config = $effectiveWorkflow;
 
         return view('projects.edit', array_merge($formData, [
             'project' => $project,
+            'effective_workflow' => $effectiveWorkflow,
+            'default_workflows' => [
+                'software' => Project::defaultWorkflowForType('software'),
+                'marketing' => Project::defaultWorkflowForType('marketing'),
+                'hr' => Project::defaultWorkflowForType('hr'),
+            ],
             'errors' => session('errors') ? session('errors')->toArray() : [],
             'old' => old(),
             'update_url' => route('projects.update', $project->id),
         ]));
     }
 
-    public function update(Request $request, Project $project): RedirectResponse
+    public function update(Request $request, Project $project): RedirectResponse|JsonResponse
     {
         $data = $request->all();
 
@@ -258,6 +302,9 @@ class ProjectsController extends Controller
 
             $companyId = $validated['company_id'] ?? null;
             if ($companyId && ! Company::query()->whereKey($companyId)->where('user_id', Auth::id())->exists()) {
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json(['success' => false, 'errors' => ['company_id' => ['Khách hàng đã chọn không thuộc tài khoản của bạn.']]], 422);
+                }
                 return back()->withInput()->withErrors([
                     'company_id' => 'Khách hàng đã chọn không thuộc tài khoản của bạn.',
                 ]);
@@ -289,12 +336,25 @@ class ProjectsController extends Controller
         $updated = $this->updateProjectHandler->handle($project, $data);
 
         if ($updated) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Dự án và quy trình làm việc đã được cập nhật thành công.',
+                    'project' => $project->fresh(),
+                ]);
+            }
+
             return redirect()->route('projects.show', ['project' => $project->id])
                 ->with('success', 'Project updated successfully.');
         }
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => false, 'message' => 'Không thể cập nhật dự án.'], 400);
+        }
+
         return back()->withInput();
     }
+
 
     public function archive(Project $project): RedirectResponse
     {

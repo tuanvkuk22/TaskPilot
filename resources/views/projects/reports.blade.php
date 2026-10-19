@@ -14,7 +14,7 @@
     </div>
 
     <nav class="pd-project-nav mb-4" aria-label="Điều hướng dự án">
-        <a href="{{ route('projects.index') }}" class="pd-nav-item">Dự án</a><a href="{{ route('projects.show', $project) }}" class="pd-nav-item">Tổng quan</a><a href="{{ route('projects.board', $project) }}" class="pd-nav-item">Bảng</a><a href="{{ route('projects.members.index', $project) }}" class="pd-nav-item">Thành viên</a><a href="{{ route('projects.roles.index', $project) }}" class="pd-nav-item">Vai trò &amp; Quyền</a><a href="{{ route('sprints.index', $project) }}" class="pd-nav-item">Backlog / Sprint</a><a href="{{ route('projects.timeline', $project) }}" class="pd-nav-item">Timeline</a><a href="{{ route('projects.roadmap', $project) }}" class="pd-nav-item">Roadmap</a><a href="{{ route('projects.reports.show', $project) }}" class="pd-nav-item active">Báo cáo</a>
+        <a href="{{ route('projects.index') }}" class="pd-nav-item">Dự án</a><a href="{{ route('projects.show', $project) }}" class="pd-nav-item">Tổng quan</a><a href="{{ route('projects.board', $project) }}" class="pd-nav-item">Bảng</a><a href="{{ route('projects.members.index', $project) }}" class="pd-nav-item">Thành viên</a><a href="{{ route('projects.roles.index', $project) }}" class="pd-nav-item">Vai trò &amp; Quyền</a><a href="{{ route('sprints.index', $project) }}" class="pd-nav-item">Backlog / Sprint</a><a href="{{ route('projects.timeline', $project) }}" class="pd-nav-item">Timeline</a><a href="{{ route('projects.roadmap', $project) }}" class="pd-nav-item">Lịch biểu</a><a href="{{ route('projects.reports.show', $project) }}" class="pd-nav-item active">Báo cáo</a>
     </nav>
 
     <section class="project-report-hero">

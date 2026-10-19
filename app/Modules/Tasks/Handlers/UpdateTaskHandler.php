@@ -32,8 +32,10 @@ class UpdateTaskHandler
             'name', 'description', 'status', 'priority', 'project_id',
             'days', 'hours', 'issue_type', 'assignee_id', 'reporter_id',
             'start_date', 'end_date', 'due_date', 'story_points', 'labels',
-            'sprint', 'parent_id', 'sprint_id'
+            'sprint', 'parent_id', 'sprint_id',
+            'test_result', 'test_status', 'approved_by', 'approved_at', 'approval_signature', 'approval_role'
         ];
+
 
         foreach ($fields as $field) {
             if (array_key_exists($field, $data)) {

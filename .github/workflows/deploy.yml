@@ -1,87 +1,87 @@
-name: Deploy
-on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        type: choice
-        options: [staging, production]
-        default: staging
-        required: true
-permissions:
-  contents: read
-concurrency:
-  group: deploy-${{ inputs.environment }}
-  cancel-in-progress: false
-jobs:
-  verify:
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    uses: ./.github/workflows/ci.yml
-  package:
-    needs: verify
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: mbstring, intl, bcmath, pdo_mysql
-          tools: composer:v2
-          coverage: none
-      - run: composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader --no-scripts
-      - run: rm -rf public/build
-      - uses: actions/download-artifact@v4
-        with:
-          name: frontend-build
-          path: public/build
-      - name: Package only runtime files
-        run: |
-          bash scripts/ci/package-release.sh "$RUNNER_TEMP/release.tar.gz"
-          cd "$RUNNER_TEMP"
-          sha256sum release.tar.gz > release.tar.gz.sha256
-      - uses: actions/upload-artifact@v4
-        with:
-          name: release-${{ github.sha }}
-          path: |
-            ${{ runner.temp }}/release.tar.gz
-            ${{ runner.temp }}/release.tar.gz.sha256
-          retention-days: 14
-          if-no-files-found: error
-  deploy:
-    needs: package
-    environment: ${{ inputs.environment }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    env:
-      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-      KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
-      DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
-      HEALTH_URL: ${{ vars.HEALTH_URL }}
-      RELEASE_ID: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: release-${{ github.sha }}
-      - name: Configure verified SSH connection
-        run: |
-          set -eu
-          : "${DEPLOY_HOST:?}" "${DEPLOY_USER:?}" "${DEPLOY_KEY:?}" "${KNOWN_HOSTS:?}" "${DEPLOY_PATH:?}" "${HEALTH_URL:?}"
-          [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]
-          [[ "$DEPLOY_USER" =~ ^[a-zA-Z0-9_-]+$ ]]
-          [[ "$DEPLOY_PATH" =~ ^/[a-zA-Z0-9/_-]+$ ]]
-          [[ "$HEALTH_URL" =~ ^https://[a-zA-Z0-9./:_-]+$ ]]
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
-      - name: Upload and activate release
-        run: |
-          set -eu
-          ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_PATH/incoming/$RELEASE_ID'"
-          scp -o BatchMode=yes release.tar.gz release.tar.gz.sha256 "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/incoming/$RELEASE_ID/"
-          ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_PATH/incoming/$RELEASE_ID' && sha256sum -c release.tar.gz.sha256 && tar -xzf release.tar.gz scripts/deploy/activate.sh && bash scripts/deploy/activate.sh '$DEPLOY_PATH' '$RELEASE_ID' '$HEALTH_URL'"
-      - name: Remove SSH credentials
-        if: always()
-        run: rm -f ~/.ssh/id_ed25519
+# name: Deploy
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       environment:
+#         type: choice
+#         options: [staging, production]
+#         default: staging
+#         required: true
+# permissions:
+#   contents: read
+# concurrency:
+#   group: deploy-${{ inputs.environment }}
+#   cancel-in-progress: false
+# jobs:
+#   verify:
+#     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+#     uses: ./.github/workflows/ci.yml
+#   package:
+#     needs: verify
+#     runs-on: ubuntu-24.04
+#     timeout-minutes: 15
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: shivammathur/setup-php@v2
+#         with:
+#           php-version: '8.4'
+#           extensions: mbstring, intl, bcmath, pdo_mysql
+#           tools: composer:v2
+#           coverage: none
+#       - run: composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader --no-scripts
+#       - run: rm -rf public/build
+#       - uses: actions/download-artifact@v4
+#         with:
+#           name: frontend-build
+#           path: public/build
+#       - name: Package only runtime files
+#         run: |
+#           bash scripts/ci/package-release.sh "$RUNNER_TEMP/release.tar.gz"
+#           cd "$RUNNER_TEMP"
+#           sha256sum release.tar.gz > release.tar.gz.sha256
+#       - uses: actions/upload-artifact@v4
+#         with:
+#           name: release-${{ github.sha }}
+#           path: |
+#             ${{ runner.temp }}/release.tar.gz
+#             ${{ runner.temp }}/release.tar.gz.sha256
+#           retention-days: 14
+#           if-no-files-found: error
+#   deploy:
+#     needs: package
+#     environment: ${{ inputs.environment }}
+#     runs-on: ubuntu-24.04
+#     timeout-minutes: 15
+#     env:
+#       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+#       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+#       DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+#       KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+#       DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+#       HEALTH_URL: ${{ vars.HEALTH_URL }}
+#       RELEASE_ID: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+#     steps:
+#       - uses: actions/download-artifact@v4
+#         with:
+#           name: release-${{ github.sha }}
+#       - name: Configure verified SSH connection
+#         run: |
+#           set -eu
+#           : "${DEPLOY_HOST:?}" "${DEPLOY_USER:?}" "${DEPLOY_KEY:?}" "${KNOWN_HOSTS:?}" "${DEPLOY_PATH:?}" "${HEALTH_URL:?}"
+#           [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]
+#           [[ "$DEPLOY_USER" =~ ^[a-zA-Z0-9_-]+$ ]]
+#           [[ "$DEPLOY_PATH" =~ ^/[a-zA-Z0-9/_-]+$ ]]
+#           [[ "$HEALTH_URL" =~ ^https://[a-zA-Z0-9./:_-]+$ ]]
+#           install -m 700 -d ~/.ssh
+#           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+#           chmod 600 ~/.ssh/id_ed25519
+#           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+#       - name: Upload and activate release
+#         run: |
+#           set -eu
+#           ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_PATH/incoming/$RELEASE_ID'"
+#           scp -o BatchMode=yes release.tar.gz release.tar.gz.sha256 "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/incoming/$RELEASE_ID/"
+#           ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_PATH/incoming/$RELEASE_ID' && sha256sum -c release.tar.gz.sha256 && tar -xzf release.tar.gz scripts/deploy/activate.sh && bash scripts/deploy/activate.sh '$DEPLOY_PATH' '$RELEASE_ID' '$HEALTH_URL'"
+#       - name: Remove SSH credentials
+#         if: always()
+#         run: rm -f ~/.ssh/id_ed25519
