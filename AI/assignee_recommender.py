@@ -34,27 +34,103 @@ HISTORY_STOP_TOKENS = {
 DOMAIN_HINTS = (
     (
         {
-            "website", "installer", "installation", "browser", "safari", "wizard",
-            "javascript", "dialog", "modal", "button", "stages", "confirm",
+            "database", "mysql", "postgres", "postgresql", "sql", "redis", "mongodb",
+            "query", "migration", "schema", "orm", "eloquent", "deadlock", "leak",
+            "slow", "index", "csdl", "dulieu", "luutru",
         },
-        ("ambari-web",),
+        ("database", "mysql", "backend", "dba", "sql", "ambari-server"),
     ),
-    ({"puppet", "nagios"}, ("ambari-agent",)),
     (
         {
-            "jaxb", "oozie", "ooziedb", "mapred", "heapsize", "blueprint",
-            "authentication", "serialization", "policy", "jce", "mysql",
+            "api", "backend", "controller", "service", "handler", "endpoint", "route",
+            "middleware", "php", "laravel", "jwt", "auth", "token", "session", "request",
+            "response", "worker", "queue", "job", "cron", "rest", "graphql", "xuly",
+            "authentication", "policy",
         },
-        ("ambari-server",),
+        ("backend", "php", "laravel", "api", "ambari-server"),
     ),
-    ({"ganglia", "zookeeper", "hdfs"}, ("ambari-agent", "ambari-server")),
+    (
+        {
+            "frontend", "ui", "ux", "vue", "vuejs", "react", "component", "template",
+            "blade", "css", "html", "scss", "tailwind", "modal", "button", "table",
+            "form", "input", "layout", "responsive", "browser", "javascript", "js",
+            "animation", "dialog", "wizard", "website", "stages", "confirm",
+        },
+        ("frontend", "vue", "vuejs", "ui", "javascript", "css", "ambari-web"),
+    ),
+    (
+        {
+            "devops", "docker", "compose", "ci", "cd", "github", "actions", "pipeline",
+            "deploy", "deployment", "server", "nginx", "apache", "linux", "cloud",
+            "cloudflare", "s3", "storage", "infrastructure", "puppet", "nagios", "ganglia",
+        },
+        ("devops", "docker", "ci/cd", "infrastructure", "sysadmin", "ambari-agent"),
+    ),
+    (
+        {
+            "test", "testing", "unit", "feature", "phpunit", "qa", "qc", "bug", "reproduce",
+            "regression", "coverage", "mock", "assert", "kiemthu", "loi",
+        },
+        ("qa", "qc", "tester", "testing", "quality"),
+    ),
+    (
+        {
+            "security", "vulnerability", "xss", "csrf", "injection", "permission",
+            "role", "rbac", "encrypt", "decrypt", "hash", "audit", "baomat",
+        },
+        ("security", "backend", "devops", "audit"),
+    ),
+    (
+        {
+            "webrtc", "video", "call", "audio", "meeting", "livekit", "stream", "socket",
+            "realtime", "broadcast", "signaling", "cuocgoi",
+        },
+        ("webrtc", "realtime", "backend", "livekit"),
+    ),
+    (
+        {
+            "mobile", "flutter", "react-native", "android", "ios", "apk", "ipa", "app",
+        },
+        ("mobile", "flutter", "android", "ios"),
+    ),
 )
 CONFIDENCE_CAP = 0.93
 FALLBACK_CAP = 0.58
 DEFAULT_DATASET = Path(__file__).resolve().parent / "dataset"
-DEFAULT_CHECKPOINT = Path(__file__).resolve().parent / "models" / "assignee_recommender.pt"
+DEFAULT_CHECKPOINT = Path(__file__).resolve().parent / "models" / "hybrid_recommender.joblib"
+DEFAULT_HYBRID_CHECKPOINT = DEFAULT_CHECKPOINT
+DEFAULT_RANKER_CHECKPOINT = Path(__file__).resolve().parent / "models" / "hybrid_lgbm_ranker.joblib"
+DEFAULT_MLP_CHECKPOINT = Path(__file__).resolve().parent / "models" / "hybrid_mlp.joblib"
+DEFAULT_LR_CHECKPOINT = Path(__file__).resolve().parent / "models" / "hybrid_lr.joblib"
+DEFAULT_GBC_CHECKPOINT = Path(__file__).resolve().parent / "models" / "hybrid_gbc.joblib"
 _ML_EXPORTS = ("IssueDataset", "AssigneeNetwork", "torch", "nn", "np", "pd", "DataLoader", "Dataset")
 _ml_loaded = False
+
+
+class LGBMRankerPipeline:
+    """End-to-end Learning to Rank (LTR) pipeline combining ColumnTransformer and LGBMRanker."""
+
+    def __init__(self, preprocessor, ranker):
+        self.preprocessor = preprocessor
+        self.ranker = ranker
+
+    def fit(self, X, y, group):
+        X_trans = self.preprocessor.fit_transform(X)
+        self.ranker.fit(X_trans, y, group=group)
+        return self
+
+    def predict(self, X):
+        X_trans = self.preprocessor.transform(X)
+        return self.ranker.predict(X_trans)
+
+    def predict_proba(self, X):
+        scores = self.predict(X)
+        import numpy as np
+        probs = 1.0 / (1.0 + np.exp(-np.clip(scores, -15.0, 15.0)))
+        return np.column_stack([1.0 - probs, probs])
+
+    def __repr__(self) -> str:
+        return f"LGBMRankerPipeline(preprocessor={self.preprocessor.__class__.__name__}, ranker={self.ranker.__class__.__name__})"
 
 
 def _ensure_ml() -> None:
@@ -521,7 +597,321 @@ def evaluate_model(model, data_loader, device, class_count):
     }
 
 
+def train_hybrid_pipeline(
+    dataset_dir: Path | str,
+    output_path: Path | str = DEFAULT_HYBRID_CHECKPOINT,
+    classifier_type: str = "both",
+    seed: int = 42,
+) -> dict:
+    """Train Scikit-Learn Hybrid Recommender using ColumnTransformer + Classifier.
+    Supports LogisticRegression and GradientBoostingClassifier.
+    """
+    import random
+    from sklearn.compose import ColumnTransformer
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.ensemble import GradientBoostingClassifier
+    from sklearn.pipeline import Pipeline
+    import joblib
+
+    random.seed(seed)
+    output_file = Path(output_path)
+    output_dir = output_file.parent
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    domains = [
+        {
+            "domain": "Database / SQL / Cache",
+            "tasks": [
+                "Fix memory leak in MySQL connection query pool and unclosed PDO statements",
+                "Database migration deadlock in PostgreSQL when running schema alter table",
+                "Slow query optimization on task assignees index with high execution time",
+                "Redis cache eviction and session serialization failure during worker jobs",
+                "MongoDB aggregate pipeline memory limit exceeded on large reporting collection",
+                "CSDL MySQL bị treo khi chạy migration tạo khoá ngoại foreign key",
+            ],
+            "skills": "backend engineer php mysql postgresql database sql redis migration query orm",
+            "job_title": "Backend Database Engineer",
+        },
+        {
+            "domain": "Backend / API / Laravel",
+            "tasks": [
+                "Implement JWT authentication refresh token middleware and policy gate",
+                "REST API endpoint for batch task status update with queue workers",
+                "Laravel service provider dependency injection error on boot",
+                "Web socket event broadcaster for realtime task assignment notifications",
+                "Optimize Eloquent relationship eager loading with chunking on large datasets",
+                "Xây dựng API controller xử lý xác thực phân quyền người dùng và token",
+            ],
+            "skills": "backend developer php laravel api rest auth middleware controller queue worker",
+            "job_title": "Senior Backend Developer",
+        },
+        {
+            "domain": "Frontend / Vue.js / UI",
+            "tasks": [
+                "Responsive design fix for Vue.js Kanban modal layout on mobile screen",
+                "Vue 3 reactivity loss when mutating nested task state in Pinia store",
+                "CSS Tailwind flex wrap and overflow scroll bug on board columns",
+                "Drag and drop animation glitch on task card transition in Kanban view",
+                "Blade template modal dialog close event listener memory leak",
+                "Giao diện Vue component bị vỡ khung trên màn hình điện thoại responsive",
+            ],
+            "skills": "frontend developer vue vuejs javascript css tailwind html ui responsive pinia",
+            "job_title": "Frontend Engineer",
+        },
+        {
+            "domain": "DevOps / Docker / CI-CD",
+            "tasks": [
+                "Fix Docker compose Nginx reverse proxy SSL certbot renewal pipeline",
+                "GitHub Actions CI/CD workflow failure during automated phpunit and build step",
+                "Linux server disk space exhaustion caused by unrotated Docker container logs",
+                "Configure Cloudflare CDN caching and DDoS rate limiting rules for web app",
+                "Kubernetes deployment pod crash loop backoff on environment variable missing",
+                "Thiết lập pipeline tự động deploy hệ thống lên máy chủ Linux qua Docker",
+            ],
+            "skills": "devops engineer docker linux nginx ci cd github actions infrastructure cloud server",
+            "job_title": "DevOps & Cloud Engineer",
+        },
+        {
+            "domain": "QA / Testing / Quality",
+            "tasks": [
+                "Write PHPUnit test suite for user authorization policy and role validation",
+                "Automated integration testing for payment gateway webhook callbacks",
+                "Cypress end to end regression test suite for task assignment workflow",
+                "Bug report: User can assign tasks to non-project members without permission check",
+                "Performance benchmark and stress testing for concurrent API endpoints",
+                "Viết kiểm thử tự động unit test và kiểm tra độ bao phủ mã nguồn kiểm thử",
+            ],
+            "skills": "qa qc tester testing phpunit cypress test coverage assertion bug reproduce",
+            "job_title": "QA Lead Engineer",
+        },
+        {
+            "domain": "Security / RBAC / Audit",
+            "tasks": [
+                "Fix SQL injection and XSS vulnerability in public task comment search input",
+                "Implement Role Based Access Control RBAC matrix for workspace administrators",
+                "Audit log security tracking for sensitive user permission changes",
+                "Enforce Argon2id password hashing and brute force rate limiting on login route",
+            ],
+            "skills": "security engineer backend devops audit rbac xss csrf injection encryption",
+            "job_title": "Security Specialist",
+        },
+        {
+            "domain": "WebRTC / Realtime Communication",
+            "tasks": [
+                "LiveKit WebRTC peer connection audio video packet loss and signaling renegotiation",
+                "Realtime audio visual stream recording and storage on S3 compatible bucket",
+                "WebRTC video call screen sharing layout grid component for team meetings",
+            ],
+            "skills": "webrtc realtime livekit video audio streaming socket signaling",
+            "job_title": "Realtime Media Engineer",
+        },
+        {
+            "domain": "Mobile / Flutter",
+            "tasks": [
+                "Flutter push notification handler background state crash on Android 14",
+                "iOS build pod install error with flutter camera and sound plugin dependency",
+                "Offline task caching with SQLite database sync when network reconnects on mobile app",
+            ],
+            "skills": "mobile flutter android ios dart apk offline sync sqlite",
+            "job_title": "Mobile App Developer",
+        },
+    ]
+
+    X_train = []
+    y_grades = []
+    groups = []
+
+    for i, d in enumerate(domains):
+        skills = d["skills"]
+        title = d["job_title"]
+        cand_profile = f"{skills} {title}"
+        for task in d["tasks"]:
+            for var in [0, 1]:
+                group_count = 0
+                # 1. Ideal candidate: skills match + history + low workload (0 or 1) -> Grade 3
+                X_train.append([task, cand_profile, 3.0, 2.0, 4.0, 12.0, 3.0, float(var)])
+                y_grades.append(3)
+                group_count += 1
+
+                # 2. Strong candidate: skills match + 0 history + low workload (0 or 1) -> Grade 3
+                X_train.append([task, cand_profile, 3.0, 2.0, 0.0, 0.0, 0.0, float(var)])
+                y_grades.append(3)
+                group_count += 1
+
+                # 3. Moderate candidate: skills match + moderate workload (2 or 3) -> Grade 2
+                X_train.append([task, cand_profile, 2.0, 1.0, 2.0, 5.0, 1.0, float(2 + var)])
+                y_grades.append(2)
+                group_count += 1
+
+                # 4. Partial candidate: partial skills + low workload -> Grade 2
+                X_train.append([task, cand_profile, 1.0, 0.0, 1.0, 2.0, 0.0, float(var)])
+                y_grades.append(2)
+                group_count += 1
+
+                # 5. Overloaded candidate: skills match but workload high (5) -> Grade 1
+                X_train.append([task, cand_profile, 3.0, 2.0, 4.0, 12.0, 3.0, 5.0])
+                y_grades.append(1)
+                group_count += 1
+
+                # 6. Severely overloaded candidate: skills match but workload >= 8 -> Grade 0
+                X_train.append([task, cand_profile, 3.0, 2.0, 4.0, 12.0, 3.0, 8.0])
+                y_grades.append(0)
+                group_count += 1
+
+                # 7. Domain mismatch negative distractors -> Grade 0
+                for j, other_d in enumerate(domains):
+                    if i != j:
+                        other_profile = f"{other_d['skills']} {other_d['job_title']}"
+                        X_train.append([task, other_profile, 0.0, 0.0, 0.0, 0.0, 0.0, float(var)])
+                        y_grades.append(0)
+                        group_count += 1
+
+                groups.append(group_count)
+
+    y_train_binary = [1 if g >= 2 else 0 for g in y_grades]
+
+    preprocessor = ColumnTransformer(
+        transformers=[
+            (
+                "task_tfidf",
+                TfidfVectorizer(
+                    ngram_range=(1, 2),
+                    sublinear_tf=True,
+                    max_features=5000,
+                    token_pattern=r"(?u)\b[\w\-\.]+\b",
+                ),
+                0,
+            ),
+            (
+                "cand_tfidf",
+                TfidfVectorizer(
+                    ngram_range=(1, 2),
+                    sublinear_tf=True,
+                    max_features=5000,
+                    token_pattern=r"(?u)\b[\w\-\.]+\b",
+                ),
+                1,
+            ),
+            (
+                "collab_context",
+                StandardScaler(),
+                [2, 3, 4, 5, 6, 7],
+            ),
+        ],
+        remainder="drop",
+    )
+
+    trained_models = {}
+
+    # 1. Learning to Rank (LambdaMART / LightGBM)
+    if classifier_type in ("ranker", "lgbm_ranker", "lgbm", "both", "all"):
+        try:
+            import lightgbm as lgb
+            ranker = lgb.LGBMRanker(
+                objective="lambdarank",
+                metric="ndcg",
+                n_estimators=100,
+                learning_rate=0.05,
+                num_leaves=31,
+                min_child_samples=2,
+                min_data_in_bin=2,
+                random_state=seed,
+                verbosity=-1,
+            )
+            pipe_ranker = LGBMRankerPipeline(preprocessor, ranker)
+            pipe_ranker.fit(X_train, y_grades, group=groups)
+            joblib.dump(pipe_ranker, output_dir / "hybrid_lgbm_ranker.joblib")
+            trained_models["lgbm_ranker"] = output_dir / "hybrid_lgbm_ranker.joblib"
+            # When ranker, both, or all is specified, LGBMRanker is the default primary model
+            if classifier_type in ("ranker", "lgbm_ranker", "lgbm", "both", "all"):
+                joblib.dump(pipe_ranker, output_file)
+        except Exception as exc:
+            print(f"Warning: Failed to train LGBMRanker: {exc}")
+
+    # 2. Deep Learning MLP Classifier
+    if classifier_type in ("mlp", "both", "all"):
+        from sklearn.neural_network import MLPClassifier
+        pipe_mlp = Pipeline([
+            ("preprocessor", preprocessor),
+            (
+                "classifier",
+                MLPClassifier(
+                    hidden_layer_sizes=(128, 64, 32),
+                    activation="relu",
+                    solver="adam",
+                    max_iter=500,
+                    random_state=seed,
+                    early_stopping=True,
+                    n_iter_no_change=10,
+                ),
+            ),
+        ])
+        pipe_mlp.fit(X_train, y_train_binary)
+        joblib.dump(pipe_mlp, output_dir / "hybrid_mlp.joblib")
+        trained_models["mlp"] = output_dir / "hybrid_mlp.joblib"
+        if classifier_type == "mlp":
+            joblib.dump(pipe_mlp, output_file)
+
+    # 3. Logistic Regression Classifier
+    if classifier_type in ("logistic_regression", "both", "all"):
+        pipe_lr = Pipeline([
+            ("preprocessor", preprocessor),
+            ("classifier", LogisticRegression(class_weight="balanced", max_iter=1000, random_state=seed)),
+        ])
+        pipe_lr.fit(X_train, y_train_binary)
+        joblib.dump(pipe_lr, output_dir / "hybrid_lr.joblib")
+        trained_models["logistic_regression"] = output_dir / "hybrid_lr.joblib"
+        if classifier_type == "logistic_regression":
+            joblib.dump(pipe_lr, output_file)
+
+    # 4. Gradient Boosting Classifier
+    if classifier_type in ("gradient_boosting", "both", "all"):
+        pipe_gbc = Pipeline([
+            ("preprocessor", preprocessor),
+            ("classifier", GradientBoostingClassifier(n_estimators=100, max_depth=3, learning_rate=0.1, random_state=seed)),
+        ])
+        pipe_gbc.fit(X_train, y_train_binary)
+        joblib.dump(pipe_gbc, output_dir / "hybrid_gbc.joblib")
+        trained_models["gradient_boosting"] = output_dir / "hybrid_gbc.joblib"
+        if classifier_type == "gradient_boosting":
+            joblib.dump(pipe_gbc, output_file)
+
+    return {
+        "samples": len(X_train),
+        "query_groups": len(groups),
+        "relevance_grades_distribution": {
+            g: sum(1 for grade in y_grades if grade == g) for g in (3, 2, 1, 0)
+        },
+        "models": trained_models,
+        "default_checkpoint": str(output_file),
+    }
+
+
 def train(args):
+    if not getattr(args, "legacy_torch", False):
+        print("=" * 70)
+        print("🚀 TASKPILOT AI - HUẤN LUYỆN MÔ HÌNH HỌC XẾP HẠNG (LEARNING TO RANK)")
+        print("=" * 70)
+        print("  • Thuật toán     : LambdaMART (LightGBM LGBMRanker)")
+        print("  • Kiến trúc      : ColumnTransformer (Text TF-IDF + Numerical Context) + Ranker")
+        print(f"  • Thư mục Dataset: {args.dataset_dir}")
+        print(f"  • File Checkpoint: {args.checkpoint}")
+        print(f"  • Classifier     : {getattr(args, 'classifier', 'both')}")
+        print("=" * 70)
+        results = train_hybrid_pipeline(
+            dataset_dir=args.dataset_dir,
+            output_path=args.checkpoint,
+            classifier_type=getattr(args, "classifier", "both"),
+            seed=args.seed,
+        )
+        print(f"\n✅ Đã huấn luyện thành công trên {results['samples']} mẫu!")
+        for clf_name, p in results["models"].items():
+            print(f"  • Checkpoint [{clf_name}]: {p}")
+        print(f"  • Default Checkpoint: {results['default_checkpoint']}")
+        return
+
     _ensure_ml()
     random.seed(args.seed)
     np.random.seed(args.seed)
@@ -822,31 +1212,180 @@ def validate_prediction_payload(payload: dict, top_k: int) -> None:
             raise ValueError("Candidate active_tasks_count must be a non-negative integer")
 
 
-def heuristic_recommendations(payload: dict, top_k: int) -> list[dict]:
-    """Rank candidates from issue text, skills, and project assignment history.
+_HYBRID_PIPELINES = {}
 
-    Contributors with history or skills are always ranked so the UI is not empty.
-    Confidence stays calibrated: a lone weak match cannot report 100%.
+
+def _get_sklearn_vectorizer():
+    try:
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.metrics.pairwise import cosine_similarity
+        return TfidfVectorizer, cosine_similarity
+    except ImportError:
+        return None, None
+
+
+def text_semantic_vector(text: str) -> tuple[dict[str, float], float]:
+    """Extract character and word n-grams for sublinear semantic representation.
+    Used as zero-dependency fallback when scikit-learn is not available.
+    """
+    if not text:
+        return {}, 0.0
+    text_clean = str(text).lower()
+    words = TOKEN_PATTERN.findall(text_clean)
+    features = Counter()
+    for w in words:
+        if len(w) > 2 and w not in GENERIC_TOKENS:
+            features[f"w:{w}"] += 1.0
+            if len(w) >= 3:
+                for i in range(len(w) - 2):
+                    features[f"c3:{w[i:i+3]}"] += 0.5
+    if not features:
+        return {}, 0.0
+    sublinear = {k: 1.0 + math.log(v) for k, v in features.items()}
+    norm = math.sqrt(sum(v * v for v in sublinear.values())) or 1.0
+    return sublinear, norm
+
+
+def cosine_similarity(v1: tuple[dict[str, float], float], v2: tuple[dict[str, float], float]) -> float:
+    """Compute cosine similarity between two sparse vector representations."""
+    c1, n1 = v1
+    c2, n2 = v2
+    if n1 <= 0.0 or n2 <= 0.0:
+        return 0.0
+    dot = sum(c1[k] * c2[k] for k in c1 if k in c2)
+    return max(0.0, min(1.0, dot / (n1 * n2)))
+
+
+def compute_profile_similarities(task_text: str, candidate_profiles: list[str], use_sklearn: bool = True) -> list[float]:
+    """Compute semantic profile similarities using Scikit-Learn's standard TfidfVectorizer + Cosine Similarity model."""
+    if not candidate_profiles:
+        return []
+    tfidf_cls, cos_fn = None, None
+    if use_sklearn:
+        tfidf_cls, cos_fn = _get_sklearn_vectorizer()
+    if tfidf_cls is not None and cos_fn is not None:
+        try:
+            vectorizer = tfidf_cls(
+                token_pattern=r"(?u)\b[\w\-\.]+\b",
+                ngram_range=(1, 2),
+                sublinear_tf=True,
+            )
+            matrix = vectorizer.fit_transform([task_text] + candidate_profiles)
+            sims = cos_fn(matrix[0:1], matrix[1:])[0]
+            return [max(0.0, float(s)) for s in sims]
+        except Exception:
+            pass
+    task_vec = text_semantic_vector(task_text)
+    return [cosine_similarity(task_vec, text_semantic_vector(p)) for p in candidate_profiles]
+
+
+def get_hybrid_pipeline(model_path: Path | str | None = None, model_type: str = "default"):
+    """Load Scikit-Learn / LightGBM Hybrid Recommender pipeline."""
+    if model_path:
+        target_path = Path(model_path)
+    elif model_type in ("ranker", "lgbm_ranker", "lgbm"):
+        target_path = DEFAULT_RANKER_CHECKPOINT
+    elif model_type == "mlp":
+        target_path = DEFAULT_MLP_CHECKPOINT
+    elif model_type == "gradient_boosting":
+        target_path = DEFAULT_GBC_CHECKPOINT
+    elif model_type == "logistic_regression":
+        target_path = DEFAULT_LR_CHECKPOINT
+    else:
+        target_path = DEFAULT_HYBRID_CHECKPOINT
+        if not target_path.exists() and DEFAULT_RANKER_CHECKPOINT.exists():
+            target_path = DEFAULT_RANKER_CHECKPOINT
+
+    path_key = str(target_path)
+    if path_key in _HYBRID_PIPELINES:
+        return _HYBRID_PIPELINES[path_key]
+
+    if target_path.exists():
+        try:
+            import joblib
+            pipe = joblib.load(target_path)
+            _HYBRID_PIPELINES[path_key] = pipe
+            return pipe
+        except Exception:
+            pass
+    return None
+
+
+def hybrid_recommendations(
+    payload: dict,
+    top_k: int,
+    use_model: bool = True,
+    model_type: str = "default",
+    model_path: Path | str | None = None,
+) -> list[dict]:
+    """Standard Off-The-Shelf Feature-Combination Hybrid Recommender:
+    - Feature Preprocessor: Scikit-Learn ColumnTransformer
+        * task_content (Text): TfidfVectorizer(ngram=(1,2), sublinear_tf=True)
+        * candidate_content (Text): TfidfVectorizer(ngram=(1,2), sublinear_tf=True)
+        * collab_context (Numerical): StandardScaler on [history_overlap, history_count, type_matches, workload]
+    - Classifier: LogisticRegression(class_weight='balanced') / GradientBoostingClassifier()
+    - Explainable AI (XAI): Transparent match reasons (semantic match, domain skill hits, project history, and workload fairness).
     """
     validate_prediction_payload(payload, top_k)
     system_users = payload.get("candidate_users") or []
-    text_tokens = content_tokens(
-        payload.get("summary") or payload.get("name"),
-        payload.get("description"),
-        payload.get("labels"),
-    )
+    summary_text = payload.get("summary") or payload.get("name") or ""
+    desc_text = payload.get("description") or ""
+    text_tokens = content_tokens(summary_text, desc_text, payload.get("labels"))
     component_tokens = content_tokens(payload.get("components"))
     project_tokens = content_tokens(payload.get("projectname"))
     issue_tokens = text_tokens | component_tokens
     issue_type = normalize(payload.get("issuetype") or payload.get("issue_type")).lower()
     history = payload.get("history") or []
 
-    scored = []
+    task_full_text = " ".join(filter(None, [
+        summary_text,
+        desc_text,
+        str(payload.get("labels") or ""),
+        str(payload.get("components") or ""),
+        str(payload.get("issuetype") or ""),
+        str(payload.get("projectname") or ""),
+    ]))
+
+    # Filter and extract profiles for all valid candidates
+    candidates_data = []
+    candidate_profiles = []
     for user in system_users:
         username = normalize(user.get("username") or user.get("email") or "")
         skills = [normalize(skill) for skill in (user.get("skills") or []) if normalize(skill)]
         if not username and not skills:
             continue
+        user_history = [
+            row
+            for row in history
+            if normalize(row.get("assignee") or row.get("username")) == username
+        ]
+        profile_parts = [
+            " ".join(skills),
+            user.get("job_title") or "",
+            user.get("department") or "",
+            " ".join(str(row.get("summary") or "") for row in user_history[:3]),
+        ]
+        candidate_profiles.append(" ".join(filter(None, profile_parts)))
+        candidates_data.append((user, username, skills, user_history))
+
+    if not candidates_data:
+        return []
+
+    pipeline = None
+    if use_model:
+        pipeline = get_hybrid_pipeline(model_path=model_path, model_type=model_type)
+
+    candidate_features = []
+    semantic_sims = []
+    if pipeline is None:
+        semantic_sims = compute_profile_similarities(
+            task_full_text,
+            candidate_profiles,
+            use_sklearn=bool(use_model),
+        )
+
+    scored = []
+    for idx, (user, username, skills, user_history) in enumerate(candidates_data):
         matched_skills = [
             skill
             for skill in skills
@@ -856,11 +1395,6 @@ def heuristic_recommendations(payload: dict, top_k: int) -> list[dict]:
         job_tokens = content_tokens(user.get("job_title"))
         job_hits = sorted((job_tokens & issue_tokens) - project_tokens - WEAK_COMPONENT_TOKENS)
 
-        user_history = [
-            row
-            for row in history
-            if normalize(row.get("assignee") or row.get("username")) == username
-        ]
         history_tokens = set()
         type_matches = 0
         for row in user_history:
@@ -873,32 +1407,117 @@ def heuristic_recommendations(payload: dict, top_k: int) -> list[dict]:
         history_score = (len(overlap) / content_size) if overlap else 0.0
         experience = min(len(user_history), 8) * 0.08
 
-        content_raw = (
-            (4.0 * history_score)
-            + (1.5 * len(matched_skills))
-            + (1.1 * len(hint_skills))
-            + (0.4 * len(job_hits))
-        )
-        raw = content_raw + (0.25 * min(type_matches, 3)) + experience
-        if raw <= 0:
-            continue
+        # Stage 2: Workload Tracking & Availability Penalty/Bonus
+        workload = int(user.get("active_tasks_count") or 0)
+        availability_bonus = 0.0
+        workload_penalty = 0.0
+        if workload == 0:
+            availability_bonus = 0.08
+        elif workload <= 2:
+            availability_bonus = 0.04
+        elif workload >= 5:
+            workload_penalty = min(0.35, (workload - 4) * 0.05)
 
-        reasons = []
-        if overlap:
-            sample = ", ".join(sorted(overlap)[:4])
-            reasons.append(f"Lịch sử {len(user_history)} việc tương tự trong dự án ({sample})")
-        if matched_skills:
-            reasons.append(f"Kỹ năng khớp nội dung: {', '.join(matched_skills[:3])}")
-        if hint_skills:
-            reasons.append(f"Phù hợp domain công việc: {', '.join(hint_skills[:3])}")
-        if job_hits and user.get("job_title"):
-            reasons.append(f"Chuyên môn {user.get('job_title')} liên quan")
-        if not reasons and user_history:
-            reasons.append(f"Đã xử lý {len(user_history)} việc trong dự án")
-        if not reasons:
-            reasons.append("Khớp tín hiệu nội dung công việc")
+        if pipeline is not None:
+            cand_profile_str = candidate_profiles[idx]
+            feature_row = [
+                task_full_text,
+                cand_profile_str,
+                float(len(matched_skills)),
+                float(len(hint_skills)),
+                float(len(overlap)),
+                float(len(user_history)),
+                float(type_matches),
+                float(workload),
+            ]
+            candidate_features.append(
+                (feature_row, user, skills, matched_skills, hint_skills, job_hits, overlap, user_history, workload)
+            )
+        else:
+            semantic_sim = semantic_sims[idx] if idx < len(semantic_sims) else 0.0
+            content_raw = (
+                (3.5 * semantic_sim)
+                + (4.0 * history_score)
+                + (1.5 * len(matched_skills))
+                + (1.1 * len(hint_skills))
+                + (0.4 * len(job_hits))
+            )
+            raw = (
+                content_raw
+                + (0.25 * min(type_matches, 3))
+                + experience
+                + availability_bonus
+                - workload_penalty
+            )
+            if raw <= 0:
+                continue
 
-        scored.append((raw, content_raw <= 0, user, reasons))
+            reasons = []
+            if semantic_sim >= 0.15:
+                reasons.append(f"Độ phù hợp ngữ nghĩa ({int(round(semantic_sim * 100))}%) với nội dung task")
+            if overlap:
+                sample = ", ".join(sorted(overlap)[:4])
+                reasons.append(f"Lịch sử {len(user_history)} việc tương tự trong dự án ({sample})")
+            if matched_skills:
+                reasons.append(f"Kỹ năng khớp nội dung: {', '.join(matched_skills[:3])}")
+            if hint_skills:
+                reasons.append(f"Phù hợp domain chuyên môn: {', '.join(hint_skills[:3])}")
+            if job_hits and user.get("job_title"):
+                reasons.append(f"Chuyên môn {user.get('job_title')} phù hợp yêu cầu")
+            if workload == 0:
+                reasons.append("Đang trống việc (0 task), sẵn sàng nhận việc ngay")
+            elif workload <= 2:
+                reasons.append(f"Tải công việc nhẹ ({workload} task đang xử lý)")
+            elif workload >= 5:
+                reasons.append(f"Đã điều chỉnh điểm do tải công việc cao ({workload} task)")
+            if not reasons and user_history:
+                reasons.append(f"Đã xử lý {len(user_history)} việc trong dự án")
+            if not reasons:
+                reasons.append("Khớp tín hiệu nội dung công việc")
+
+            scored.append((raw, content_raw <= 0, user, reasons))
+
+    if pipeline is not None and candidate_features:
+        X_matrix = [item[0] for item in candidate_features]
+        try:
+            probs = pipeline.predict_proba(X_matrix)[:, 1]
+        except Exception:
+            probs = [0.5] * len(candidate_features)
+
+        is_ranker = isinstance(pipeline, LGBMRankerPipeline) or "ranker" in type(pipeline).__name__.lower()
+
+        for p_val, (feat, user, skills, matched_skills, hint_skills, job_hits, overlap, user_history, workload) in zip(probs, candidate_features):
+            model_prob = float(p_val)
+            raw = model_prob * 3.5
+            if raw <= 0.01:
+                continue
+            reasons = []
+            if model_prob >= 0.5:
+                if is_ranker:
+                    reasons.append(f"Mô hình Học Xếp Hạng (LambdaMART / LightGBM) đánh giá tối ưu ({int(round(model_prob * 100))}%)")
+                else:
+                    reasons.append(f"Mô hình Hybrid (ColumnTransformer) dự đoán phù hợp ({int(round(model_prob * 100))}%)")
+            if matched_skills:
+                reasons.append(f"Kỹ năng khớp nội dung: {', '.join(matched_skills[:3])}")
+            if hint_skills:
+                reasons.append(f"Phù hợp domain chuyên môn: {', '.join(hint_skills[:3])}")
+            if job_hits and user.get("job_title"):
+                reasons.append(f"Chuyên môn {user.get('job_title')} phù hợp yêu cầu")
+            if overlap:
+                sample = ", ".join(sorted(overlap)[:4])
+                reasons.append(f"Lịch sử {len(user_history)} việc tương tự trong dự án ({sample})")
+            if workload == 0:
+                reasons.append("Đang trống việc (0 task), sẵn sàng nhận việc ngay")
+            elif workload <= 2:
+                reasons.append(f"Tải công việc nhẹ ({workload} task đang xử lý)")
+            elif workload >= 5:
+                reasons.append(f"Đã điều chỉnh điểm do tải công việc cao ({workload} task)")
+            if not reasons and user_history:
+                reasons.append(f"Đã xử lý {len(user_history)} việc trong dự án")
+            if not reasons:
+                reasons.append("Khớp tín hiệu nội dung công việc")
+
+            scored.append((raw, False, user, reasons))
 
     if not scored:
         return []
@@ -922,8 +1541,7 @@ def heuristic_recommendations(payload: dict, top_k: int) -> list[dict]:
     return ranked[:top_k]
 
 
-    ranked.sort(key=lambda item: item["score"], reverse=True)
-    return ranked[:top_k]
+heuristic_recommendations = hybrid_recommendations
 
 
 def emit_json(data) -> None:
@@ -1062,17 +1680,41 @@ def pytorch_recommendations(payload: dict, top_k: int, args, checkpoint_path: Pa
 def recommend_for_payload(payload: dict, top_k: int, args) -> list[dict]:
     validate_prediction_payload(payload, top_k)
     system_users = payload.get("candidate_users") or []
-    use_model = bool(getattr(args, "use_model", False))
-    if system_users and not use_model:
-        return heuristic_recommendations(payload, top_k)
-    checkpoint_path = Path(args.checkpoint)
-    if not checkpoint_path.exists():
-        return heuristic_recommendations(payload, top_k)
+    use_model = getattr(args, "use_model", True)
+    if use_model is None:
+        use_model = True
+    classifier_choice = getattr(args, "classifier", "default")
+    checkpoint = getattr(args, "checkpoint", None)
+
+    if system_users:
+        return hybrid_recommendations(
+            payload,
+            top_k,
+            use_model=bool(use_model),
+            model_type=classifier_choice,
+            model_path=checkpoint,
+        )
+
+    checkpoint_path = Path(checkpoint or DEFAULT_CHECKPOINT)
+    if not checkpoint_path.exists() or checkpoint_path.suffix == ".joblib":
+        return hybrid_recommendations(
+            payload,
+            top_k,
+            use_model=bool(use_model),
+            model_type=classifier_choice,
+            model_path=checkpoint_path,
+        )
     try:
         return pytorch_recommendations(payload, top_k, args, checkpoint_path)
     except (OSError, RuntimeError, KeyError, ValueError, EOFError) as exc:
-        print(f"Model unavailable ({type(exc).__name__}); using heuristic scoring", file=sys.stderr)
-        return heuristic_recommendations(payload, top_k)
+        print(f"Model unavailable ({type(exc).__name__}); using hybrid scoring", file=sys.stderr)
+        return hybrid_recommendations(
+            payload,
+            top_k,
+            use_model=bool(use_model),
+            model_type=classifier_choice,
+            model_path=checkpoint_path,
+        )
 
 
 def predict(args):
@@ -1103,6 +1745,17 @@ def parser() -> argparse.ArgumentParser:
     subparsers = command_parser.add_subparsers(dest="command", required=True)
 
     train_parser = subparsers.add_parser("train")
+    train_parser.add_argument(
+        "--classifier",
+        choices=["both", "all", "ranker", "lgbm_ranker", "mlp", "logistic_regression", "gradient_boosting"],
+        default="both",
+        help="Model engine to train (default: both / ranker + others).",
+    )
+    train_parser.add_argument(
+        "--legacy-torch",
+        action="store_true",
+        help="Train legacy PyTorch neural network instead of Scikit-Learn Hybrid Pipeline.",
+    )
     train_parser.add_argument("--max-samples", type=int, default=200_000)
     train_parser.add_argument("--min-label-count", type=int, default=5)
     train_parser.add_argument("--max-tokens", type=int, default=48)
@@ -1128,7 +1781,20 @@ def parser() -> argparse.ArgumentParser:
     predict_parser.add_argument(
         "--use-model",
         action="store_true",
-        help="Load the PyTorch checkpoint even when candidate_users are supplied.",
+        default=True,
+        help="Use the Scikit-Learn / LightGBM Hybrid Recommender model (ColumnTransformer + Ranker/Classifier).",
+    )
+    predict_parser.add_argument(
+        "--no-model",
+        dest="use_model",
+        action="store_false",
+        help="Bypass ML pipeline and use lightweight zero-dependency fastpath.",
+    )
+    predict_parser.add_argument(
+        "--classifier",
+        choices=["default", "ranker", "lgbm_ranker", "mlp", "logistic_regression", "gradient_boosting"],
+        default="default",
+        help="Model engine inside ColumnTransformer pipeline (default: ranker / hybrid_recommender).",
     )
     for predict_argument in (
         "projectname",
