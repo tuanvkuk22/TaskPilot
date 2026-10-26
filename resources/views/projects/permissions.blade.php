@@ -8,8 +8,7 @@
             <h1><i class="fa fa-shield"></i> Chỉnh sửa quyền</h1>
             <p>Thiết lập các quyền và vai trò được phép sử dụng trong dự án.</p>
         </div>
-        <a href="{{ route('projects.show', $project) }}" class="tp-project-btn"><i class="fa fa-arrow-left"></i> Quay lại dự án</a>
-    </div>
+    @include('projects.partials.nav', ['project' => $project, 'active' => 'roles'])
 
     <div class="tp-permissions-layout">
         <section class="tp-jira-card">

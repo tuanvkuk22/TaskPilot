@@ -33,16 +33,44 @@
             </div>
         </div>
 
-        <!-- 2. EXACT JIRA SUB-NAV TAB BAR -->
+        <!-- 2. UNIFIED PROJECT SUB-NAV BAR -->
         <div class="pd-project-nav mb-3">
-            <a href="/projects" class="pd-nav-item">Dự án</a>
-            <a :href="`/projects/${project.id}`" class="pd-nav-item">Tổng quan</a>
-            <a :href="`/projects/${project.id}/board`" class="pd-nav-item">Bảng (Board)</a>
-            <a :href="`/projects/${project.id}/members`" class="pd-nav-item">Thành viên</a>
-            <a :href="`/projects/${project.id}/roles`" class="pd-nav-item">Vai trò &amp; Quyền</a>
-            <a :href="`/sprints?project_id=${project.id}`" class="pd-nav-item">Backlog / Sprint</a>
-            <a :href="`/projects/${project.id}/timeline`" class="pd-nav-item active">Timeline</a>
-            <a :href="`/projects/${project.id}/roadmap`" class="pd-nav-item">Lịch biểu</a>
+            <a href="/projects" class="pd-nav-item" title="Quay lại danh sách dự án">
+                <i class="fa fa-folder-open-o"></i>
+                <span>Dự án</span>
+            </a>
+            <a :href="`/projects/${project.id}`" class="pd-nav-item">
+                <i class="fa fa-th-large"></i>
+                <span>Tổng quan</span>
+            </a>
+            <a :href="`/projects/${project.id}/board`" class="pd-nav-item">
+                <i class="fa fa-columns"></i>
+                <span>Bảng (Board)</span>
+            </a>
+            <a :href="`/projects/${project.id}/sprints`" class="pd-nav-item">
+                <i class="fa fa-list-alt"></i>
+                <span>Backlog / Sprint</span>
+            </a>
+            <a :href="`/projects/${project.id}/members`" class="pd-nav-item">
+                <i class="fa fa-users"></i>
+                <span>Thành viên</span>
+            </a>
+            <a :href="`/projects/${project.id}/roles`" class="pd-nav-item">
+                <i class="fa fa-shield"></i>
+                <span>Vai trò &amp; Quyền</span>
+            </a>
+            <a :href="`/projects/${project.id}/timeline`" class="pd-nav-item active">
+                <i class="fa fa-calendar"></i>
+                <span>Timeline</span>
+            </a>
+            <a :href="`/projects/${project.id}/roadmap`" class="pd-nav-item">
+                <i class="fa fa-calendar-check-o"></i>
+                <span>Lịch biểu</span>
+            </a>
+            <a :href="`/projects/${project.id}/reports`" class="pd-nav-item">
+                <i class="fa fa-bar-chart"></i>
+                <span>Báo cáo</span>
+            </a>
         </div>
 
         <!-- 3. JIRA SEARCH & FILTER TOOLBAR -->

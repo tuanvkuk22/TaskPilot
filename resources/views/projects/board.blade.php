@@ -33,17 +33,8 @@
             </div>
         </div>
 
-        <!-- Standard Project Sub-Nav Bar -->
-        <div class="pd-project-nav mb-4">
-            <a href="{{ route('projects.index') }}" class="pd-nav-item">Dự án</a>
-            <a href="{{ route('projects.show', $project) }}" class="pd-nav-item">Tổng quan</a>
-            <a href="{{ route('projects.board', $project) }}" class="pd-nav-item active">Bảng</a>
-            <a href="{{ route('projects.members.index', $project) }}" class="pd-nav-item">Thành viên</a>
-            <a href="{{ route('projects.roles.index', $project) }}" class="pd-nav-item">Vai trò &amp; Quyền</a>
-            <a href="{{ route('sprints.index', $project) }}" class="pd-nav-item">Backlog / Sprint</a>
-            <a href="{{ route('projects.timeline', $project) }}" class="pd-nav-item">Timeline</a>
-            <a href="{{ route('projects.roadmap', $project) }}" class="pd-nav-item">Lịch biểu</a>
-        </div>
+        <!-- Unified Project Sub-Nav Bar -->
+        @include('projects.partials.nav', ['project' => $project, 'active' => 'board'])
     </div>
 
     <!-- Vue TaskPilot Kanban App (Includes Live Stats + Filters + Board) -->

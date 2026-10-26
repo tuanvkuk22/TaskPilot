@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\ImportDatasetTestCommand::class,
+        Commands\CloseExpiredSprintsCommand::class,
     ];
 
     /**
@@ -24,8 +25,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+        // Tự động kiểm tra và đóng các sprint quá hạn kết thúc vào đầu ngày (00:01)
+        $schedule->command('sprints:close-expired')->dailyAt('00:01');
     }
 
     /**

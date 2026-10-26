@@ -28,35 +28,8 @@
             </div>
         </div>
 
-        <!-- Project Nav Tabs -->
-        <nav class="tp-project-nav-tabs">
-            <a href="{{ route('projects.show', $project) }}" class="tp-project-nav-tab">
-                <i class="fa fa-th-large"></i> Tổng quan
-            </a>
-            <a href="{{ route('projects.board', $project) }}" class="tp-project-nav-tab">
-                <i class="fa fa-columns"></i> Bảng (Board)
-            </a>
-            <a href="{{ route('sprints.index', $project) }}" class="tp-project-nav-tab active">
-                <i class="fa fa-list-alt"></i> Backlog & Sprint
-            </a>
-            <a href="{{ route('projects.members.index', $project) }}" class="tp-project-nav-tab">
-                <i class="fa fa-users"></i> Thành viên
-            </a>
-            <a href="{{ route('projects.roles.index', $project) }}" class="tp-project-nav-tab">
-                <i class="fa fa-shield"></i> Vai trò & Quyền
-            </a>
-            <a href="{{ route('projects.timeline', $project) }}" class="tp-project-nav-tab">
-                <i class="fa fa-calendar"></i> Timeline
-            </a>
-            <a href="{{ route('projects.roadmap', $project) }}" class="tp-project-nav-tab">
-                <i class="fa fa-calendar"></i> Lịch biểu
-            </a>
-            @if(\Illuminate\Support\Facades\Route::has('projects.reports.show'))
-            <a href="{{ route('projects.reports.show', $project) }}" class="tp-project-nav-tab">
-                <i class="fa fa-bar-chart"></i> Báo cáo
-            </a>
-            @endif
-        </nav>
+        <!-- Unified Project Nav Tabs -->
+        @include('projects.partials.nav', ['project' => $project, 'active' => 'sprints'])
     </div>
 
     <!-- Agile KPI Summary Grid -->

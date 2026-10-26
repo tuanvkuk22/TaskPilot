@@ -18,6 +18,9 @@ class SprintsController extends Controller
 {
     public function index(Project $project): View
     {
+        // Tự động đóng sprint đang chạy nếu đã quá hạn ngày kết thúc
+        Sprint::closeExpiredSprints($project->id);
+
         $project->load([
             'sprints' => function ($query) {
                 $query->with(['tasks' => function ($tasks) {

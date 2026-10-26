@@ -82,7 +82,7 @@ class SprintObserver
                 $project,
                 NotificationService::EVENT_SPRINT_UPDATED,
                 'Sprint được cập nhật: ' . $sprint->name,
-                $actor?->name . ' đã cập nhật sprint "' . $sprint->name . '" (' . $changedFieldsText . ').',
+                ($actor?->name ?? 'Hệ thống') . ' đã cập nhật sprint "' . $sprint->name . '" (' . $changedFieldsText . ').',
                 $actor,
                 ['sprint_name' => $sprint->name, 'changed_fields' => $changedFields],
                 '/projects/' . $project->id . '/sprints',

@@ -71,26 +71,22 @@
                 </div>
             </div>
 
-            <!-- 2. MODERN PILL NAVIGATION -->
+            <!-- 2. UNIFIED PROJECT SUB-NAV BAR -->
             <div class="pd-project-nav mb-4">
-                <a href="/projects" class="pd-nav-item">
+                <a href="/projects" class="pd-nav-item" title="Quay lại danh sách dự án">
                     <i class="fa fa-folder-open-o"></i>
-                    <span>Tất cả dự án</span>
+                    <span>Dự án</span>
                 </a>
                 <a :href="`/projects/${project.id}`" class="pd-nav-item" :class="{ active: currentTab === 'overview' }" @click.prevent="currentTab = 'overview'">
                     <i class="fa fa-th-large"></i>
                     <span>Tổng quan</span>
                 </a>
-                <a :href="`/projects/${project.id}/board`" class="pd-nav-item" :class="{ active: currentTab === 'board' }" @click.prevent="currentTab = 'board'">
-                    <i class="fa fa-trello"></i>
+                <a :href="`/projects/${project.id}/board`" class="pd-nav-item">
+                    <i class="fa fa-columns"></i>
                     <span>Bảng (Board)</span>
                 </a>
-                <a :href="`#workflow`" class="pd-nav-item" :class="{ active: currentTab === 'workflow' }" @click.prevent="currentTab = 'workflow'">
-                    <i class="fa fa-sitemap"></i>
-                    <span>Quy trình</span>
-                </a>
                 <a :href="`/projects/${project.id}/sprints`" class="pd-nav-item">
-                    <i class="fa fa-cubes"></i>
+                    <i class="fa fa-list-alt"></i>
                     <span>Backlog / Sprint</span>
                 </a>
                 <a :href="`/projects/${project.id}/members`" class="pd-nav-item">
@@ -106,12 +102,20 @@
                     <span>Timeline</span>
                 </a>
                 <a :href="`/projects/${project.id}/roadmap`" class="pd-nav-item">
-                    <i class="fa fa-calendar"></i>
+                    <i class="fa fa-calendar-check-o"></i>
                     <span>Lịch biểu</span>
+                </a>
+                <a :href="`/projects/${project.id}/reports`" class="pd-nav-item">
+                    <i class="fa fa-bar-chart"></i>
+                    <span>Báo cáo</span>
+                </a>
+                <a :href="`#workflow`" class="pd-nav-item" :class="{ active: currentTab === 'workflow' }" @click.prevent="currentTab = 'workflow'">
+                    <i class="fa fa-sitemap"></i>
+                    <span>Quy trình</span>
                 </a>
                 <a :href="`#activity`" class="pd-nav-item" :class="{ active: currentTab === 'activity' }" @click.prevent="currentTab = 'activity'">
                     <i class="fa fa-history"></i>
-                    <span>Nhật ký hoạt động</span>
+                    <span>Nhật ký</span>
                 </a>
             </div>
 

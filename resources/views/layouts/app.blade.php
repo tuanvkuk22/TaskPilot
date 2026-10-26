@@ -263,6 +263,67 @@
             });
         });
     }
+
+    // Universal Modal handler fallback (supports both Bootstrap 3 & 5 data attributes)
+    function closeAppModal(modal) {
+        if (!modal) return;
+        modal.classList.remove('in');
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        var backdrop = document.getElementById(modal.id + '-backdrop');
+        if (backdrop) backdrop.remove();
+        var generalBackdrops = document.querySelectorAll('.modal-backdrop');
+        generalBackdrops.forEach(function(b) { b.remove(); });
+    }
+
+    function openAppModal(targetModal) {
+        if (!targetModal) return;
+        targetModal.classList.add('in');
+        targetModal.style.display = 'block';
+        document.body.classList.add('modal-open');
+        var backdropId = targetModal.id + '-backdrop';
+        if (!document.getElementById(backdropId)) {
+            var backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade in';
+            backdrop.id = backdropId;
+            backdrop.style.zIndex = '1040';
+            backdrop.addEventListener('click', function() {
+                closeAppModal(targetModal);
+            });
+            document.body.appendChild(backdrop);
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        var toggle = e.target.closest('[data-toggle="modal"], [data-bs-toggle="modal"]');
+        if (toggle) {
+            e.preventDefault();
+            var targetSelector = toggle.getAttribute('data-target') || toggle.getAttribute('data-bs-target');
+            if (targetSelector) {
+                var targetModal = document.querySelector(targetSelector);
+                if (targetModal) {
+                    openAppModal(targetModal);
+                }
+            }
+            return;
+        }
+
+        var dismiss = e.target.closest('[data-dismiss="modal"], [data-bs-dismiss="modal"]');
+        if (dismiss) {
+            e.preventDefault();
+            var modal = dismiss.closest('.modal');
+            if (modal) {
+                closeAppModal(modal);
+            }
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            var openModals = document.querySelectorAll('.modal.in');
+            openModals.forEach(closeAppModal);
+        }
+    });
 })();
 </script>
 @stack('scripts')

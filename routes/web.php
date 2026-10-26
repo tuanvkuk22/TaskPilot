@@ -15,6 +15,7 @@ use ProjectsManager\Modules\Projects\Controllers\ProjectToolsController;
 use ProjectsManager\Modules\Projects\Controllers\ProjectDocumentsController;
 use ProjectsManager\Modules\Projects\Controllers\ProjectFormsController;
 use ProjectsManager\Modules\Projects\Controllers\ProjectDevelopmentController;
+use ProjectsManager\Modules\Projects\Controllers\ProjectReportsController;
 use ProjectsManager\Modules\Tasks\Controllers\SprintsController;
 use ProjectsManager\Modules\Tasks\Controllers\TasksController;
 use ProjectsManager\Modules\Teams\Controllers\TeamsController;
@@ -62,6 +63,9 @@ Route::middleware('auth')->group(function (): void {
     Route::get('projects/{project}/board', [ProjectsController::class, 'board'])->name('projects.board');
     Route::get('projects/{project}/timeline', [ProjectsController::class, 'timeline'])->name('projects.timeline');
     Route::get('projects/{project}/roadmap', [ProjectsController::class, 'roadmap'])->name('projects.roadmap');
+    Route::get('projects/{project}/reports', [ProjectReportsController::class, 'show'])->name('projects.reports.show');
+    Route::get('projects/{project}/reports/excel', [ProjectReportsController::class, 'excel'])->name('projects.reports.excel');
+    Route::get('projects/{project}/reports/pdf', [ProjectReportsController::class, 'pdf'])->name('projects.reports.pdf');
     Route::get('projects/{project}/permissions', [ProjectsController::class, 'editPermissions'])->name('projects.permissions.index')->middleware('can.project:manage_project');
     Route::post('projects/{project}/permissions', [ProjectsController::class, 'storePermission'])->name('projects.permissions.store')->middleware('can.project:manage_project');
     Route::put('projects/{project}/permissions/{permission}', [ProjectsController::class, 'updatePermission'])->name('projects.permissions.update')->middleware('can.project:manage_project');

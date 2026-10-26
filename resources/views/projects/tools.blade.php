@@ -1,6 +1,14 @@
 @extends('layouts.app')
 @section('content')
-<div class="jira-workspace"><div class="jira-workspace-heading"><div><span class="jira-eyebrow">{{ $project->project_code }}</span><h1>{{ $project->name }} / {{ ucfirst($tool) }}</h1><p>Workspace cộng tác cấp dự án, đặt cạnh Board, Timeline và Roadmap.</p></div><div class="jira-view-links"><a href="{{ route('projects.show', $project) }}">Tổng quan</a><a href="{{ route('projects.board', $project) }}">Board</a><a href="{{ route('sprints.index', $project) }}">Backlog</a></div></div>
+<div class="jira-workspace">
+    <div class="jira-workspace-heading mb-3">
+        <div>
+            <span class="jira-eyebrow">{{ $project->project_code }}</span>
+            <h1 class="pd-title m-0">{{ $project->name }} / {{ ucfirst($tool) }}</h1>
+            <p class="text-muted mb-0">Workspace cộng tác cấp dự án, đặt cạnh Board, Timeline và Roadmap.</p>
+        </div>
+    </div>
+    @include('projects.partials.nav', ['project' => $project])
 <section class="project-tool-panel"><h2>{{ ['documents'=>'Tài liệu dự án','meetings'=>'Phòng họp trực tuyến','budgets'=>'Ngân sách dự án','chat'=>'Chat dự án'][$tool] }}</h2>
 @if($tool === 'documents')<form method="POST" action="{{ route('projects.tools.store', $project) }}">@csrf<input type="hidden" name="tool" value="documents"><input name="title" class="form-control" placeholder="Tên tài liệu" required><input name="url" type="url" class="form-control" placeholder="https://..." required><textarea name="description" class="form-control" placeholder="Mô tả"></textarea><button class="btn btn-primary">Lưu tài liệu</button></form>
 @elseif($tool === 'meetings')<form method="POST" action="{{ route('projects.tools.store', $project) }}">@csrf<input type="hidden" name="tool" value="meetings"><input name="title" class="form-control" placeholder="Tên phòng họp" required><select name="platform" class="form-select"><option value="meet">Google Meet</option><option value="google_meet">Google Workspace Meet</option><option value="jitsi">Jitsi</option><option value="agora">Agora</option></select><input name="url" type="url" class="form-control" placeholder="Link phòng họp" required><input name="starts_at" type="datetime-local" class="form-control"><button class="btn btn-primary">Lưu phòng họp</button></form>
